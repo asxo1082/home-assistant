@@ -1,0 +1,162 @@
+title: Schule
+views:
+  - title: Schule
+    path: schule
+    icon: mdi:school
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Heute
+            icon: mdi:calendar-today
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% from 'schule.jinja' import frei, tagname %} {% set f =
+              frei(now().strftime('%Y-%m-%d')) | trim %} {{
+              tagname(now().weekday()) }}{{ ' · ' ~ f if f and f != 'Wochenende'
+              else '' }}
+            secondary: >-
+              {% from 'schule.jinja' import frei, faecher, naechster_schultag,
+              tagname %} {% set f = frei(now().strftime('%Y-%m-%d')) | trim %}
+              {% if f %} {% set n = as_datetime(naechster_schultag() | trim) %}
+              Schulfrei 🎉 · wieder Schule ab {{ tagname(n.weekday()) }}, {{
+              n.strftime('%d.%m.') }} {% else %}{{ faecher(now().weekday()) }}{%
+              endif %}
+            multiline_secondary: true
+            icon: >-
+              {% from 'schule.jinja' import frei %} {{ 'mdi:party-popper' if
+              frei(now().strftime('%Y-%m-%d')) | trim else 'mdi:school' }}
+            icon_color: blue
+            layout: horizontal
+            fill_container: true
+            grid_options:
+              columns: full
+          - type: custom:mushroom-template-card
+            primary: Beginn
+            secondary: >-
+              {% from 'schule.jinja' import frei %} {{ '–' if
+              frei(now().strftime('%Y-%m-%d')) | trim else '8:00 Uhr' }}
+            icon: mdi:clock-start
+            icon_color: blue
+            layout: horizontal
+            fill_container: true
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-template-card
+            primary: Schluss
+            secondary: >-
+              {% from 'schule.jinja' import frei, schulende %} {{ '–' if
+              frei(now().strftime('%Y-%m-%d')) | trim else
+              schulende(now().weekday()) ~ ' Uhr' }}
+            icon: mdi:bell-ring-outline
+            icon_color: green
+            layout: horizontal
+            fill_container: true
+            grid_options:
+              columns: 6
+      - type: grid
+        cards:
+          - type: heading
+            heading: Nächster Schultag
+            icon: mdi:calendar-arrow-right
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% from 'schule.jinja' import naechster_schultag, tagname %} {%
+              set d = naechster_schultag() | trim %}{% set n = as_datetime(d) %}
+              {% if (now() + timedelta(days=1)).strftime('%Y-%m-%d') == d
+              %}Morgen · {{ tagname(n.weekday()) }} {% else %}{{
+              tagname(n.weekday()) }}, {{ n.strftime('%d.%m.') }}{% endif %}
+            secondary: >-
+              {% from 'schule.jinja' import naechster_schultag, faecher %} {{
+              faecher(as_datetime(naechster_schultag() | trim).weekday()) }}
+            multiline_secondary: true
+            icon: mdi:school-outline
+            icon_color: purple
+            layout: horizontal
+            fill_container: true
+            grid_options:
+              columns: full
+          - type: custom:mushroom-template-card
+            primary: Beginn
+            secondary: 8:00 Uhr
+            icon: mdi:clock-start
+            icon_color: purple
+            layout: horizontal
+            fill_container: true
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-template-card
+            primary: Schluss
+            secondary: >-
+              {% from 'schule.jinja' import naechster_schultag, schulende %} {{
+              schulende(as_datetime(naechster_schultag() | trim).weekday()) }}
+              Uhr
+            icon: mdi:bell-ring-outline
+            icon_color: purple
+            layout: horizontal
+            fill_container: true
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% from 'schule.jinja' import naechster_schultag, mitbringen %} {%
+              set t = mitbringen(as_datetime(naechster_schultag() |
+              trim).weekday()) | trim %} {{ t if t else 'Nichts Besonderes
+              einpacken' }}
+            secondary: >-
+              {% from 'schule.jinja' import naechster_schultag, mitbringen,
+              tagname %} {% set d = naechster_schultag() | trim %}{% set n =
+              as_datetime(d) %} {% set t = mitbringen(n.weekday()) | trim %} {%
+              if not t %}Normale Schultasche reicht {% elif (now() +
+              timedelta(days=1)).strftime('%Y-%m-%d') == d %}Für morgen {% else
+              %}Für {{ tagname(n.weekday()) }}, {{ n.strftime('%d.%m.') }}{%
+              endif %}
+            icon: mdi:bag-personal
+            icon_color: >-
+              {% from 'schule.jinja' import naechster_schultag, mitbringen %} {{
+              'orange' if mitbringen(as_datetime(naechster_schultag() |
+              trim).weekday()) | trim else 'grey' }}
+            layout: horizontal
+            fill_container: true
+            grid_options:
+              columns: full
+            card_mod:
+              style: |
+                ha-card {
+                  {% from 'schule.jinja' import naechster_schultag, mitbringen %}
+                  {% if mitbringen(as_datetime(naechster_schultag() | trim).weekday()) | trim %}
+                  background: rgba(255, 152, 0, 0.15);
+                  border: 1px solid rgba(255, 152, 0, 0.6);
+                  {% endif %}
+                }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Erdmännchen-Klasse
+            icon: mdi:school
+          - type: custom:mushroom-template-card
+            primary: Padlet
+            secondary: 'Passwort: <siehe Passwortmanager> · tippen zum Öffnen'
+            icon: mdi:bulletin-board
+            icon_color: amber
+            layout: horizontal
+            fill_container: true
+            grid_options:
+              columns: full
+            tap_action:
+              action: url
+              url_path: https://padlet.com/qr-code/9gli7j9yiaciyh2n?source=image
+      - type: grid
+        cards:
+          - type: heading
+            heading: Stundenplan 3b
+            icon: mdi:timetable
+          - type: picture
+            image: /local/IMG_6363.png?v=1
+            grid_options:
+              columns: full
+            tap_action:
+              action: url
+              url_path: /local/IMG_6363.png?v=1

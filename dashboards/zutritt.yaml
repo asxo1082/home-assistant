@@ -1,0 +1,312 @@
+title: Zutritt
+views:
+  - title: Zutritt
+    path: zutritt
+    icon: mdi:lock
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Garage
+            icon: mdi:garage
+          - type: custom:mushroom-template-card
+            primary: Garagentor
+            secondary: >-
+              {% set z =
+              states('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage')
+              %}{{ {'open': 'Offen', 'closed': 'Geschlossen', 'opening': 'Öffnet
+              …', 'closing': 'Schließt …', 'unavailable': 'Nicht erreichbar',
+              'unknown': 'Unbekannt'}.get(z, z) }}
+            icon: >-
+              {{ 'mdi:garage-open' if
+              is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage',
+              'open') else 'mdi:garage' }}
+            icon_color: >-
+              {% set z =
+              states('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage')
+              %}{{ 'red' if z == 'open' else ('amber' if z in ['opening',
+              'closing'] else ('disabled' if z in ['unavailable', 'unknown']
+              else 'green')) }}
+            layout: vertical
+            fill_container: true
+            grid_options:
+              columns: full
+            tap_action:
+              action: none
+            card_mod:
+              style: |-
+                ha-card {
+                  text-align: center;
+                  border-radius: 22px;
+                  border: none;
+                  {% if is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage', 'open') %}
+                  border: 3px solid var(--red-color);
+                  background: linear-gradient(135deg, rgba(244,67,54,.40), rgba(244,67,54,.10));
+                  {% elif is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage', 'closed') %}
+                  background: linear-gradient(135deg, rgba(76,175,80,.28), rgba(76,175,80,.06));
+                  {% else %}
+                  background: linear-gradient(135deg, rgba(255,193,7,.30), rgba(255,193,7,.07));
+                  {% endif %}
+                }
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Garage auf
+                icon: mdi:garage-open
+                icon_color: red
+                layout: vertical
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id: cover.smart_garage_door_2006048876520336100248e1e91e491b_garage
+                  confirmation:
+                    text: Garagentor öffnen?
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(244,67,54,0.22),
+                    rgba(244,67,54,0.05)); }
+              - type: custom:mushroom-template-card
+                primary: Garage zu
+                icon: mdi:garage
+                icon_color: green
+                layout: vertical
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id: cover.smart_garage_door_2006048876520336100248e1e91e491b_garage
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(76,175,80,0.28),
+                    rgba(76,175,80,0.06)); }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Übersicht
+            icon: mdi:window-open-variant
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set ns = namespace(k=[], o=[], a=[], b=[]) %}
+
+              {% for s in states.binary_sensor if
+              s.attributes.get('device_class') in ['window', 'door',
+              'garage_door', 'opening'] %}
+
+              {% set ns.k = ns.k + [s] %}
+
+              {% if s.state == 'on' %}{% set ns.o = ns.o + [s.name |
+              replace('Sensor ', '')] %}{% endif %}
+
+              {% if s.state in ['unavailable', 'unknown'] %}{% set ns.a = ns.a +
+              [s.name | replace('Sensor ', '')] %}{% endif %}
+
+              {% endfor %}
+
+              {% for s in states.sensor if s.attributes.get('device_class') ==
+              'battery' and s.entity_id.startswith('sensor.sensor_') and s.state
+              | is_number and s.state | float(100) < 25 %}
+
+              {% set ns.b = ns.b + [s.name | replace('Sensor ', '') | replace('
+              Battery', '') ~ ' (' ~ s.state ~ ' %)'] %}
+
+              {% endfor %}{{ 'Alles geschlossen' if ns.o | count == 0 else ns.o
+              | count ~ ' offen' }}
+            secondary: >-
+              {% set ns = namespace(k=[], o=[], a=[], b=[]) %}
+
+              {% for s in states.binary_sensor if
+              s.attributes.get('device_class') in ['window', 'door',
+              'garage_door', 'opening'] %}
+
+              {% set ns.k = ns.k + [s] %}
+
+              {% if s.state == 'on' %}{% set ns.o = ns.o + [s.name |
+              replace('Sensor ', '')] %}{% endif %}
+
+              {% if s.state in ['unavailable', 'unknown'] %}{% set ns.a = ns.a +
+              [s.name | replace('Sensor ', '')] %}{% endif %}
+
+              {% endfor %}
+
+              {% for s in states.sensor if s.attributes.get('device_class') ==
+              'battery' and s.entity_id.startswith('sensor.sensor_') and s.state
+              | is_number and s.state | float(100) < 25 %}
+
+              {% set ns.b = ns.b + [s.name | replace('Sensor ', '') | replace('
+              Battery', '') ~ ' (' ~ s.state ~ ' %)'] %}
+
+              {% endfor %}{{ ns.k | count }} Melder{% if ns.o | count > 0 %} ·
+              offen: {{ ns.o | join(', ') }}{% endif %}{% if ns.a | count > 0 %}
+              · nicht erreichbar: {{ ns.a | join(', ') }}{% endif %}{% if ns.b |
+              count > 0 %} · Batterie schwach: {{ ns.b | join(', ') }}{% endif
+              %}
+            multiline_secondary: true
+            icon: >-
+              {% set o = states.binary_sensor |
+              selectattr('attributes.device_class', 'in', ['window', 'door',
+              'garage_door', 'opening']) | selectattr('state', 'eq', 'on') |
+              list | count %}{{ 'mdi:shield-check' if o == 0 else
+              'mdi:alert-circle' }}
+            icon_color: >-
+              {% set ns = namespace(k=[], o=[], a=[], b=[]) %}
+
+              {% for s in states.binary_sensor if
+              s.attributes.get('device_class') in ['window', 'door',
+              'garage_door', 'opening'] %}
+
+              {% set ns.k = ns.k + [s] %}
+
+              {% if s.state == 'on' %}{% set ns.o = ns.o + [s.name |
+              replace('Sensor ', '')] %}{% endif %}
+
+              {% if s.state in ['unavailable', 'unknown'] %}{% set ns.a = ns.a +
+              [s.name | replace('Sensor ', '')] %}{% endif %}
+
+              {% endfor %}
+
+              {% for s in states.sensor if s.attributes.get('device_class') ==
+              'battery' and s.entity_id.startswith('sensor.sensor_') and s.state
+              | is_number and s.state | float(100) < 25 %}
+
+              {% set ns.b = ns.b + [s.name | replace('Sensor ', '') | replace('
+              Battery', '') ~ ' (' ~ s.state ~ ' %)'] %}
+
+              {% endfor %}{{ 'green' if ns.o | count == 0 else 'red' }}
+            layout: vertical
+            fill_container: true
+            grid_options:
+              columns: full
+            tap_action:
+              action: none
+            card_mod:
+              style: |-
+                ha-card {
+                  text-align: center;
+                  border-radius: 22px;
+                  border: none;
+                  {% set ns = namespace(o=0) %}
+                  {% for s in states.binary_sensor if s.attributes.get('device_class') in ['window', 'door', 'garage_door', 'opening'] and s.state == 'on' %}{% set ns.o = ns.o + 1 %}{% endfor %}
+                  {% if ns.o == 0 %}
+                  background: linear-gradient(135deg, rgba(76,175,80,.28), rgba(76,175,80,.06));
+                  {% else %}
+                  border: 3px solid var(--red-color);
+                  background: linear-gradient(135deg, rgba(244,67,54,.40), rgba(244,67,54,.10));
+                  {% endif %}
+                }
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set z = states('alarm_control_panel.alpen_alarm')
+              %}Alarmanlage: {{ {'disarmed': 'Inaktiv', 'armed_home': 'Zuhause',
+              'armed_away': 'Abwesend', 'arming': 'Wird scharf …', 'pending':
+              'Eingangsverzögerung', 'triggered': 'ALARM!'}.get(z, z) }}
+            secondary: Antippen für Sicherheit
+            icon: >-
+              {% set z = states('alarm_control_panel.alpen_alarm') %}{{
+              {'disarmed': 'mdi:shield-off', 'armed_home': 'mdi:shield-home',
+              'armed_away': 'mdi:shield-lock', 'triggered':
+              'mdi:shield-alert'}.get(z, 'mdi:shield') }}
+            icon_color: >-
+              {% set z = states('alarm_control_panel.alpen_alarm') %}{{
+              {'disarmed': 'blue', 'armed_home': 'red', 'armed_away': 'purple',
+              'triggered': 'red', 'arming': 'amber', 'pending': 'amber'}.get(z,
+              'blue') }}
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-sicherheit
+            card_mod:
+              style: |-
+                ha-card {
+                  border-radius: 22px;
+                  {% set z = states('alarm_control_panel.alpen_alarm') %}
+                  {% if z == 'triggered' %}
+                  border: 3px solid var(--red-color);
+                  {% elif z == 'armed_home' %}
+                  border: 3px solid var(--red-color);
+                  {% elif z == 'armed_away' %}
+                  border: 3px solid var(--purple-color);
+                  {% elif z == 'disarmed' %}
+                  border: 3px solid var(--blue-color);
+                  {% else %}
+                  border: 3px solid var(--amber-color);
+                  {% endif %}
+                }
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: heading
+            heading: Türen
+            heading_style: subtitle
+            icon: mdi:door
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: binary_sensor.sensor_haustur
+                name: Haustür
+              - type: tile
+                entity: binary_sensor.sensor_hwr_tur_garage
+                name: HWR Tür Garage
+      - type: grid
+        cards:
+          - type: heading
+            heading: Fenster Erdgeschoss
+            icon: mdi:stairs-down
+          - type: heading
+            heading: Wohnzimmer
+            heading_style: subtitle
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: binary_sensor.sensor_fenster_wohnzimmer
+                name: Wohnzimmer 1
+              - type: tile
+                entity: binary_sensor.sensor_fenster_wohnzimmer_2
+                name: Wohnzimmer 2
+              - type: tile
+                entity: binary_sensor.sensor_fenster_garten_mitte
+                name: Garten Mitte
+              - type: tile
+                entity: binary_sensor.sensor_fenster_garten_rechts
+                name: Garten rechts
+              - type: tile
+                entity: binary_sensor.sensor_fenster_feld
+                name: Feld
+          - type: heading
+            heading: Küche & Nebenräume
+            heading_style: subtitle
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: binary_sensor.sensor_fenster_kuche_links
+                name: Küche links
+              - type: tile
+                entity: binary_sensor.sensor_fenster_gastewc
+                name: Gäste-WC
+              - type: tile
+                entity: binary_sensor.sensor_fenster_hrw
+                name: HWR
+      - type: grid
+        cards:
+          - type: heading
+            heading: Fenster 1 OG
+            icon: mdi:stairs-up
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: binary_sensor.sensor_badezimmer
+                name: Badezimmer
+              - type: tile
+                entity: binary_sensor.sensor_schlafzimmer
+                name: Schlafzimmer

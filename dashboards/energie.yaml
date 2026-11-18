@@ -16,14 +16,15 @@ views:
           - type: custom:mushroom-template-card
             entity: binary_sensor.kostal_storung
             primary: >-
-              {% set s = states('binary_sensor.kostal_storung') %}{{
-              'Kostal – Störung' if s == 'on' else ('Kostal – alles in Ordnung'
-              if s == 'off' else 'Kostal – Überwachung nicht verfügbar') }}
+              {% set s = states('binary_sensor.kostal_storung') %}{{ 'Kostal –
+              Störung' if s == 'on' else ('Kostal – alles in Ordnung' if s ==
+              'off' else 'Kostal – Überwachung nicht verfügbar') }}
             secondary: >-
               {% set s = states('binary_sensor.kostal_storung') %}{% if s ==
               'on' %}{{ state_attr('binary_sensor.kostal_storung', 'gruende')
-              }}{% elif s == 'off' %}Wechselrichter erreichbar, Werte plausibel{%
-              else %}Sensor binary_sensor.kostal_storung prüfen{% endif %}
+              }}{% elif s == 'off' %}Wechselrichter erreichbar, Werte
+              plausibel{% else %}Sensor binary_sensor.kostal_storung prüfen{%
+              endif %}
             multiline_secondary: true
             icon: >-
               {% set s = states('binary_sensor.kostal_storung') %}{{
@@ -39,7 +40,7 @@ views:
             tap_action:
               action: more-info
             card_mod:
-              style: >
+              style: |
                 ha-card { border-radius: 22px;
                   {% set s = states('binary_sensor.kostal_storung') %}{% set rgb = '244,67,54' if s == 'on' else ('76,175,80' if s == 'off' else '120,144,156') %}
                   border: {{ '2px solid rgba(244,67,54,.7)' if s == 'on' else 'none' }};

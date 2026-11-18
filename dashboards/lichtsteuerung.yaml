@@ -1,0 +1,1749 @@
+title: Lichtsteuerung
+views:
+  - title: Lichtsteuerung
+    path: licht
+    icon: mdi:lightbulb-group
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Übersicht
+            icon: mdi:lightbulb-group
+          - type: custom:mushroom-template-card
+            primary: Licht im Haus
+            secondary: >-
+              {% set n = expand(['light.vorgarten', 'light.terrasse',
+              'light.gartenhutte', 'light.gastewc', 'light.einfahrt_leuchte',
+              'light.haus_seite_leuchte', 'switch.garage_aussenbeleuchtung',
+              'switch.shelly1_e89f6d867192', 'switch.shellyplug_s_fdcccb',
+              'switch.licht_haus_terrasse', 'light.shelly_stehlampe_gross',
+              'light.shelly_stehlampe_gross_2',
+              'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+              'switch.shelly2pmg3_8cbfea97b4e0_output_1', 'light.kinderzimmer',
+              'light.licht_mauer_links', 'light.licht_mauer_rechts',
+              'light.aussenbeleuchtung_hutte_li',
+              'light.aussenbeleuchtung_hutte_re', 'light.licht_terrasse_rechts',
+              'light.paul_kinderzimmer',
+              'switch.beleuchtung_kugelahorn_steckdose_1',
+              'switch.beleuchtung_mulltonnen_steckdose_1',
+              'switch.beleuchtung_pergola_steckdose_1',
+              'switch.beleuchtung_weihnachten_2_steckdose_1']) |
+              selectattr('state', 'eq', 'on') | list | count %}{{ 'Alles aus' if
+              n == 0 else n ~ ' von 25 an' }}
+            icon: mdi:lightbulb-group
+            icon_color: >-
+              {{ 'amber' if (expand(['light.vorgarten', 'light.terrasse',
+              'light.gartenhutte', 'light.gastewc', 'light.einfahrt_leuchte',
+              'light.haus_seite_leuchte', 'switch.garage_aussenbeleuchtung',
+              'switch.shelly1_e89f6d867192', 'switch.shellyplug_s_fdcccb',
+              'switch.licht_haus_terrasse', 'light.shelly_stehlampe_gross',
+              'light.shelly_stehlampe_gross_2',
+              'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+              'switch.shelly2pmg3_8cbfea97b4e0_output_1', 'light.kinderzimmer',
+              'light.licht_mauer_links', 'light.licht_mauer_rechts',
+              'light.aussenbeleuchtung_hutte_li',
+              'light.aussenbeleuchtung_hutte_re', 'light.licht_terrasse_rechts',
+              'light.paul_kinderzimmer',
+              'switch.beleuchtung_kugelahorn_steckdose_1',
+              'switch.beleuchtung_mulltonnen_steckdose_1',
+              'switch.beleuchtung_pergola_steckdose_1',
+              'switch.beleuchtung_weihnachten_2_steckdose_1']) |
+              selectattr('state', 'eq', 'on') | list | count) > 0 else 'blue' }}
+            layout: vertical
+            fill_container: true
+            grid_options:
+              columns: full
+            tap_action:
+              action: none
+            card_mod:
+              style: |-
+                ha-card {
+                  text-align: center;
+                  border-radius: 22px;
+                  border: none;
+                  {% set n = expand(['light.vorgarten', 'light.terrasse', 'light.gartenhutte', 'light.gastewc', 'light.einfahrt_leuchte', 'light.haus_seite_leuchte', 'switch.garage_aussenbeleuchtung', 'switch.shelly1_e89f6d867192', 'switch.shellyplug_s_fdcccb', 'switch.licht_haus_terrasse', 'light.shelly_stehlampe_gross', 'light.shelly_stehlampe_gross_2', 'switch.shelly2pmg3_8cbfea97b4e0_output_0', 'switch.shelly2pmg3_8cbfea97b4e0_output_1', 'light.kinderzimmer', 'light.licht_mauer_links', 'light.licht_mauer_rechts', 'light.aussenbeleuchtung_hutte_li', 'light.aussenbeleuchtung_hutte_re', 'light.licht_terrasse_rechts', 'light.paul_kinderzimmer', 'switch.beleuchtung_kugelahorn_steckdose_1', 'switch.beleuchtung_mulltonnen_steckdose_1', 'switch.beleuchtung_pergola_steckdose_1', 'switch.beleuchtung_weihnachten_2_steckdose_1']) | selectattr('state', 'eq', 'on') | list | count %}
+                  {% if n > 0 %}
+                  background: linear-gradient(135deg, rgba(255,193,7,.40), rgba(255,193,7,.09));
+                  {% else %}
+                  background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                  {% endif %}
+                }
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Alles an
+                icon: >-
+                  {{ 'mdi:lightbulb-on' if (['light.vorgarten',
+                  'light.terrasse', 'light.gartenhutte', 'light.gastewc',
+                  'light.einfahrt_leuchte', 'light.haus_seite_leuchte',
+                  'switch.garage_aussenbeleuchtung',
+                  'switch.shelly1_e89f6d867192', 'switch.shellyplug_s_fdcccb',
+                  'switch.licht_haus_terrasse', 'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.licht_mauer_links',
+                  'light.licht_mauer_rechts',
+                  'light.aussenbeleuchtung_hutte_li',
+                  'light.aussenbeleuchtung_hutte_re',
+                  'light.licht_terrasse_rechts', 'light.paul_kinderzimmer',
+                  'switch.beleuchtung_kugelahorn_steckdose_1',
+                  'switch.beleuchtung_mulltonnen_steckdose_1',
+                  'switch.beleuchtung_pergola_steckdose_1',
+                  'switch.beleuchtung_weihnachten_2_steckdose_1'] |
+                  select('is_state','on') | list | count) > 0 else
+                  'mdi:lightbulb-outline' }}
+                icon_color: >-
+                  {{ 'amber' if (['light.vorgarten', 'light.terrasse',
+                  'light.gartenhutte', 'light.gastewc',
+                  'light.einfahrt_leuchte', 'light.haus_seite_leuchte',
+                  'switch.garage_aussenbeleuchtung',
+                  'switch.shelly1_e89f6d867192', 'switch.shellyplug_s_fdcccb',
+                  'switch.licht_haus_terrasse', 'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.licht_mauer_links',
+                  'light.licht_mauer_rechts',
+                  'light.aussenbeleuchtung_hutte_li',
+                  'light.aussenbeleuchtung_hutte_re',
+                  'light.licht_terrasse_rechts', 'light.paul_kinderzimmer',
+                  'switch.beleuchtung_kugelahorn_steckdose_1',
+                  'switch.beleuchtung_mulltonnen_steckdose_1',
+                  'switch.beleuchtung_pergola_steckdose_1',
+                  'switch.beleuchtung_weihnachten_2_steckdose_1'] |
+                  select('is_state','on') | list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_on
+                  target:
+                    entity_id:
+                      - light.vorgarten
+                      - light.terrasse
+                      - light.gartenhutte
+                      - light.gastewc
+                      - light.einfahrt_leuchte
+                      - light.haus_seite_leuchte
+                      - switch.garage_aussenbeleuchtung
+                      - switch.shelly1_e89f6d867192
+                      - switch.shellyplug_s_fdcccb
+                      - switch.licht_haus_terrasse
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_0
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_1
+                      - light.kinderzimmer
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                      - light.aussenbeleuchtung_hutte_li
+                      - light.aussenbeleuchtung_hutte_re
+                      - light.licht_terrasse_rechts
+                      - light.paul_kinderzimmer
+                      - switch.beleuchtung_kugelahorn_steckdose_1
+                      - switch.beleuchtung_mulltonnen_steckdose_1
+                      - switch.beleuchtung_pergola_steckdose_1
+                      - switch.beleuchtung_weihnachten_2_steckdose_1
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.vorgarten', 'light.terrasse', 'light.gartenhutte', 'light.gastewc', 'light.einfahrt_leuchte', 'light.haus_seite_leuchte', 'switch.garage_aussenbeleuchtung', 'switch.shelly1_e89f6d867192', 'switch.shellyplug_s_fdcccb', 'switch.licht_haus_terrasse', 'light.shelly_stehlampe_gross', 'light.shelly_stehlampe_gross_2', 'switch.shelly2pmg3_8cbfea97b4e0_output_0', 'switch.shelly2pmg3_8cbfea97b4e0_output_1', 'light.kinderzimmer', 'light.licht_mauer_links', 'light.licht_mauer_rechts', 'light.aussenbeleuchtung_hutte_li', 'light.aussenbeleuchtung_hutte_re', 'light.licht_terrasse_rechts', 'light.paul_kinderzimmer', 'switch.beleuchtung_kugelahorn_steckdose_1', 'switch.beleuchtung_mulltonnen_steckdose_1', 'switch.beleuchtung_pergola_steckdose_1', 'switch.beleuchtung_weihnachten_2_steckdose_1'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '255,193,7' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {% set n = (['light.vorgarten', 'light.terrasse',
+                  'light.gartenhutte', 'light.gastewc',
+                  'light.einfahrt_leuchte', 'light.haus_seite_leuchte',
+                  'switch.garage_aussenbeleuchtung',
+                  'switch.shelly1_e89f6d867192', 'switch.shellyplug_s_fdcccb',
+                  'switch.licht_haus_terrasse', 'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.licht_mauer_links',
+                  'light.licht_mauer_rechts',
+                  'light.aussenbeleuchtung_hutte_li',
+                  'light.aussenbeleuchtung_hutte_re',
+                  'light.licht_terrasse_rechts', 'light.paul_kinderzimmer',
+                  'switch.beleuchtung_kugelahorn_steckdose_1',
+                  'switch.beleuchtung_mulltonnen_steckdose_1',
+                  'switch.beleuchtung_pergola_steckdose_1',
+                  'switch.beleuchtung_weihnachten_2_steckdose_1'] |
+                  select('is_state','on') | list | count) %}{{ 'Keine Lampe an'
+                  if n == 0 else (n ~ (' Lampe an' if n == 1 else ' Lampen an'))
+                  }}
+              - type: custom:mushroom-template-card
+                primary: Alles aus
+                icon: mdi:lightbulb-off
+                icon_color: >-
+                  {{ 'blue' if (['light.vorgarten', 'light.terrasse',
+                  'light.gartenhutte', 'light.gastewc',
+                  'light.einfahrt_leuchte', 'light.haus_seite_leuchte',
+                  'switch.garage_aussenbeleuchtung',
+                  'switch.shelly1_e89f6d867192', 'switch.shellyplug_s_fdcccb',
+                  'switch.licht_haus_terrasse', 'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.licht_mauer_links',
+                  'light.licht_mauer_rechts',
+                  'light.aussenbeleuchtung_hutte_li',
+                  'light.aussenbeleuchtung_hutte_re',
+                  'light.licht_terrasse_rechts', 'light.paul_kinderzimmer',
+                  'switch.beleuchtung_kugelahorn_steckdose_1',
+                  'switch.beleuchtung_mulltonnen_steckdose_1',
+                  'switch.beleuchtung_pergola_steckdose_1',
+                  'switch.beleuchtung_weihnachten_2_steckdose_1'] |
+                  select('is_state','on') | list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - light.vorgarten
+                      - light.terrasse
+                      - light.gartenhutte
+                      - light.gastewc
+                      - light.einfahrt_leuchte
+                      - light.haus_seite_leuchte
+                      - switch.garage_aussenbeleuchtung
+                      - switch.shelly1_e89f6d867192
+                      - switch.shellyplug_s_fdcccb
+                      - switch.licht_haus_terrasse
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_0
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_1
+                      - light.kinderzimmer
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                      - light.aussenbeleuchtung_hutte_li
+                      - light.aussenbeleuchtung_hutte_re
+                      - light.licht_terrasse_rechts
+                      - light.paul_kinderzimmer
+                      - switch.beleuchtung_kugelahorn_steckdose_1
+                      - switch.beleuchtung_mulltonnen_steckdose_1
+                      - switch.beleuchtung_pergola_steckdose_1
+                      - switch.beleuchtung_weihnachten_2_steckdose_1
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.vorgarten', 'light.terrasse', 'light.gartenhutte', 'light.gastewc', 'light.einfahrt_leuchte', 'light.haus_seite_leuchte', 'switch.garage_aussenbeleuchtung', 'switch.shelly1_e89f6d867192', 'switch.shellyplug_s_fdcccb', 'switch.licht_haus_terrasse', 'light.shelly_stehlampe_gross', 'light.shelly_stehlampe_gross_2', 'switch.shelly2pmg3_8cbfea97b4e0_output_0', 'switch.shelly2pmg3_8cbfea97b4e0_output_1', 'light.kinderzimmer', 'light.licht_mauer_links', 'light.licht_mauer_rechts', 'light.aussenbeleuchtung_hutte_li', 'light.aussenbeleuchtung_hutte_re', 'light.licht_terrasse_rechts', 'light.paul_kinderzimmer', 'switch.beleuchtung_kugelahorn_steckdose_1', 'switch.beleuchtung_mulltonnen_steckdose_1', 'switch.beleuchtung_pergola_steckdose_1', 'switch.beleuchtung_weihnachten_2_steckdose_1'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '33,150,243' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {{ 'Alles aus' if (['light.vorgarten', 'light.terrasse',
+                  'light.gartenhutte', 'light.gastewc',
+                  'light.einfahrt_leuchte', 'light.haus_seite_leuchte',
+                  'switch.garage_aussenbeleuchtung',
+                  'switch.shelly1_e89f6d867192', 'switch.shellyplug_s_fdcccb',
+                  'switch.licht_haus_terrasse', 'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.licht_mauer_links',
+                  'light.licht_mauer_rechts',
+                  'light.aussenbeleuchtung_hutte_li',
+                  'light.aussenbeleuchtung_hutte_re',
+                  'light.licht_terrasse_rechts', 'light.paul_kinderzimmer',
+                  'switch.beleuchtung_kugelahorn_steckdose_1',
+                  'switch.beleuchtung_mulltonnen_steckdose_1',
+                  'switch.beleuchtung_pergola_steckdose_1',
+                  'switch.beleuchtung_weihnachten_2_steckdose_1'] |
+                  select('is_state','on') | list | count) == 0 else 'Jetzt
+                  ausschalten' }}
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Außen an
+                icon: >-
+                  {{ 'mdi:lightbulb-on' if (['script.aussen_an'] |
+                  select('is_state','on') | list | count) > 0 else
+                  'mdi:lightbulb-outline' }}
+                icon_color: >-
+                  {{ 'amber' if (['script.aussen_an'] | select('is_state','on')
+                  | list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: script.turn_on
+                  target:
+                    entity_id: script.aussen_an
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['script.aussen_an'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '255,193,7' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {% set n = (['script.aussen_an'] | select('is_state','on') |
+                  list | count) %}{{ 'Keine Lampe an' if n == 0 else (n ~ ('
+                  Lampe an' if n == 1 else ' Lampen an')) }}
+              - type: custom:mushroom-template-card
+                primary: Außen aus
+                icon: mdi:outdoor-lamp
+                icon_color: >-
+                  {{ 'blue' if (['script.aussen_an'] | select('is_state','on') |
+                  list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - light.vorgarten
+                      - light.terrasse
+                      - light.gartenhutte
+                      - light.einfahrt_leuchte
+                      - light.haus_seite_leuchte
+                      - switch.garage_aussenbeleuchtung
+                      - switch.shelly1_e89f6d867192
+                      - switch.shellyplug_s_fdcccb
+                      - switch.licht_haus_terrasse
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['script.aussen_an'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '33,150,243' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {{ 'Alles aus' if (['script.aussen_an'] |
+                  select('is_state','on') | list | count) == 0 else 'Jetzt
+                  ausschalten' }}
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Innen an
+                icon: >-
+                  {{ 'mdi:lightbulb-on' if (['light.gastewc',
+                  'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.paul_kinderzimmer'] |
+                  select('is_state','on') | list | count) > 0 else
+                  'mdi:lightbulb-outline' }}
+                icon_color: >-
+                  {{ 'amber' if (['light.gastewc',
+                  'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.paul_kinderzimmer'] |
+                  select('is_state','on') | list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_on
+                  target:
+                    entity_id:
+                      - light.gastewc
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_0
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_1
+                      - light.kinderzimmer
+                      - light.paul_kinderzimmer
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.gastewc', 'light.shelly_stehlampe_gross', 'light.shelly_stehlampe_gross_2', 'switch.shelly2pmg3_8cbfea97b4e0_output_0', 'switch.shelly2pmg3_8cbfea97b4e0_output_1', 'light.kinderzimmer', 'light.paul_kinderzimmer'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '255,193,7' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {% set n = (['light.gastewc', 'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.paul_kinderzimmer'] |
+                  select('is_state','on') | list | count) %}{{ 'Keine Lampe an'
+                  if n == 0 else (n ~ (' Lampe an' if n == 1 else ' Lampen an'))
+                  }}
+              - type: custom:mushroom-template-card
+                primary: Innen aus
+                icon: mdi:ceiling-light
+                icon_color: >-
+                  {{ 'blue' if (['light.gastewc',
+                  'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.paul_kinderzimmer'] |
+                  select('is_state','on') | list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - light.gastewc
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_0
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_1
+                      - light.kinderzimmer
+                      - light.paul_kinderzimmer
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.gastewc', 'light.shelly_stehlampe_gross', 'light.shelly_stehlampe_gross_2', 'switch.shelly2pmg3_8cbfea97b4e0_output_0', 'switch.shelly2pmg3_8cbfea97b4e0_output_1', 'light.kinderzimmer', 'light.paul_kinderzimmer'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '33,150,243' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {{ 'Alles aus' if (['light.gastewc',
+                  'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.paul_kinderzimmer'] |
+                  select('is_state','on') | list | count) == 0 else 'Jetzt
+                  ausschalten' }}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Garten
+            icon: mdi:tree
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Garten an
+                icon: >-
+                  {{ 'mdi:lightbulb-on' if (['light.vorgarten',
+                  'light.gartenhutte', 'switch.shellyplug_s_fdcccb'] |
+                  select('is_state','on') | list | count) > 0 else
+                  'mdi:lightbulb-outline' }}
+                icon_color: >-
+                  {{ 'amber' if (['light.vorgarten', 'light.gartenhutte',
+                  'switch.shellyplug_s_fdcccb'] | select('is_state','on') | list
+                  | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_on
+                  target:
+                    entity_id:
+                      - light.vorgarten
+                      - light.gartenhutte
+                      - switch.shellyplug_s_fdcccb
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.vorgarten', 'light.gartenhutte', 'switch.shellyplug_s_fdcccb'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '255,193,7' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {% set n = (['light.vorgarten', 'light.gartenhutte',
+                  'switch.shellyplug_s_fdcccb'] | select('is_state','on') | list
+                  | count) %}{{ 'Keine Lampe an' if n == 0 else (n ~ (' Lampe
+                  an' if n == 1 else ' Lampen an')) }}
+              - type: custom:mushroom-template-card
+                primary: Garten aus
+                icon: mdi:lightbulb-off
+                icon_color: >-
+                  {{ 'blue' if (['light.vorgarten', 'light.gartenhutte',
+                  'switch.shellyplug_s_fdcccb'] | select('is_state','on') | list
+                  | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - light.vorgarten
+                      - light.gartenhutte
+                      - switch.shellyplug_s_fdcccb
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.vorgarten', 'light.gartenhutte', 'switch.shellyplug_s_fdcccb'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '33,150,243' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {{ 'Alles aus' if (['light.vorgarten', 'light.gartenhutte',
+                  'switch.shellyplug_s_fdcccb'] | select('is_state','on') | list
+                  | count) == 0 else 'Jetzt ausschalten' }}
+          - type: tile
+            entity: light.vorgarten
+            name: Vorgarten
+            features:
+              - type: toggle
+              - type: light-brightness
+          - type: tile
+            entity: light.gartenhutte
+            name: Gartenhütte
+            features:
+              - type: toggle
+              - type: light-brightness
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: switch.shellyplug_s_fdcccb
+                name: Spalierbäume
+                icon: mdi:string-lights
+                tap_action:
+                  action: toggle
+                color: amber
+              - type: tile
+                entity: switch.shellyplus1pm_d4d4da0a291c_aussensteckdose
+                name: Whirlpool-Steckdose
+                icon: mdi:hot-tub
+                tap_action:
+                  action: toggle
+                color: amber
+          - type: custom:mushroom-select-card
+            entity: select.aussenbeleuchtung_vorgarten_szene
+            name: Szene Vorgarten
+            icon: mdi:palette
+          - type: heading
+            heading: Einzellampen Garten
+            heading_style: subtitle
+            icon: mdi:lightbulb-outline
+          - type: custom:mushroom-light-card
+            entity: light.licht_mauer_links
+            name: Mauer links
+            show_brightness_control: true
+            show_color_temp_control: true
+            show_color_control: true
+            use_light_color: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-light-card
+            entity: light.licht_mauer_rechts
+            name: Mauer rechts
+            show_brightness_control: true
+            show_color_temp_control: true
+            show_color_control: true
+            use_light_color: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 6
+            chips:
+              - type: template
+                icon: mdi:white-balance-incandescent
+                icon_color: orange
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                  data:
+                    color_temp_kelvin: 2700
+              - type: template
+                icon: mdi:white-balance-sunny
+                icon_color: light-blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                  data:
+                    color_temp_kelvin: 5500
+              - type: template
+                icon: mdi:circle
+                icon_color: red
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                  data:
+                    rgb_color:
+                      - 255
+                      - 40
+                      - 0
+              - type: template
+                icon: mdi:circle
+                icon_color: purple
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                  data:
+                    rgb_color:
+                      - 160
+                      - 0
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                  data:
+                    rgb_color:
+                      - 0
+                      - 80
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                  data:
+                    rgb_color:
+                      - 0
+                      - 255
+                      - 60
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 6
+            chips:
+              - type: template
+                icon: mdi:white-balance-incandescent
+                icon_color: orange
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_rechts
+                  data:
+                    color_temp_kelvin: 2700
+              - type: template
+                icon: mdi:white-balance-sunny
+                icon_color: light-blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_rechts
+                  data:
+                    color_temp_kelvin: 5500
+              - type: template
+                icon: mdi:circle
+                icon_color: red
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 255
+                      - 40
+                      - 0
+              - type: template
+                icon: mdi:circle
+                icon_color: purple
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 160
+                      - 0
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 0
+                      - 80
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 0
+                      - 255
+                      - 60
+          - type: heading
+            heading: Beide Mauerlampen
+            icon: mdi:wall-sconce-flat
+            heading_style: subtitle
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 12
+            chips:
+              - type: template
+                icon: mdi:brightness-6
+                content: 10 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    brightness_pct: 10
+              - type: template
+                icon: mdi:brightness-6
+                content: 30 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    brightness_pct: 30
+              - type: template
+                icon: mdi:brightness-6
+                content: 50 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    brightness_pct: 50
+              - type: template
+                icon: mdi:brightness-6
+                content: 75 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    brightness_pct: 75
+              - type: template
+                icon: mdi:brightness-6
+                content: 100 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    brightness_pct: 100
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 12
+            chips:
+              - type: template
+                icon: mdi:white-balance-incandescent
+                icon_color: orange
+                content: Warm
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    color_temp_kelvin: 2700
+              - type: template
+                icon: mdi:white-balance-sunny
+                icon_color: light-blue
+                content: Kalt
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    color_temp_kelvin: 5500
+              - type: template
+                icon: mdi:circle
+                icon_color: red
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 255
+                      - 40
+                      - 0
+              - type: template
+                icon: mdi:circle
+                icon_color: purple
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 160
+                      - 0
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 0
+                      - 80
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 0
+                      - 255
+                      - 60
+              - type: template
+                icon: mdi:power
+                content: Beide aus
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_off
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+              - type: template
+                icon: mdi:power
+                icon_color: amber
+                content: Beide an
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+          - type: tile
+            entity: light.aussenbeleuchtung_hutte_li
+            name: Hütte links
+            features:
+              - type: toggle
+              - type: light-brightness
+          - type: tile
+            entity: light.aussenbeleuchtung_hutte_re
+            name: Hütte rechts
+            features:
+              - type: toggle
+              - type: light-brightness
+      - type: grid
+        cards:
+          - type: heading
+            heading: Weitere Außenlichter
+            icon: mdi:outdoor-lamp
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: switch.beleuchtung_kugelahorn_steckdose_1
+                name: Kugelahorn
+                icon: mdi:tree
+                tap_action:
+                  action: toggle
+                color: amber
+              - type: tile
+                entity: switch.beleuchtung_mulltonnen_steckdose_1
+                name: Mülltonnen
+                icon: mdi:trash-can-outline
+                tap_action:
+                  action: toggle
+                color: amber
+              - type: tile
+                entity: switch.beleuchtung_pergola_steckdose_1
+                name: Pergola
+                icon: mdi:string-lights
+                tap_action:
+                  action: toggle
+                color: amber
+              - type: tile
+                entity: switch.beleuchtung_weihnachten_2_steckdose_1
+                name: Weihnachten 2
+                icon: mdi:string-lights
+                tap_action:
+                  action: toggle
+                color: amber
+      - type: grid
+        cards:
+          - type: heading
+            heading: Terrasse & Haus außen
+            icon: mdi:home-lightbulb
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Haus außen an
+                icon: >-
+                  {{ 'mdi:lightbulb-on' if (['light.terrasse',
+                  'switch.licht_haus_terrasse', 'switch.shelly1_e89f6d867192',
+                  'switch.garage_aussenbeleuchtung'] | select('is_state','on') |
+                  list | count) > 0 else 'mdi:lightbulb-outline' }}
+                icon_color: >-
+                  {{ 'amber' if (['light.terrasse',
+                  'switch.licht_haus_terrasse', 'switch.shelly1_e89f6d867192',
+                  'switch.garage_aussenbeleuchtung'] | select('is_state','on') |
+                  list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_on
+                  target:
+                    entity_id:
+                      - light.terrasse
+                      - switch.licht_haus_terrasse
+                      - switch.shelly1_e89f6d867192
+                      - switch.garage_aussenbeleuchtung
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.terrasse', 'switch.licht_haus_terrasse', 'switch.shelly1_e89f6d867192', 'switch.garage_aussenbeleuchtung'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '255,193,7' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {% set n = (['light.terrasse', 'switch.licht_haus_terrasse',
+                  'switch.shelly1_e89f6d867192',
+                  'switch.garage_aussenbeleuchtung'] | select('is_state','on') |
+                  list | count) %}{{ 'Keine Lampe an' if n == 0 else (n ~ ('
+                  Lampe an' if n == 1 else ' Lampen an')) }}
+              - type: custom:mushroom-template-card
+                primary: Haus außen aus
+                icon: mdi:lightbulb-off
+                icon_color: >-
+                  {{ 'blue' if (['light.terrasse', 'switch.licht_haus_terrasse',
+                  'switch.shelly1_e89f6d867192',
+                  'switch.garage_aussenbeleuchtung'] | select('is_state','on') |
+                  list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - light.terrasse
+                      - switch.licht_haus_terrasse
+                      - switch.shelly1_e89f6d867192
+                      - switch.garage_aussenbeleuchtung
+                      - light.einfahrt_leuchte
+                      - light.haus_seite_leuchte
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.terrasse', 'switch.licht_haus_terrasse', 'switch.shelly1_e89f6d867192', 'switch.garage_aussenbeleuchtung'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '33,150,243' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {{ 'Alles aus' if (['light.terrasse',
+                  'switch.licht_haus_terrasse', 'switch.shelly1_e89f6d867192',
+                  'switch.garage_aussenbeleuchtung'] | select('is_state','on') |
+                  list | count) == 0 else 'Jetzt ausschalten' }}
+          - type: tile
+            entity: light.terrasse
+            name: Terrasse
+            features:
+              - type: toggle
+              - type: light-brightness
+          - type: tile
+            entity: light.licht_terrasse_rechts
+            name: Terrasse rechts (Einzellampe)
+            features:
+              - type: toggle
+              - type: light-brightness
+          - type: custom:mushroom-select-card
+            entity: select.aussenbeleuchtung_terrasse_szene
+            name: Szene Terrasse
+            icon: mdi:palette
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: switch.licht_haus_terrasse
+                name: Haus Terrasse
+                icon: mdi:wall-sconce-flat
+                tap_action:
+                  action: toggle
+                color: amber
+              - type: tile
+                entity: switch.shelly1_e89f6d867192
+                name: Haustür
+                icon: mdi:door
+                tap_action:
+                  action: toggle
+                color: amber
+              - type: tile
+                entity: switch.garage_aussenbeleuchtung
+                name: Garage
+                icon: mdi:garage
+                tap_action:
+                  action: toggle
+                color: amber
+              - type: tile
+                entity: light.einfahrt_leuchte
+                name: Einfahrt (Ring)
+                icon: mdi:car-light-high
+                tap_action:
+                  action: toggle
+              - type: tile
+                entity: light.haus_seite_leuchte
+                name: Haus Seite (Ring)
+                icon: mdi:wall-sconce-flat
+                tap_action:
+                  action: toggle
+      - type: grid
+        cards:
+          - type: heading
+            heading: Innenräume
+            icon: mdi:home-floor-1
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Innen an
+                icon: >-
+                  {{ 'mdi:lightbulb-on' if (['light.gastewc',
+                  'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.paul_kinderzimmer'] |
+                  select('is_state','on') | list | count) > 0 else
+                  'mdi:lightbulb-outline' }}
+                icon_color: >-
+                  {{ 'amber' if (['light.gastewc',
+                  'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.paul_kinderzimmer'] |
+                  select('is_state','on') | list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_on
+                  target:
+                    entity_id:
+                      - light.gastewc
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_0
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_1
+                      - light.kinderzimmer
+                      - light.paul_kinderzimmer
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.gastewc', 'light.shelly_stehlampe_gross', 'light.shelly_stehlampe_gross_2', 'switch.shelly2pmg3_8cbfea97b4e0_output_0', 'switch.shelly2pmg3_8cbfea97b4e0_output_1', 'light.kinderzimmer', 'light.paul_kinderzimmer'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '255,193,7' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {% set n = (['light.gastewc', 'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.paul_kinderzimmer'] |
+                  select('is_state','on') | list | count) %}{{ 'Keine Lampe an'
+                  if n == 0 else (n ~ (' Lampe an' if n == 1 else ' Lampen an'))
+                  }}
+              - type: custom:mushroom-template-card
+                primary: Innen aus
+                icon: mdi:lightbulb-off
+                icon_color: >-
+                  {{ 'blue' if (['light.gastewc',
+                  'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.paul_kinderzimmer'] |
+                  select('is_state','on') | list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - light.gastewc
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_0
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_1
+                      - light.kinderzimmer
+                      - light.paul_kinderzimmer
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.gastewc', 'light.shelly_stehlampe_gross', 'light.shelly_stehlampe_gross_2', 'switch.shelly2pmg3_8cbfea97b4e0_output_0', 'switch.shelly2pmg3_8cbfea97b4e0_output_1', 'light.kinderzimmer', 'light.paul_kinderzimmer'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '33,150,243' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {{ 'Alles aus' if (['light.gastewc',
+                  'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer', 'light.paul_kinderzimmer'] |
+                  select('is_state','on') | list | count) == 0 else 'Jetzt
+                  ausschalten' }}
+          - type: heading
+            heading: Wohnzimmer
+            heading_style: subtitle
+            icon: mdi:sofa
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Wohnzimmer an
+                icon: >-
+                  {{ 'mdi:lightbulb-on' if (['light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2'] | select('is_state','on') |
+                  list | count) > 0 else 'mdi:lightbulb-outline' }}
+                icon_color: >-
+                  {{ 'amber' if (['light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2'] | select('is_state','on') |
+                  list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.shelly_stehlampe_gross', 'light.shelly_stehlampe_gross_2'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '255,193,7' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {% set n = (['light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2'] | select('is_state','on') |
+                  list | count) %}{{ 'Keine Lampe an' if n == 0 else (n ~ ('
+                  Lampe an' if n == 1 else ' Lampen an')) }}
+              - type: custom:mushroom-template-card
+                primary: Wohnzimmer aus
+                icon: mdi:lightbulb-off
+                icon_color: >-
+                  {{ 'blue' if (['light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2'] | select('is_state','on') |
+                  list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.shelly_stehlampe_gross', 'light.shelly_stehlampe_gross_2'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '33,150,243' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {{ 'Alles aus' if (['light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2'] | select('is_state','on') |
+                  list | count) == 0 else 'Jetzt ausschalten' }}
+          - type: custom:mushroom-light-card
+            entity: light.shelly_stehlampe_gross
+            name: Stehlampe klein
+            show_brightness_control: true
+            show_color_temp_control: true
+            show_color_control: true
+            use_light_color: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-light-card
+            entity: light.shelly_stehlampe_gross_2
+            name: Stehlampe groß
+            show_brightness_control: true
+            show_color_temp_control: true
+            show_color_control: true
+            use_light_color: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 6
+            chips:
+              - type: template
+                icon: mdi:white-balance-incandescent
+                icon_color: orange
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                  data:
+                    color_temp_kelvin: 2700
+              - type: template
+                icon: mdi:white-balance-sunny
+                icon_color: light-blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                  data:
+                    color_temp_kelvin: 5500
+              - type: template
+                icon: mdi:circle
+                icon_color: red
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                  data:
+                    rgb_color:
+                      - 255
+                      - 40
+                      - 0
+              - type: template
+                icon: mdi:circle
+                icon_color: purple
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                  data:
+                    rgb_color:
+                      - 160
+                      - 0
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                  data:
+                    rgb_color:
+                      - 0
+                      - 80
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                  data:
+                    rgb_color:
+                      - 0
+                      - 255
+                      - 60
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 6
+            chips:
+              - type: template
+                icon: mdi:white-balance-incandescent
+                icon_color: orange
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    color_temp_kelvin: 2700
+              - type: template
+                icon: mdi:white-balance-sunny
+                icon_color: light-blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    color_temp_kelvin: 5500
+              - type: template
+                icon: mdi:circle
+                icon_color: red
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 255
+                      - 40
+                      - 0
+              - type: template
+                icon: mdi:circle
+                icon_color: purple
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 160
+                      - 0
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 0
+                      - 80
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 0
+                      - 255
+                      - 60
+          - type: heading
+            heading: Beide Stehlampen
+            icon: mdi:lamps
+            heading_style: subtitle
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 12
+            chips:
+              - type: template
+                icon: mdi:brightness-6
+                content: 10 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    brightness_pct: 10
+              - type: template
+                icon: mdi:brightness-6
+                content: 30 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    brightness_pct: 30
+              - type: template
+                icon: mdi:brightness-6
+                content: 50 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    brightness_pct: 50
+              - type: template
+                icon: mdi:brightness-6
+                content: 75 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    brightness_pct: 75
+              - type: template
+                icon: mdi:brightness-6
+                content: 100 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    brightness_pct: 100
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 12
+            chips:
+              - type: template
+                icon: mdi:white-balance-incandescent
+                icon_color: orange
+                content: Warm
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    color_temp_kelvin: 2700
+              - type: template
+                icon: mdi:white-balance-sunny
+                icon_color: light-blue
+                content: Kalt
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    color_temp_kelvin: 5500
+              - type: template
+                icon: mdi:circle
+                icon_color: red
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 255
+                      - 40
+                      - 0
+              - type: template
+                icon: mdi:circle
+                icon_color: purple
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 160
+                      - 0
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 0
+                      - 80
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 0
+                      - 255
+                      - 60
+              - type: template
+                icon: mdi:power
+                content: Beide aus
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_off
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+              - type: template
+                icon: mdi:power
+                icon_color: amber
+                content: Beide an
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+          - type: heading
+            heading: Flur
+            icon: mdi:stairs
+            heading_style: subtitle
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Flur an
+                icon: >-
+                  {{ 'mdi:lightbulb-on' if
+                  (['switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1'] |
+                  select('is_state','on') | list | count) > 0 else
+                  'mdi:lightbulb-outline' }}
+                icon_color: >-
+                  {{ 'amber' if (['switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1'] |
+                  select('is_state','on') | list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_on
+                  target:
+                    entity_id:
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_0
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_1
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['switch.shelly2pmg3_8cbfea97b4e0_output_0', 'switch.shelly2pmg3_8cbfea97b4e0_output_1'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '255,193,7' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {% set n = (['switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1'] |
+                  select('is_state','on') | list | count) %}{{ 'Keine Lampe an'
+                  if n == 0 else (n ~ (' Lampe an' if n == 1 else ' Lampen an'))
+                  }}
+              - type: custom:mushroom-template-card
+                primary: Flur aus
+                icon: mdi:lightbulb-off
+                icon_color: >-
+                  {{ 'blue' if (['switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1'] |
+                  select('is_state','on') | list | count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_0
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_1
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['switch.shelly2pmg3_8cbfea97b4e0_output_0', 'switch.shelly2pmg3_8cbfea97b4e0_output_1'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '33,150,243' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {{ 'Alles aus' if
+                  (['switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1'] |
+                  select('is_state','on') | list | count) == 0 else 'Jetzt
+                  ausschalten' }}
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: switch.shelly2pmg3_8cbfea97b4e0_output_0
+                name: Treppe
+                icon: mdi:stairs
+                tap_action:
+                  action: toggle
+                color: amber
+              - type: tile
+                entity: switch.shelly2pmg3_8cbfea97b4e0_output_1
+                name: Gallery
+                icon: mdi:ceiling-light
+                tap_action:
+                  action: toggle
+                color: amber
+          - type: heading
+            heading: Gäste-WC
+            icon: mdi:toilet
+            heading_style: subtitle
+          - type: tile
+            entity: light.gastewc
+            name: Gäste-WC
+            features:
+              - type: toggle
+              - type: light-brightness
+          - type: heading
+            heading: Kinderzimmer Paul
+            icon: mdi:teddy-bear
+            heading_style: subtitle
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Paul an
+                icon: >-
+                  {{ 'mdi:lightbulb-on' if (['light.kinderzimmer',
+                  'light.paul_kinderzimmer'] | select('is_state','on') | list |
+                  count) > 0 else 'mdi:lightbulb-outline' }}
+                icon_color: >-
+                  {{ 'amber' if (['light.kinderzimmer',
+                  'light.paul_kinderzimmer'] | select('is_state','on') | list |
+                  count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_on
+                  target:
+                    entity_id:
+                      - light.kinderzimmer
+                      - light.paul_kinderzimmer
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.kinderzimmer', 'light.paul_kinderzimmer'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '255,193,7' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {% set n = (['light.kinderzimmer', 'light.paul_kinderzimmer']
+                  | select('is_state','on') | list | count) %}{{ 'Keine Lampe
+                  an' if n == 0 else (n ~ (' Lampe an' if n == 1 else ' Lampen
+                  an')) }}
+              - type: custom:mushroom-template-card
+                primary: Paul aus
+                icon: mdi:lightbulb-off
+                icon_color: >-
+                  {{ 'blue' if (['light.kinderzimmer',
+                  'light.paul_kinderzimmer'] | select('is_state','on') | list |
+                  count) > 0 else 'disabled' }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - light.kinderzimmer
+                      - light.paul_kinderzimmer
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 22px; border: none;
+                      {% set n = (['light.kinderzimmer', 'light.paul_kinderzimmer'] | select('is_state','on') | list | count) %}
+                      {% set rgb = '33,150,243' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},{{ '0.3' if n > 0 else '0.14' }}), rgba({{ rgb }},0.05)); }
+                secondary: >-
+                  {{ 'Alles aus' if (['light.kinderzimmer',
+                  'light.paul_kinderzimmer'] | select('is_state','on') | list |
+                  count) == 0 else 'Jetzt ausschalten' }}
+          - type: tile
+            entity: light.kinderzimmer
+            name: Paul (Gruppe)
+            features:
+              - type: toggle
+              - type: light-brightness
+          - type: tile
+            entity: light.paul_kinderzimmer
+            name: Paul Kinderzimmer (Einzellampe)
+            features:
+              - type: toggle
+              - type: light-brightness

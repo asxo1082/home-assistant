@@ -1,0 +1,434 @@
+title: Netzwerk
+views:
+  - title: Netzwerk
+    path: netzwerk
+    icon: mdi:access-point-network
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Übersicht
+            icon: mdi:access-point-network
+          - type: custom:mushroom-template-card
+            primary: USG Firewall
+            secondary: >-
+              {% set s = states('sensor.usg_firewall_zustand') %}{{ 'Verbunden'
+              if s not in ['unavailable','unknown'] else 'Nicht erreichbar' }}
+              {%- if is_number(states('sensor.usg_firewall_cpu_auslastung')) %}
+              · CPU {{ states('sensor.usg_firewall_cpu_auslastung') | float |
+              round(0) | int }} %{% endif %} {%- if
+              is_number(states('sensor.usg_firewall_arbeitsspeicherauslastung'))
+              %} · RAM {{
+              states('sensor.usg_firewall_arbeitsspeicherauslastung') | float |
+              round(0) | int }} %{% endif %} {%- if
+              states('sensor.usg_firewall_betriebszeit') not in
+              ['unavailable','unknown','none'] %} · seit {{ (now() -
+              as_datetime(states('sensor.usg_firewall_betriebszeit'))).days }}
+              Tagen{% endif %}
+            icon: mdi:shield-check
+            icon_color: >-
+              {{ 'red' if states('sensor.usg_firewall_zustand') in
+              ['unavailable','unknown'] else 'green' }}
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: more-info
+              entity: sensor.usg_firewall_zustand
+          - type: custom:mushroom-template-card
+            primary: WAN-Adresse
+            secondary: 192.168.178.21 (FritzBox-Netz)
+            icon: mdi:earth
+            icon_color: blue
+            layout: horizontal
+            fill_container: true
+          - type: custom:mushroom-template-card
+            primary: Raspberry UniFi Netzwerk Controller
+            secondary: >-
+              {{ 'Online' if is_state('binary_sensor.raspberry_15','on') else
+              'Offline' }} · seit {{
+              relative_time(states.binary_sensor.raspberry_15.last_changed) }}
+            icon: mdi:raspberry-pi
+            icon_color: >-
+              {{ 'green' if is_state('binary_sensor.raspberry_15','on') else
+              'red' }}
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: more-info
+              entity: binary_sensor.raspberry_15
+          - type: custom:mushroom-template-card
+            primary: Access Points
+            secondary: >-
+              {% set aps =
+              ['sensor.ap_wohnzimmer_zustand','sensor.ap_hwr_zustand','sensor.ap_gartenhaus_zustand','sensor.ap_dachboden_zustand','sensor.ap_garage_zustand']
+              %}{% set n = aps | reject('is_state','unavailable') |
+              reject('is_state','unknown') | list | count %}{{ n }} von 5
+              verbunden
+            icon: mdi:access-point
+            icon_color: >-
+              {% set aps =
+              ['sensor.ap_wohnzimmer_zustand','sensor.ap_hwr_zustand','sensor.ap_gartenhaus_zustand','sensor.ap_dachboden_zustand','sensor.ap_garage_zustand']
+              %}{{ 'green' if (aps | reject('is_state','unavailable') |
+              reject('is_state','unknown') | list | count) == 5 else 'orange' }}
+            layout: horizontal
+            fill_container: true
+          - type: custom:mushroom-template-card
+            primary: Geräte im Netzwerk
+            secondary: >-
+              {{ integration_entities('unifi') |
+              select('match','device_tracker\.') | select('is_state','home') |
+              list | count }} online – tippen für Liste
+            icon: mdi:devices
+            icon_color: purple
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-netzwerk/geraete
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:restart
+                content: USG Neustart
+                tap_action:
+                  action: perform-action
+                  perform_action: button.press
+                  target:
+                    entity_id: button.usg_firewall_neustart
+                  confirmation:
+                    text: USG wirklich neu starten? Das Internet ist kurz weg.
+      - type: grid
+        cards:
+          - type: heading
+            heading: Access Points
+            icon: mdi:access-point
+          - type: custom:mushroom-template-card
+            primary: AP Wohnzimmer
+            secondary: >-
+              {{ 'Verbunden' if states('sensor.ap_wohnzimmer_zustand') not in
+              ['unavailable','unknown'] else 'Offline' }} {%- if
+              is_number(states('sensor.ap_wohnzimmer_cpu_auslastung')) %} · CPU
+              {{ states('sensor.ap_wohnzimmer_cpu_auslastung') | float |
+              round(0) | int }} %{% endif %}
+            icon: mdi:access-point
+            icon_color: >-
+              {{ 'red' if states('sensor.ap_wohnzimmer_zustand') in
+              ['unavailable','unknown'] else 'green' }}
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: more-info
+              entity: sensor.ap_wohnzimmer_zustand
+          - type: custom:mushroom-template-card
+            primary: AP HWR
+            secondary: >-
+              {{ 'Verbunden' if states('sensor.ap_hwr_zustand') not in
+              ['unavailable','unknown'] else 'Offline' }} {%- if
+              is_number(states('sensor.ap_hwr_cpu_auslastung')) %} · CPU {{
+              states('sensor.ap_hwr_cpu_auslastung') | float | round(0) | int }}
+              %{% endif %}
+            icon: mdi:access-point
+            icon_color: >-
+              {{ 'red' if states('sensor.ap_hwr_zustand') in
+              ['unavailable','unknown'] else 'green' }}
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: more-info
+              entity: sensor.ap_hwr_zustand
+          - type: custom:mushroom-template-card
+            primary: AP Gartenhaus
+            secondary: >-
+              {{ 'Verbunden' if states('sensor.ap_gartenhaus_zustand') not in
+              ['unavailable','unknown'] else 'Offline' }} {%- if
+              is_number(states('sensor.ap_gartenhaus_cpu_auslastung')) %} · CPU
+              {{ states('sensor.ap_gartenhaus_cpu_auslastung') | float |
+              round(0) | int }} %{% endif %}
+            icon: mdi:access-point
+            icon_color: >-
+              {{ 'red' if states('sensor.ap_gartenhaus_zustand') in
+              ['unavailable','unknown'] else 'green' }}
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: more-info
+              entity: sensor.ap_gartenhaus_zustand
+          - type: custom:mushroom-template-card
+            primary: AP Dachboden
+            secondary: >-
+              {{ 'Verbunden' if states('sensor.ap_dachboden_zustand') not in
+              ['unavailable','unknown'] else 'Offline' }} {%- if
+              is_number(states('sensor.ap_dachboden_cpu_auslastung')) %} · CPU
+              {{ states('sensor.ap_dachboden_cpu_auslastung') | float | round(0)
+              | int }} %{% endif %}
+            icon: mdi:access-point
+            icon_color: >-
+              {{ 'red' if states('sensor.ap_dachboden_zustand') in
+              ['unavailable','unknown'] else 'green' }}
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: more-info
+              entity: sensor.ap_dachboden_zustand
+          - type: custom:mushroom-template-card
+            primary: AP Garage
+            secondary: >-
+              {{ 'Verbunden (Mesh)' if states('sensor.ap_garage_zustand') not in
+              ['unavailable','unknown'] else 'Offline' }} {%- if
+              is_number(states('sensor.ap_garage_cpu_auslastung')) %} · CPU {{
+              states('sensor.ap_garage_cpu_auslastung') | float | round(0) | int
+              }} %{% endif %}
+            icon: mdi:access-point
+            icon_color: >-
+              {{ 'red' if states('sensor.ap_garage_zustand') in
+              ['unavailable','unknown'] else 'green' }}
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: more-info
+              entity: sensor.ap_garage_zustand
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:led-on
+                content: LEDs an
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.ap_wohnzimmer_led
+                      - light.ap_hwr_led
+                      - light.ap_gartenhaus_led
+                      - light.ap_dachboden_led
+                      - light.ap_garage_led
+              - type: template
+                icon: mdi:led-off
+                content: LEDs aus
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_off
+                  target:
+                    entity_id:
+                      - light.ap_wohnzimmer_led
+                      - light.ap_hwr_led
+                      - light.ap_gartenhaus_led
+                      - light.ap_dachboden_led
+                      - light.ap_garage_led
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:restart
+                content: Wohnzimmer
+                tap_action:
+                  action: perform-action
+                  perform_action: button.press
+                  target:
+                    entity_id: button.ap_wohnzimmer_neustart
+                  confirmation:
+                    text: AP Wohnzimmer neu starten?
+              - type: template
+                icon: mdi:restart
+                content: HWR
+                tap_action:
+                  action: perform-action
+                  perform_action: button.press
+                  target:
+                    entity_id: button.ap_hwr_neustart
+                  confirmation:
+                    text: AP HWR neu starten?
+              - type: template
+                icon: mdi:restart
+                content: Garage
+                tap_action:
+                  action: perform-action
+                  perform_action: button.press
+                  target:
+                    entity_id: button.ap_garage_neustart
+                  confirmation:
+                    text: AP Garage neu starten?
+              - type: template
+                icon: mdi:restart
+                content: Gartenhaus
+                tap_action:
+                  action: perform-action
+                  perform_action: button.press
+                  target:
+                    entity_id: button.ap_gartenhaus_neustart
+                  confirmation:
+                    text: AP Gartenhaus neu starten?
+              - type: template
+                icon: mdi:restart
+                content: Dachboden
+                tap_action:
+                  action: perform-action
+                  perform_action: button.press
+                  target:
+                    entity_id: button.ap_dachboden_neustart
+                  confirmation:
+                    text: AP Dachboden neu starten?
+      - type: grid
+        cards:
+          - type: heading
+            heading: FritzBox 6890 LTE
+            icon: mdi:router-wireless
+          - type: custom:mushroom-template-card
+            primary: Internetverbindung
+            secondary: >-
+              {{ 'Verbunden' if
+              is_state('binary_sensor.fritz_box_6890_lte_verbindung','on') else
+              'Getrennt' }} · {{ states('sensor.fritz_box_6890_lte_externe_ip')
+              }}
+            icon: mdi:web
+            icon_color: >-
+              {{ 'green' if
+              is_state('binary_sensor.fritz_box_6890_lte_verbindung','on') else
+              'red' }}
+            layout: horizontal
+            fill_container: true
+            grid_options:
+              columns: full
+          - type: custom:mushroom-template-card
+            primary: Zustand
+            secondary: >-
+              CPU {{ states('sensor.fritz_box_6890_lte_cpu_temperatur') }} °C
+              {%- if states('sensor.fritz_box_6890_lte_betriebszeit') not in
+              ['unavailable','unknown'] %} · seit {{ (now() -
+              as_datetime(states('sensor.fritz_box_6890_lte_betriebszeit'))).days
+              }} Tagen{% endif %}
+            icon: mdi:thermometer
+            icon_color: >-
+              {{ 'orange' if states('sensor.fritz_box_6890_lte_cpu_temperatur')
+              | float(0) > 75 else 'green' }}
+            layout: horizontal
+            fill_container: true
+            grid_options:
+              columns: full
+          - type: tile
+            entity: switch.fritz_box_6890_lte_wi_fi_guest
+            name: Gast-WLAN
+            icon: mdi:wifi-lock
+          - type: custom:mushroom-template-card
+            primary: FRITZ!OS
+            secondary: >-
+              {{
+              state_attr('update.fritz_box_6890_lte_fritz_os','installed_version')
+              }} {{ '· Update verfügbar' if
+              is_state('update.fritz_box_6890_lte_fritz_os','on') else '·
+              aktuell' }}
+            icon: mdi:update
+            icon_color: >-
+              {{ 'orange' if is_state('update.fritz_box_6890_lte_fritz_os','on')
+              else 'green' }}
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: more-info
+              entity: update.fritz_box_6890_lte_fritz_os
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:connection
+                content: Neu verbinden
+                tap_action:
+                  action: perform-action
+                  perform_action: button.press
+                  target:
+                    entity_id: button.fritz_box_6890_lte_neu_verbinden
+                  confirmation:
+                    text: Internetverbindung neu aufbauen?
+              - type: template
+                icon: mdi:restart
+                content: Neu starten
+                tap_action:
+                  action: perform-action
+                  perform_action: button.press
+                  target:
+                    entity_id: button.fritz_box_6890_lte_neu_starten
+                  confirmation:
+                    text: FritzBox wirklich neu starten?
+      - type: grid
+        cards:
+          - type: heading
+            heading: Datenrate
+            icon: mdi:swap-vertical
+          - type: tile
+            entity: sensor.fritz_box_6890_lte_download_durchsatz
+            name: Download live
+            icon: mdi:arrow-down-bold
+            color: blue
+            vertical: true
+          - type: tile
+            entity: sensor.fritz_box_6890_lte_upload_durchsatz
+            name: Upload live
+            icon: mdi:arrow-up-bold
+            color: amber
+            vertical: true
+          - type: history-graph
+            title: Letzte 24 Stunden
+            hours_to_show: 24
+            grid_options:
+              columns: full
+            entities:
+              - entity: sensor.fritz_box_6890_lte_download_durchsatz
+                name: Download
+              - entity: sensor.fritz_box_6890_lte_upload_durchsatz
+                name: Upload
+          - type: statistics-graph
+            title: Letzte 7 Tage (Ø und Spitze)
+            days_to_show: 7
+            period: hour
+            chart_type: line
+            stat_types:
+              - mean
+              - max
+            grid_options:
+              columns: full
+            entities:
+              - entity: sensor.fritz_box_6890_lte_download_durchsatz
+                name: Download
+              - entity: sensor.fritz_box_6890_lte_upload_durchsatz
+                name: Upload
+          - type: tile
+            entity: sensor.fritz_box_6890_lte_gb_empfangen
+            name: Empfangen seit Einwahl
+            icon: mdi:download
+            color: blue
+          - type: tile
+            entity: sensor.fritz_box_6890_lte_gb_gesendet
+            name: Gesendet seit Einwahl
+            icon: mdi:upload
+            color: amber
+  - title: Geräte im Netzwerk
+    path: geraete
+    subview: true
+    back_path: /dashboard-netzwerk/netzwerk
+    type: sections
+    max_columns: 1
+    sections:
+      - type: grid
+        cards:
+          - type: markdown
+            title: Geräte im Netzwerk
+            content: >-
+              {% set ents = integration_entities('unifi') | select('match',
+              'device_tracker\.') | select('is_state', 'home') | list | sort %}
+
+              **{{ ents | count }} Geräte online**
+
+
+              | Gerät | IP-Adresse | Verbunden mit |
+
+              |---|---|---|
+
+              {% for e in ents %}| {{ state_attr(e, 'friendly_name') or e }} |
+              {{ state_attr(e, 'ip') or '–' }} | {{ state_attr(e, 'ap_name') or
+              state_attr(e, 'essid') or 'Kabel' }} |
+
+              {% endfor %}

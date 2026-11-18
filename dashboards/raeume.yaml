@@ -1,0 +1,4230 @@
+title: Räume
+views:
+  - title: Zuhause
+    path: zuhause
+    icon: mdi:home
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: >-
+              {% set h = now().hour %} {% if h < 5 or h >= 22 %}{% set g, e =
+              'Gute Nacht', '🌙' %} {% elif h < 10 %}{% set g, e = 'Guten
+              Morgen', '☀️' %} {% elif h < 14 %}{% set g, e = 'Guten Tag', '👋'
+              %} {% elif h < 18 %}{% set g, e = 'Schönen Nachmittag', '☕' %} {%
+              else %}{% set g, e = 'Guten Abend', '🌆' %}{% endif %} {{ g }} {{
+              (user.split('.')[0].split(' ')[0] | capitalize) if user else
+              'Familie Seelen' }}
+            subtitle: >-
+              {% set tage =
+              ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag']
+              %} {% set monate =
+              ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember']
+              %} {% set w = 'weather.forecast_home' %} {% set wetter =
+              {'sunny':'sonnig','clear-night':'klar','partlycloudy':'teils
+              bewölkt','cloudy':'bewölkt',
+                 'rainy':'Regen','pouring':'Starkregen','fog':'Nebel','snowy':'Schnee','snowy-rainy':'Schneeregen',
+                 'windy':'windig','windy-variant':'windig','lightning':'Gewitter','lightning-rainy':'Gewitter','hail':'Hagel'} %}
+              {{ tage[now().weekday()] }}, {{ now().day }}. {{
+              monate[now().month - 1] }} {%- if states(w) not in ['unknown',
+              'unavailable'] %} · {{ state_attr(w, 'temperature') | float(0) |
+              round(0) | int }} °C, {{ wetter.get(states(w), states(w)) }}{%
+              endif %}
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set z = states('alarm_control_panel.alpen_alarm') %}
+              Alarmanlage: {{ {'disarmed': 'Inaktiv', 'armed_home': 'Zuhause',
+              'armed_away': 'Abwesend', 'arming': 'Wird scharf …', 'pending':
+              'Eingangsverzögerung', 'triggered': 'ALARM!', 'unavailable':
+              'Nicht erreichbar', 'unknown': 'Unbekannt'}.get(z, z) }}
+            secondary: >-
+              {% set z = states('alarm_control_panel.alpen_alarm') %} {{ 'Tippen
+              für Details' if z not in ['triggered'] else 'Sofort prüfen!' }}
+            icon: >-
+              {% set z = states('alarm_control_panel.alpen_alarm') %} {{
+              {'disarmed': 'mdi:shield-off', 'armed_home': 'mdi:shield-home',
+              'armed_away': 'mdi:shield-lock', 'triggered':
+              'mdi:shield-alert'}.get(z, 'mdi:shield') }}
+            icon_color: >-
+              {% set z = states('alarm_control_panel.alpen_alarm') %} {{
+              {'disarmed': 'blue', 'armed_home': 'red', 'armed_away': 'purple',
+              'triggered': 'red', 'arming': 'amber', 'pending': 'amber'}.get(z,
+              'grey') }}
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: more-info
+              entity: alarm_control_panel.alpen_alarm
+            grid_options:
+              columns: full
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 22px;
+                  --card-primary-font-size: 15px;
+                  --card-secondary-font-size: 12px;
+                  {% set z = states('alarm_control_panel.alpen_alarm') %}
+                  {% if z == 'triggered' %}
+                  border: 3px solid var(--red-color);
+                  background: linear-gradient(135deg, rgba(244,67,54,.55), rgba(244,67,54,.15));
+                  {% elif z == 'armed_home' %}
+                  border: 3px solid var(--red-color);
+                  background: linear-gradient(135deg, rgba(244,67,54,.30), rgba(244,67,54,.07));
+                  {% elif z == 'armed_away' %}
+                  border: 3px solid var(--purple-color);
+                  background: linear-gradient(135deg, rgba(156,39,176,.34), rgba(156,39,176,.08));
+                  {% elif z == 'disarmed' %}
+                  border: 3px solid var(--blue-color);
+                  background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                  {% elif z in ['arming', 'pending'] %}
+                  border: 3px solid var(--amber-color);
+                  background: linear-gradient(135deg, rgba(255,193,7,.30), rgba(255,193,7,.07));
+                  {% else %}
+                  border: 3px solid var(--grey-color);
+                  background: linear-gradient(135deg, rgba(158,158,158,.20), rgba(158,158,158,.05));
+                  {% endif %}
+                }
+          - type: heading
+            heading: Was liegt an?
+            icon: mdi:bell-ring-outline
+            heading_style: subtitle
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set ns = namespace(w=0) %} {% for s in states.binary_sensor if
+              s.attributes.get('device_class') in
+              ['window','door','garage_door','opening'] and s.state == 'on' %}{%
+              set ns.w = ns.w + 1 %}{% endfor %} {% set alarm =
+              states('alarm_control_panel.alpen_alarm') %} {% if alarm ==
+              'triggered' or
+              is_state('binary_sensor.co2_melder_wohnzimmer_rauch','on') or
+              is_state('binary_sensor.wasssermelder_uberflutung','on') %}🚨
+              Achtung! {% elif ns.w or
+              is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage','open')
+              %}Bitte prüfen {% else %}Alles im grünen Bereich{% endif %}
+            secondary: >-
+              {% from 'schule.jinja' import frei, naechster_schultag, schulende,
+              mitbringen, tagname %} {% set ns = namespace(l=[], offen=[]) %} {%
+              set h = now().hour %} {% if
+              is_state('binary_sensor.co2_melder_wohnzimmer_rauch','on') %}{%
+              set ns.l = ns.l + ['🔥 RAUCHALARM im Wohnzimmer!'] %}{% endif %}
+              {% if is_state('binary_sensor.wasssermelder_uberflutung','on')
+              %}{% set ns.l = ns.l + ['💧 Wassermelder schlägt an!'] %}{% endif
+              %} {% if is_state('alarm_control_panel.alpen_alarm','triggered')
+              %}{% set ns.l = ns.l + ['🚨 Alarmanlage ausgelöst!'] %}{% endif %}
+              {% set f = frei(now().strftime('%Y-%m-%d')) | trim %} {% set n =
+              naechster_schultag() | trim %} {% set nd = as_datetime(n) %} {%
+              set morgen = (now() + timedelta(days=1)).strftime('%Y-%m-%d') == n
+              %} {% if f and f != 'Wochenende' %}{% set ns.l = ns.l + ['🎒 ' ~ f
+              ~ ' – Schule wieder ab ' ~ tagname(nd.weekday()) ~ ', ' ~
+              nd.strftime('%d.%m.')] %} {% elif not f and
+              now().strftime('%H:%M') < schulende(now().weekday()) %}{% set ns.l
+              = ns.l + ['🎒 Schule heute bis ' ~ schulende(now().weekday()) ~ '
+              Uhr'] %}{% endif %} {% set t = mitbringen(nd.weekday()) | trim %}
+              {% if morgen and t and h >= 12 %}{% set ns.l = ns.l + ['🧳 Für
+              morgen: ' ~ t] %}{% endif %} {% set mm =
+              state_attr('sensor.mull_nachste_abfuhr','morgen') %}{% set mh =
+              state_attr('sensor.mull_nachste_abfuhr','heute') %}{% if mh and h
+              < 10 %}{% set ns.l = ns.l + ['🗑️ Heute Abfuhr: ' ~ mh] %}{% elif
+              mm and h >= 12 %}{% set ns.l = ns.l + ['🗑️ Morgen raus: ' ~ mm]
+              %}{% endif %} {% for s in states.binary_sensor if
+              s.attributes.get('device_class') in
+              ['window','door','garage_door','opening'] and s.state == 'on' %}{%
+              set ns.offen = ns.offen + [s.name | replace('Sensor ', '')] %}{%
+              endfor %} {% if ns.offen %}{% set ns.l = ns.l + ['🪟 Offen: ' ~
+              ns.offen | join(', ')] %}{% endif %} {% if
+              is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage','open')
+              %}{% set ns.l = ns.l + ['🚗 Garagentor ist offen'] %}{% endif %}
+              {% set lampen =
+              expand(['light.gastewc','light.shelly_stehlampe_gross','light.shelly_stehlampe_gross_2','switch.shelly2pmg3_8cbfea97b4e0_output_0','switch.shelly2pmg3_8cbfea97b4e0_output_1','light.kinderzimmer'])
+              | selectattr('state','eq','on') | list | count %} {% if lampen and
+              (h >= 23 or h < 6) %}{% set ns.l = ns.l + ['💡 Innen noch ' ~
+              lampen ~ (' Lampe an' if lampen == 1 else ' Lampen an')] %}{%
+              endif %} {% if
+              is_state('alarm_control_panel.alpen_alarm','disarmed') and (h >=
+              22 or h < 5) %}{% set ns.l = ns.l + ['🛡️ Alarm noch inaktiv –
+              Gute Nacht vergessen?'] %}{% endif %} {{ ns.l | join('\n') if ns.l
+              else '✅ Nichts Besonderes – genieß den Tag' }}
+            multiline_secondary: true
+            icon: >-
+              {% set ns = namespace(w=0) %} {% for s in states.binary_sensor if
+              s.attributes.get('device_class') in
+              ['window','door','garage_door','opening'] and s.state == 'on' %}{%
+              set ns.w = ns.w + 1 %}{% endfor %} {% if
+              is_state('alarm_control_panel.alpen_alarm','triggered') or
+              is_state('binary_sensor.co2_melder_wohnzimmer_rauch','on') or
+              is_state('binary_sensor.wasssermelder_uberflutung','on')
+              %}mdi:alert {% elif ns.w or
+              is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage','open')
+              %}mdi:clipboard-alert-outline {% else
+              %}mdi:clipboard-check-outline{% endif %}
+            icon_color: >-
+              {% set ns = namespace(w=0) %} {% for s in states.binary_sensor if
+              s.attributes.get('device_class') in
+              ['window','door','garage_door','opening'] and s.state == 'on' %}{%
+              set ns.w = ns.w + 1 %}{% endfor %} {% if
+              is_state('alarm_control_panel.alpen_alarm','triggered') or
+              is_state('binary_sensor.co2_melder_wohnzimmer_rauch','on') or
+              is_state('binary_sensor.wasssermelder_uberflutung','on') %}red {%
+              elif ns.w or
+              is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage','open')
+              %}orange {% else %}green{% endif %}
+            tap_action:
+              action: none
+            grid_options:
+              columns: full
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 22px;
+                  border: none;
+                  --card-secondary-font-size: 13px;
+                  --card-primary-font-size: 14px;
+                  {% set ns = namespace(w=0) %}
+                  {% for s in states.binary_sensor if s.attributes.get('device_class') in ['window','door','garage_door','opening'] and s.state == 'on' %}{% set ns.w = ns.w + 1 %}{% endfor %}
+                  {% if is_state('alarm_control_panel.alpen_alarm','triggered') or is_state('binary_sensor.co2_melder_wohnzimmer_rauch','on') or is_state('binary_sensor.wasssermelder_uberflutung','on') %}{% set rgb = '244,67,54' %}
+                  {% elif ns.w or is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage','open') %}{% set rgb = '255,152,0' %}
+                  {% else %}{% set rgb = '76,175,80' %}{% endif %}
+                  background: linear-gradient(135deg, rgba({{ rgb }},.28), rgba({{ rgb }},.06));
+                }
+          - type: heading
+            heading: Termine
+            icon: mdi:calendar
+            heading_style: subtitle
+          - type: custom:mushroom-template-card
+            primary: Termine
+            secondary: '{{ state_attr(''sensor.termine_woche'',''text'') }}'
+            multiline_secondary: true
+            icon: mdi:calendar
+            icon_color: blue
+            tap_action:
+              action: navigate
+              navigation_path: /calendar
+            grid_options:
+              columns: full
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 22px;
+                  border: none;
+                  background: linear-gradient(135deg, rgba(33,150,243,.25), rgba(33,150,243,.06));
+                  --card-secondary-font-size: 13px;
+                  --card-primary-font-size: 14px;
+                }
+          - type: heading
+            heading: Müllabfuhr
+            icon: mdi:trash-can-outline
+            heading_style: subtitle
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set m = state_attr('sensor.mull_nachste_abfuhr', 'morgen') %}
+              {% set h = state_attr('sensor.mull_nachste_abfuhr', 'heute') %} {{
+              'Heute Abfuhr: ' ~ h if h else ('Morgen raus: ' ~ m if m else
+              'Müllabfuhr') }}
+            secondary: '{{ state_attr(''sensor.mull_nachste_abfuhr'', ''text'') }}'
+            multiline_secondary: true
+            icon: mdi:trash-can
+            icon_color: >-
+              {{ 'orange' if states('sensor.mull_nachste_abfuhr') | int(9) <= 1
+              else 'green' }}
+            tap_action:
+              action: navigate
+              navigation_path: /calendar
+            grid_options:
+              columns: full
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 22px;
+                  border: none;
+                  {% set rgb = '255,152,0' if states('sensor.mull_nachste_abfuhr') | int(9) <= 1 else '76,175,80' %}
+                  background: linear-gradient(135deg, rgba({{ rgb }},.26), rgba({{ rgb }},.06));
+                  --card-secondary-font-size: 13px;
+                  --card-primary-font-size: 14px;
+                }
+          - type: heading
+            heading: Schnellaktionen
+            heading_style: subtitle
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Guten Morgen
+                secondary: Alarm aus · Licht aus · Rollos hoch
+                multiline_secondary: true
+                icon: mdi:weather-sunset-up
+                icon_color: amber
+                layout: vertical
+                tap_action:
+                  action: perform-action
+                  perform_action: script.turn_on
+                  target:
+                    entity_id: script.guten_morgen
+                  confirmation:
+                    text: 'Guten Morgen: Alarm aus, Licht aus, Rollläden hoch?'
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 22px;
+                      border: none;
+                      background: linear-gradient(135deg, rgba(255,193,7,.34), rgba(255,193,7,.08));
+                    }
+              - type: custom:mushroom-template-card
+                primary: Gute Nacht
+                secondary: Innen aus · Außen an · Rollos zu · Alarm an
+                multiline_secondary: true
+                icon: mdi:weather-night
+                icon_color: indigo
+                layout: vertical
+                tap_action:
+                  action: perform-action
+                  perform_action: script.turn_on
+                  target:
+                    entity_id: script.gute_nacht
+                  confirmation:
+                    text: >-
+                      Gute Nacht: Innenlicht aus, Außenlicht an, Rollläden zu,
+                      Alarm auf Zuhause?
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 22px;
+                      border: none;
+                      background: linear-gradient(135deg, rgba(63,81,181,.34), rgba(63,81,181,.08));
+                    }
+          - type: custom:mushroom-chips-card
+            alignment: start
+            chips:
+              - type: template
+                icon: >-
+                  {{ 'mdi:garage-open' if
+                  is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage',
+                  'open') else 'mdi:garage' }}
+                icon_color: >-
+                  {% set z =
+                  states('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage')
+                  %} {{ 'red' if z == 'open' else ('amber' if z in ['opening',
+                  'closing'] else ('disabled' if z in ['unavailable', 'unknown']
+                  else 'green')) }}
+                content: >-
+                  {% set z =
+                  states('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage')
+                  %} Garage {{ {'open': 'offen', 'closed': 'zu', 'opening':
+                  'öffnet', 'closing': 'schließt', 'unavailable': '?',
+                  'unknown': '?'}.get(z, z) }}
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-zutritt
+              - type: template
+                icon: >-
+                  {{ 'mdi:smoke-detector-variant-alert' if
+                  is_state('binary_sensor.co2_melder_wohnzimmer_rauch', 'on')
+                  else 'mdi:smoke-detector-variant' }}
+                icon_color: >-
+                  {% set r = states('binary_sensor.co2_melder_wohnzimmer_rauch')
+                  %} {{ 'red' if r == 'on' else ('disabled' if r in
+                  ['unavailable', 'unknown'] else 'green') }}
+                content: >-
+                  {% set r = states('binary_sensor.co2_melder_wohnzimmer_rauch')
+                  %} {{ 'RAUCHALARM' if r == 'on' else ('Rauchmelder ?' if r in
+                  ['unavailable', 'unknown'] else 'Rauchmelder ok') }}
+                tap_action:
+                  action: none
+              - type: template
+                icon: >-
+                  {{ 'mdi:water-alert' if
+                  is_state('binary_sensor.wasssermelder_uberflutung','on') else
+                  'mdi:water-check' }}
+                icon_color: >-
+                  {% set w = states('binary_sensor.wasssermelder_uberflutung')
+                  %}{{ 'red' if w == 'on' else ('disabled' if w in
+                  ['unavailable','unknown'] else 'green') }}
+                content: >-
+                  {% set w = states('binary_sensor.wasssermelder_uberflutung')
+                  %}{{ 'ÜBERFLUTUNG' if w == 'on' else ('Wasser ?' if w in
+                  ['unavailable','unknown'] else 'Wasser ok') }}
+                tap_action:
+                  action: none
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:lightbulb-off
+                content: Licht aus
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - light.vorgarten
+                      - light.terrasse
+                      - light.gartenhutte
+                      - light.gastewc
+                      - light.einfahrt_leuchte
+                      - light.haus_seite_leuchte
+                      - switch.garage_aussenbeleuchtung
+                      - switch.shelly1_e89f6d867192
+                      - switch.shellyplug_s_fdcccb
+                      - switch.licht_haus_terrasse
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_0
+                      - switch.shelly2pmg3_8cbfea97b4e0_output_1
+                      - light.kinderzimmer
+              - type: template
+                icon: mdi:outdoor-lamp
+                content: Außen aus
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - light.vorgarten
+                      - light.terrasse
+                      - light.gartenhutte
+                      - light.einfahrt_leuchte
+                      - light.haus_seite_leuchte
+                      - switch.garage_aussenbeleuchtung
+                      - switch.shelly1_e89f6d867192
+                      - switch.shellyplug_s_fdcccb
+                      - switch.licht_haus_terrasse
+              - type: template
+                icon: mdi:window-shutter
+                content: Rollos zu
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_badezimmer
+                      - cover.rollo_flur_links
+                      - cover.rollo_flur_rechts
+                      - cover.rollo_gaste_wc
+                      - cover.rollo_hwr
+                      - cover.rollo_kinderzimmer_clara
+                      - cover.rollo_kinderzimmer_paul
+                      - cover.rollo_kuche
+                      - cover.rollo_schlafzimmer
+                      - cover.rollo_wohnzimmer_feld
+                      - cover.rollo_wohnzimmer_garten_mitte
+                      - cover.rollo_wohnzimmer_garten_rechts
+                      - cover.rollo_wohnzimmer_strasse_links
+                      - cover.rollo_wohnzimmer_strasse_rechts
+                  confirmation:
+                    text: Alle Rollläden schließen?
+              - type: template
+                icon: mdi:window-shutter-open
+                content: Rollos auf
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_badezimmer
+                      - cover.rollo_flur_links
+                      - cover.rollo_flur_rechts
+                      - cover.rollo_gaste_wc
+                      - cover.rollo_hwr
+                      - cover.rollo_kinderzimmer_clara
+                      - cover.rollo_kinderzimmer_paul
+                      - cover.rollo_kuche
+                      - cover.rollo_schlafzimmer
+                      - cover.rollo_wohnzimmer_feld
+                      - cover.rollo_wohnzimmer_garten_mitte
+                      - cover.rollo_wohnzimmer_garten_rechts
+                      - cover.rollo_wohnzimmer_strasse_links
+                      - cover.rollo_wohnzimmer_strasse_rechts
+            grid_options:
+              columns: 12
+              rows: auto
+          - type: heading
+            heading: Auf einen Blick
+            heading_style: subtitle
+            icon: mdi:view-dashboard
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Licht
+                secondary: >-
+                  {% set n =
+                  expand(['light.vorgarten','light.terrasse','light.gartenhutte','light.gastewc','light.einfahrt_leuchte','light.haus_seite_leuchte','switch.garage_aussenbeleuchtung','switch.shelly1_e89f6d867192','switch.shellyplug_s_fdcccb','switch.licht_haus_terrasse','light.shelly_stehlampe_gross','light.shelly_stehlampe_gross_2','switch.shelly2pmg3_8cbfea97b4e0_output_0','switch.shelly2pmg3_8cbfea97b4e0_output_1','light.kinderzimmer'])
+                  | selectattr('state','eq','on') | list | count %}{{ 'Alles
+                  aus' if n == 0 else n ~ ' an' }}
+                icon: mdi:lightbulb-group
+                icon_color: >-
+                  {% set n =
+                  expand(['light.vorgarten','light.terrasse','light.gartenhutte','light.gastewc','light.einfahrt_leuchte','light.haus_seite_leuchte','switch.garage_aussenbeleuchtung','switch.shelly1_e89f6d867192','switch.shellyplug_s_fdcccb','switch.licht_haus_terrasse','light.shelly_stehlampe_gross','light.shelly_stehlampe_gross_2','switch.shelly2pmg3_8cbfea97b4e0_output_0','switch.shelly2pmg3_8cbfea97b4e0_output_1','light.kinderzimmer'])
+                  | selectattr('state','eq','on') | list | count %}{{ 'amber' if
+                  n > 0 else 'disabled' }}
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-lichtsteuerung
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    118px;
+                      {% set n = expand(['light.vorgarten','light.terrasse','light.gartenhutte','light.gastewc','light.einfahrt_leuchte','light.haus_seite_leuchte','switch.garage_aussenbeleuchtung','switch.shelly1_e89f6d867192','switch.shellyplug_s_fdcccb','switch.licht_haus_terrasse','light.shelly_stehlampe_gross','light.shelly_stehlampe_gross_2','switch.shelly2pmg3_8cbfea97b4e0_output_0','switch.shelly2pmg3_8cbfea97b4e0_output_1','light.kinderzimmer']) | selectattr('state','eq','on') | list | count %}{% set rgb = '255,193,7' if n > 0 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},.38), rgba({{ rgb }},.08));
+                      box-shadow: 0 4px 14px rgba({{ rgb }},.15); }
+              - type: custom:mushroom-template-card
+                primary: Rollos
+                secondary: >-
+                  {% set r = states.cover |
+                  selectattr('entity_id','match','cover.rollo_') | list %}{% set
+                  offen = r | rejectattr('state','eq','closed') | list | count
+                  %}{{ 'Alle zu' if offen == 0 else offen ~ ' offen' }}
+                icon: mdi:window-shutter
+                icon_color: >-
+                  {% set r = states.cover |
+                  selectattr('entity_id','match','cover.rollo_') | list %}{% set
+                  offen = r | rejectattr('state','eq','closed') | list | count
+                  %}{{ 'blue' if offen == 0 else 'amber' }}
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-rollosteuerung
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    118px;
+                      {% set r = states.cover | selectattr('entity_id','match','cover.rollo_') | list %}{% set offen = r | rejectattr('state','eq','closed') | list | count %}{% set rgb = '33,150,243' if offen == 0 else '255,160,0' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},.38), rgba({{ rgb }},.08));
+                      box-shadow: 0 4px 14px rgba({{ rgb }},.15); }
+              - type: custom:mushroom-template-card
+                primary: Klima
+                secondary: >-
+                  {% set ks = states.climate |
+                  rejectattr('state','in',['off','unavailable','unknown']) |
+                  list %}{% if ks | count == 0 %}Alles aus{% else %}{{ ks |
+                  count }} aktiv · {{ ks[0].attributes.current_temperature |
+                  default('?') }} °C{% endif %}
+                icon: mdi:air-conditioner
+                icon_color: >-
+                  {% set ks = states.climate |
+                  rejectattr('state','in',['off','unavailable','unknown']) |
+                  list %}{% if ks | count == 0 %}disabled{% elif ks[0].state ==
+                  'heat' %}red{% elif ks[0].state == 'cool' %}blue{% else
+                  %}green{% endif %}
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-klima
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    118px;
+                      {% set ks = states.climate | rejectattr('state','in',['off','unavailable','unknown']) | list %}{% set rgb = '120,144,156' if ks | count == 0 else ('244,67,54' if ks[0].state == 'heat' else ('33,150,243' if ks[0].state == 'cool' else '76,175,80')) %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},.38), rgba({{ rgb }},.08));
+                      box-shadow: 0 4px 14px rgba({{ rgb }},.15); }
+              - type: custom:mushroom-template-card
+                primary: Fenster & Türen
+                secondary: >-
+                  {% set ns = namespace(o=0) %}{% for s in states.binary_sensor
+                  if s.attributes.get('device_class') in
+                  ['window','door','garage_door','opening'] and s.state == 'on'
+                  %}{% set ns.o = ns.o + 1 %}{% endfor %}{{ 'Alles zu' if ns.o
+                  == 0 else ns.o ~ ' offen' }}
+                icon: mdi:window-open-variant
+                icon_color: >-
+                  {% set ns = namespace(o=0) %}{% for s in states.binary_sensor
+                  if s.attributes.get('device_class') in
+                  ['window','door','garage_door','opening'] and s.state == 'on'
+                  %}{% set ns.o = ns.o + 1 %}{% endfor %}{{ 'green' if ns.o == 0
+                  else 'red' }}
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-zutritt
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    118px;
+                      {% set ns = namespace(o=0) %}{% for s in states.binary_sensor if s.attributes.get('device_class') in ['window','door','garage_door','opening'] and s.state == 'on' %}{% set ns.o = ns.o + 1 %}{% endfor %}{% set rgb = '76,175,80' if ns.o == 0 else '244,67,54' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},.38), rgba({{ rgb }},.08));
+                      box-shadow: 0 4px 14px rgba({{ rgb }},.15); }
+              - type: custom:mushroom-template-card
+                primary: Energie
+                secondary: >-
+                  {% set pv = states('sensor.pv_erzeugung') | float(0) %}{% set
+                  netz = states('sensor.plenticoreseelen_grid_power') | float(0)
+                  %}☀️ {{ (pv/1000) | round(1) }} kW · Netz {{ (netz/1000) |
+                  round(1) }} kW
+                icon: mdi:solar-power
+                icon_color: >-
+                  {% set pv = states('sensor.pv_erzeugung') | float(0) %}{% set
+                  netz = states('sensor.plenticoreseelen_grid_power') | float(0)
+                  %}{{ 'amber' if pv > 50 else 'disabled' }}
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-energie
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    118px;
+                      {% set pv = states('sensor.pv_erzeugung') | float(0) %}{% set rgb = '255,193,7' if pv > 50 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},.38), rgba({{ rgb }},.08));
+                      box-shadow: 0 4px 14px rgba({{ rgb }},.15); }
+              - type: custom:mushroom-template-card
+                primary: Bewässerung
+                secondary: >-
+                  {% set n = expand(['switch.shellyplug_s_819696',
+                  'switch.sprinkler', 'switch.tropf_vorgarten',
+                  'switch.shellyplug_s_dddecc']) | selectattr('state', 'eq',
+                  'on') | list | count %} {{ 'Alles aus' if n == 0 else n ~ '
+                  läuft' }}
+                icon: mdi:sprinkler-variant
+                icon_color: >-
+                  {{ 'blue' if (expand(['switch.shellyplug_s_819696',
+                  'switch.sprinkler', 'switch.tropf_vorgarten',
+                  'switch.shellyplug_s_dddecc']) | selectattr('state', 'eq',
+                  'on') | list | count) > 0 else 'disabled' }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-bewasserung
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 118px;
+                      background: linear-gradient(135deg, rgba(0,188,212,.20), rgba(0,188,212,.04));
+                    }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Sicherheit
+            icon: mdi:shield-home
+          - type: vertical-stack
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Inaktiv
+                    icon: mdi:shield-off
+                    layout: vertical
+                    icon_color: >-
+                      {{ 'blue' if is_state('alarm_control_panel.alpen_alarm',
+                      'disarmed') else 'disabled' }}
+                    tap_action:
+                      action: perform-action
+                      perform_action: alarm_control_panel.alarm_disarm
+                      target:
+                        entity_id: alarm_control_panel.alpen_alarm
+                      confirmation:
+                        text: Alarmanlage wirklich ausschalten?
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 22px;
+                          {% if is_state('alarm_control_panel.alpen_alarm', 'disarmed') %}
+                          border: 3px solid var(--blue-color);
+                          {% endif %}
+                        }
+                  - type: custom:mushroom-template-card
+                    primary: Zuhause
+                    icon: mdi:shield-home
+                    layout: vertical
+                    icon_color: >-
+                      {{ 'red' if is_state('alarm_control_panel.alpen_alarm',
+                      'armed_home') else 'disabled' }}
+                    tap_action:
+                      action: perform-action
+                      perform_action: alarm_control_panel.alarm_arm_home
+                      target:
+                        entity_id: alarm_control_panel.alpen_alarm
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 22px;
+                          {% if is_state('alarm_control_panel.alpen_alarm', 'armed_home') %}
+                          border: 3px solid var(--red-color);
+                          {% endif %}
+                        }
+                  - type: custom:mushroom-template-card
+                    primary: Abwesend
+                    icon: mdi:shield-lock
+                    layout: vertical
+                    icon_color: >-
+                      {{ 'purple' if is_state('alarm_control_panel.alpen_alarm',
+                      'armed_away') else 'disabled' }}
+                    tap_action:
+                      action: perform-action
+                      perform_action: alarm_control_panel.alarm_arm_away
+                      target:
+                        entity_id: alarm_control_panel.alpen_alarm
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 22px;
+                          {% if is_state('alarm_control_panel.alpen_alarm', 'armed_away') %}
+                          border: 3px solid var(--purple-color);
+                          {% endif %}
+                        }
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Garagentor
+                secondary: >-
+                  {% set z =
+                  states('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage')
+                  %} {{ {'open': 'Offen', 'closed': 'Geschlossen', 'opening':
+                  'Öffnet …', 'closing': 'Schließt …', 'unavailable': 'Nicht
+                  erreichbar', 'unknown': 'Unbekannt'}.get(z, z) }}
+                icon: >-
+                  {{ 'mdi:garage-open' if
+                  is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage',
+                  'open') else 'mdi:garage' }}
+                icon_color: >-
+                  {% set z =
+                  states('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage')
+                  %} {{ 'red' if z == 'open' else ('amber' if z in ['opening',
+                  'closing'] else ('disabled' if z in ['unavailable', 'unknown']
+                  else 'green')) }}
+                tap_action:
+                  action: none
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 22px;
+                      border: none;
+                      {% if is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage', 'open') %}
+                      background: linear-gradient(135deg, rgba(244,67,54,.28), rgba(244,67,54,.06));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(76,175,80,.20), rgba(76,175,80,.05));
+                      {% endif %}
+                    }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Garage auf
+                    icon: mdi:garage-open
+                    icon_color: red
+                    layout: vertical
+                    tap_action:
+                      action: perform-action
+                      perform_action: cover.open_cover
+                      target:
+                        entity_id: cover.smart_garage_door_2006048876520336100248e1e91e491b_garage
+                      confirmation:
+                        text: Garagentor öffnen?
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 22px; }
+                  - type: custom:mushroom-template-card
+                    primary: Garage zu
+                    icon: mdi:garage
+                    icon_color: green
+                    layout: vertical
+                    tap_action:
+                      action: perform-action
+                      perform_action: cover.close_cover
+                      target:
+                        entity_id: cover.smart_garage_door_2006048876520336100248e1e91e491b_garage
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 22px; }
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Rauchmelder Wohnzimmer
+                secondary: >-
+                  {% set r = states('binary_sensor.co2_melder_wohnzimmer_rauch')
+                  %} {% set b =
+                  states('sensor.co2_melder_wohnzimmer_batteriestatus') %} {%
+                  set bt = {'high': 'voll', 'middle': 'mittel', 'low':
+                  'schwach'}.get(b, 'unbekannt') %} {% if r == 'on'
+                  %}RAUCHALARM!{% elif r in ['unavailable', 'unknown'] %}Nicht
+                  erreichbar{% else %}Kein Rauch erkannt{% endif %} · Batterie
+                  {{ bt }}
+                multiline_secondary: true
+                icon: >-
+                  {{ 'mdi:smoke-detector-variant-alert' if
+                  is_state('binary_sensor.co2_melder_wohnzimmer_rauch', 'on')
+                  else 'mdi:smoke-detector-variant' }}
+                icon_color: >-
+                  {% set r = states('binary_sensor.co2_melder_wohnzimmer_rauch')
+                  %} {% set b =
+                  states('sensor.co2_melder_wohnzimmer_batteriestatus') %} {{
+                  'red' if r == 'on' else ('disabled' if r in ['unavailable',
+                  'unknown'] else ('amber' if b == 'low' else 'green')) }}
+                tap_action:
+                  action: none
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 22px;
+                      {% set r = states('binary_sensor.co2_melder_wohnzimmer_rauch') %}
+                      {% set b = states('sensor.co2_melder_wohnzimmer_batteriestatus') %}
+                      {% if r == 'on' %}
+                      border: 3px solid var(--red-color);
+                      background: linear-gradient(135deg, rgba(244,67,54,.55), rgba(244,67,54,.15));
+                      {% elif r in ['unavailable', 'unknown'] %}
+                      border: none;
+                      background: linear-gradient(135deg, rgba(158,158,158,.20), rgba(158,158,158,.05));
+                      {% elif b == 'low' %}
+                      border: none;
+                      background: linear-gradient(135deg, rgba(255,193,7,.30), rgba(255,193,7,.07));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(135deg, rgba(76,175,80,.24), rgba(76,175,80,.05));
+                      {% endif %}
+                    }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Klima
+            icon: mdi:air-conditioner
+          - type: vertical-stack
+            grid_options:
+              columns: full
+            cards:
+              - type: custom:mushroom-template-card
+                primary: >-
+                  Schlafzimmer · {{
+                  state_attr('climate.wf_rac_71fb','current_temperature') |
+                  float(0) | round(1) | string | replace('.', ',') }} °C
+                secondary: >-
+                  {% set s = states('climate.wf_rac_71fb') %} {{
+                  {'off':'Aus','cool':'Kühlen','heat':'Heizen','auto':'Auto','dry':'Entfeuchten','fan_only':'Lüften','unavailable':'Nicht
+                  erreichbar'}.get(s, s) }} {%- if s not in
+                  ['off','unavailable'] %} · Soll {{
+                  state_attr('climate.wf_rac_71fb','temperature') | float(0) |
+                  round(1) | string | replace('.', ',') }} °C{% endif %}
+                icon: mdi:air-conditioner
+                icon_color: >-
+                  {% set s = states('climate.wf_rac_71fb') %} {{ 'red' if s in
+                  ['heat','unavailable'] else ('blue' if s == 'cool' else
+                  ('teal' if s in ['dry','fan_only'] else ('green' if s ==
+                  'auto' else 'disabled'))) }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/schlafzimmer
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 22px;
+                      border: none;
+                      {% set s = states('climate.wf_rac_71fb') %}
+                      {% if s == 'heat' %}
+                      background: linear-gradient(135deg, rgba(244,67,54,.30), rgba(244,67,54,.06));
+                      {% elif s == 'cool' %}
+                      background: linear-gradient(135deg, rgba(33,150,243,.30), rgba(33,150,243,.06));
+                      {% elif s == 'auto' %}
+                      background: linear-gradient(135deg, rgba(76,175,80,.28), rgba(76,175,80,.06));
+                      {% elif s in ['dry','fan_only'] %}
+                      background: linear-gradient(135deg, rgba(0,150,136,.28), rgba(0,150,136,.06));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(158,158,158,.18), rgba(158,158,158,.04));
+                      {% endif %}
+                    }
+              - type: tile
+                entity: climate.wf_rac_71fb
+                name: Solltemperatur
+                hide_state: true
+                vertical: false
+                icon: mdi:thermometer
+                tap_action:
+                  action: none
+                features:
+                  - type: target-temperature
+                features_position: bottom
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: 18°
+                    secondary: >-
+                      {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off')
+                      and state_attr('climate.wf_rac_71fb','temperature') |
+                      float(0) == 18) else '' }}
+                    icon: mdi:snowflake
+                    icon_color: blue
+                    layout: vertical
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_temperature
+                      target:
+                        entity_id: climate.wf_rac_71fb
+                      data:
+                        temperature: 18
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 20px;
+                          --card-primary-font-size: 20px;
+                          --card-primary-font-weight: 700;
+                          --card-secondary-font-size: 11px;
+                          {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 18) %}
+                          border: 3px solid rgb(33,150,243);
+                          background: linear-gradient(160deg, rgba(33,150,243,.55), rgba(33,150,243,.15));
+                          {% else %}
+                          border: none;
+                          background: linear-gradient(160deg, rgba(33,150,243,.22), rgba(33,150,243,.05));
+                          {% endif %}
+                        }
+                  - type: custom:mushroom-template-card
+                    primary: 20°
+                    secondary: >-
+                      {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off')
+                      and state_attr('climate.wf_rac_71fb','temperature') |
+                      float(0) == 20) else '' }}
+                    icon: mdi:thermometer-low
+                    icon_color: cyan
+                    layout: vertical
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_temperature
+                      target:
+                        entity_id: climate.wf_rac_71fb
+                      data:
+                        temperature: 20
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 20px;
+                          --card-primary-font-size: 20px;
+                          --card-primary-font-weight: 700;
+                          --card-secondary-font-size: 11px;
+                          {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 20) %}
+                          border: 3px solid rgb(0,188,212);
+                          background: linear-gradient(160deg, rgba(0,188,212,.55), rgba(0,188,212,.15));
+                          {% else %}
+                          border: none;
+                          background: linear-gradient(160deg, rgba(0,188,212,.22), rgba(0,188,212,.05));
+                          {% endif %}
+                        }
+                  - type: custom:mushroom-template-card
+                    primary: 22°
+                    secondary: >-
+                      {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off')
+                      and state_attr('climate.wf_rac_71fb','temperature') |
+                      float(0) == 22) else '' }}
+                    icon: mdi:thermometer
+                    icon_color: green
+                    layout: vertical
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_temperature
+                      target:
+                        entity_id: climate.wf_rac_71fb
+                      data:
+                        temperature: 22
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 20px;
+                          --card-primary-font-size: 20px;
+                          --card-primary-font-weight: 700;
+                          --card-secondary-font-size: 11px;
+                          {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 22) %}
+                          border: 3px solid rgb(76,175,80);
+                          background: linear-gradient(160deg, rgba(76,175,80,.55), rgba(76,175,80,.15));
+                          {% else %}
+                          border: none;
+                          background: linear-gradient(160deg, rgba(76,175,80,.22), rgba(76,175,80,.05));
+                          {% endif %}
+                        }
+                  - type: custom:mushroom-template-card
+                    primary: 24°
+                    secondary: >-
+                      {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off')
+                      and state_attr('climate.wf_rac_71fb','temperature') |
+                      float(0) == 24) else '' }}
+                    icon: mdi:thermometer-high
+                    icon_color: orange
+                    layout: vertical
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_temperature
+                      target:
+                        entity_id: climate.wf_rac_71fb
+                      data:
+                        temperature: 24
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 20px;
+                          --card-primary-font-size: 20px;
+                          --card-primary-font-weight: 700;
+                          --card-secondary-font-size: 11px;
+                          {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 24) %}
+                          border: 3px solid rgb(255,152,0);
+                          background: linear-gradient(160deg, rgba(255,152,0,.55), rgba(255,152,0,.15));
+                          {% else %}
+                          border: none;
+                          background: linear-gradient(160deg, rgba(255,152,0,.22), rgba(255,152,0,.05));
+                          {% endif %}
+                        }
+                  - type: custom:mushroom-template-card
+                    primary: 26°
+                    secondary: >-
+                      {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off')
+                      and state_attr('climate.wf_rac_71fb','temperature') |
+                      float(0) == 26) else '' }}
+                    icon: mdi:fire
+                    icon_color: red
+                    layout: vertical
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_temperature
+                      target:
+                        entity_id: climate.wf_rac_71fb
+                      data:
+                        temperature: 26
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 20px;
+                          --card-primary-font-size: 20px;
+                          --card-primary-font-weight: 700;
+                          --card-secondary-font-size: 11px;
+                          {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 26) %}
+                          border: 3px solid rgb(244,67,54);
+                          background: linear-gradient(160deg, rgba(244,67,54,.55), rgba(244,67,54,.15));
+                          {% else %}
+                          border: none;
+                          background: linear-gradient(160deg, rgba(244,67,54,.22), rgba(244,67,54,.05));
+                          {% endif %}
+                        }
+              - type: custom:mushroom-chips-card
+                alignment: center
+                chips:
+                  - type: template
+                    icon: mdi:power
+                    icon_color: >-
+                      {{ 'blue-grey' if is_state('climate.wf_rac_71fb','off')
+                      else 'disabled' }}
+                    content: Aus
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_hvac_mode
+                      target:
+                        entity_id: climate.wf_rac_71fb
+                      data:
+                        hvac_mode: 'off'
+                  - type: template
+                    icon: mdi:thermostat-auto
+                    icon_color: >-
+                      {{ 'green' if is_state('climate.wf_rac_71fb','auto') else
+                      'disabled' }}
+                    content: Auto
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_hvac_mode
+                      target:
+                        entity_id: climate.wf_rac_71fb
+                      data:
+                        hvac_mode: auto
+                  - type: template
+                    icon: mdi:snowflake
+                    icon_color: >-
+                      {{ 'blue' if is_state('climate.wf_rac_71fb','cool') else
+                      'disabled' }}
+                    content: Kühlen
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_hvac_mode
+                      target:
+                        entity_id: climate.wf_rac_71fb
+                      data:
+                        hvac_mode: cool
+                  - type: template
+                    icon: mdi:fire
+                    icon_color: >-
+                      {{ 'red' if is_state('climate.wf_rac_71fb','heat') else
+                      'disabled' }}
+                    content: Heizen
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_hvac_mode
+                      target:
+                        entity_id: climate.wf_rac_71fb
+                      data:
+                        hvac_mode: heat
+          - type: vertical-stack
+            grid_options:
+              columns: full
+            cards:
+              - type: custom:mushroom-template-card
+                primary: >-
+                  Badezimmer · {{
+                  state_attr('climate.wf_rac_9707','current_temperature') |
+                  float(0) | round(1) | string | replace('.', ',') }} °C
+                secondary: >-
+                  {% set s = states('climate.wf_rac_9707') %} {{
+                  {'off':'Aus','cool':'Kühlen','heat':'Heizen','auto':'Auto','dry':'Entfeuchten','fan_only':'Lüften','unavailable':'Nicht
+                  erreichbar'}.get(s, s) }} {%- if s not in
+                  ['off','unavailable'] %} · Soll {{
+                  state_attr('climate.wf_rac_9707','temperature') | float(0) |
+                  round(1) | string | replace('.', ',') }} °C{% endif %}
+                icon: mdi:air-conditioner
+                icon_color: >-
+                  {% set s = states('climate.wf_rac_9707') %} {{ 'red' if s in
+                  ['heat','unavailable'] else ('blue' if s == 'cool' else
+                  ('teal' if s in ['dry','fan_only'] else ('green' if s ==
+                  'auto' else 'disabled'))) }}
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/badezimmer
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 22px;
+                      border: none;
+                      {% set s = states('climate.wf_rac_9707') %}
+                      {% if s == 'heat' %}
+                      background: linear-gradient(135deg, rgba(244,67,54,.30), rgba(244,67,54,.06));
+                      {% elif s == 'cool' %}
+                      background: linear-gradient(135deg, rgba(33,150,243,.30), rgba(33,150,243,.06));
+                      {% elif s == 'auto' %}
+                      background: linear-gradient(135deg, rgba(76,175,80,.28), rgba(76,175,80,.06));
+                      {% elif s in ['dry','fan_only'] %}
+                      background: linear-gradient(135deg, rgba(0,150,136,.28), rgba(0,150,136,.06));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(158,158,158,.18), rgba(158,158,158,.04));
+                      {% endif %}
+                    }
+              - type: tile
+                entity: climate.wf_rac_9707
+                name: Solltemperatur
+                hide_state: true
+                vertical: false
+                icon: mdi:thermometer
+                tap_action:
+                  action: none
+                features:
+                  - type: target-temperature
+                features_position: bottom
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: 18°
+                    secondary: >-
+                      {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off')
+                      and state_attr('climate.wf_rac_9707','temperature') |
+                      float(0) == 18) else '' }}
+                    icon: mdi:snowflake
+                    icon_color: blue
+                    layout: vertical
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_temperature
+                      target:
+                        entity_id: climate.wf_rac_9707
+                      data:
+                        temperature: 18
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 20px;
+                          --card-primary-font-size: 20px;
+                          --card-primary-font-weight: 700;
+                          --card-secondary-font-size: 11px;
+                          {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 18) %}
+                          border: 3px solid rgb(33,150,243);
+                          background: linear-gradient(160deg, rgba(33,150,243,.55), rgba(33,150,243,.15));
+                          {% else %}
+                          border: none;
+                          background: linear-gradient(160deg, rgba(33,150,243,.22), rgba(33,150,243,.05));
+                          {% endif %}
+                        }
+                  - type: custom:mushroom-template-card
+                    primary: 20°
+                    secondary: >-
+                      {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off')
+                      and state_attr('climate.wf_rac_9707','temperature') |
+                      float(0) == 20) else '' }}
+                    icon: mdi:thermometer-low
+                    icon_color: cyan
+                    layout: vertical
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_temperature
+                      target:
+                        entity_id: climate.wf_rac_9707
+                      data:
+                        temperature: 20
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 20px;
+                          --card-primary-font-size: 20px;
+                          --card-primary-font-weight: 700;
+                          --card-secondary-font-size: 11px;
+                          {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 20) %}
+                          border: 3px solid rgb(0,188,212);
+                          background: linear-gradient(160deg, rgba(0,188,212,.55), rgba(0,188,212,.15));
+                          {% else %}
+                          border: none;
+                          background: linear-gradient(160deg, rgba(0,188,212,.22), rgba(0,188,212,.05));
+                          {% endif %}
+                        }
+                  - type: custom:mushroom-template-card
+                    primary: 22°
+                    secondary: >-
+                      {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off')
+                      and state_attr('climate.wf_rac_9707','temperature') |
+                      float(0) == 22) else '' }}
+                    icon: mdi:thermometer
+                    icon_color: green
+                    layout: vertical
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_temperature
+                      target:
+                        entity_id: climate.wf_rac_9707
+                      data:
+                        temperature: 22
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 20px;
+                          --card-primary-font-size: 20px;
+                          --card-primary-font-weight: 700;
+                          --card-secondary-font-size: 11px;
+                          {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 22) %}
+                          border: 3px solid rgb(76,175,80);
+                          background: linear-gradient(160deg, rgba(76,175,80,.55), rgba(76,175,80,.15));
+                          {% else %}
+                          border: none;
+                          background: linear-gradient(160deg, rgba(76,175,80,.22), rgba(76,175,80,.05));
+                          {% endif %}
+                        }
+                  - type: custom:mushroom-template-card
+                    primary: 24°
+                    secondary: >-
+                      {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off')
+                      and state_attr('climate.wf_rac_9707','temperature') |
+                      float(0) == 24) else '' }}
+                    icon: mdi:thermometer-high
+                    icon_color: orange
+                    layout: vertical
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_temperature
+                      target:
+                        entity_id: climate.wf_rac_9707
+                      data:
+                        temperature: 24
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 20px;
+                          --card-primary-font-size: 20px;
+                          --card-primary-font-weight: 700;
+                          --card-secondary-font-size: 11px;
+                          {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 24) %}
+                          border: 3px solid rgb(255,152,0);
+                          background: linear-gradient(160deg, rgba(255,152,0,.55), rgba(255,152,0,.15));
+                          {% else %}
+                          border: none;
+                          background: linear-gradient(160deg, rgba(255,152,0,.22), rgba(255,152,0,.05));
+                          {% endif %}
+                        }
+                  - type: custom:mushroom-template-card
+                    primary: 26°
+                    secondary: >-
+                      {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off')
+                      and state_attr('climate.wf_rac_9707','temperature') |
+                      float(0) == 26) else '' }}
+                    icon: mdi:fire
+                    icon_color: red
+                    layout: vertical
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_temperature
+                      target:
+                        entity_id: climate.wf_rac_9707
+                      data:
+                        temperature: 26
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 20px;
+                          --card-primary-font-size: 20px;
+                          --card-primary-font-weight: 700;
+                          --card-secondary-font-size: 11px;
+                          {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 26) %}
+                          border: 3px solid rgb(244,67,54);
+                          background: linear-gradient(160deg, rgba(244,67,54,.55), rgba(244,67,54,.15));
+                          {% else %}
+                          border: none;
+                          background: linear-gradient(160deg, rgba(244,67,54,.22), rgba(244,67,54,.05));
+                          {% endif %}
+                        }
+              - type: custom:mushroom-chips-card
+                alignment: center
+                chips:
+                  - type: template
+                    icon: mdi:power
+                    icon_color: >-
+                      {{ 'blue-grey' if is_state('climate.wf_rac_9707','off')
+                      else 'disabled' }}
+                    content: Aus
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_hvac_mode
+                      target:
+                        entity_id: climate.wf_rac_9707
+                      data:
+                        hvac_mode: 'off'
+                  - type: template
+                    icon: mdi:thermostat-auto
+                    icon_color: >-
+                      {{ 'green' if is_state('climate.wf_rac_9707','auto') else
+                      'disabled' }}
+                    content: Auto
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_hvac_mode
+                      target:
+                        entity_id: climate.wf_rac_9707
+                      data:
+                        hvac_mode: auto
+                  - type: template
+                    icon: mdi:snowflake
+                    icon_color: >-
+                      {{ 'blue' if is_state('climate.wf_rac_9707','cool') else
+                      'disabled' }}
+                    content: Kühlen
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_hvac_mode
+                      target:
+                        entity_id: climate.wf_rac_9707
+                      data:
+                        hvac_mode: cool
+                  - type: template
+                    icon: mdi:fire
+                    icon_color: >-
+                      {{ 'red' if is_state('climate.wf_rac_9707','heat') else
+                      'disabled' }}
+                    content: Heizen
+                    tap_action:
+                      action: perform-action
+                      perform_action: climate.set_hvac_mode
+                      target:
+                        entity_id: climate.wf_rac_9707
+                      data:
+                        hvac_mode: heat
+      - type: grid
+        cards:
+          - type: heading
+            heading: Energie
+            icon: mdi:flash
+          - type: custom:power-flow-card-plus
+            entities:
+              battery:
+                entity: sensor.plenticoreseelen_battery_power
+                state_of_charge: sensor.plenticoreseelen_battery_soc
+                show_state_of_charge: true
+                state_of_charge_unit_white_space: true
+                display_state: two_way
+                invert_state: false
+                display_zero: true
+              grid:
+                entity: sensor.plenticoreseelen_grid_power
+                display_state: two_way
+                invert_state: false
+              solar:
+                entity: sensor.plenticoreseelen_sum_power_of_all_pv_dc_inputs
+                display_zero_state: true
+                display_zero: true
+                invert_state: false
+                use_metadata: false
+                icon: mdi:solar-power-variant
+                name: PV-Haus
+              individual:
+                - entity: sensor.keba_p30_charging_power
+                  name: Wallbox
+                - entity: sensor.garage_klima_leistung
+                  name: Garage + Klima
+                - entity: sensor.ecoflow_powerstream_solarleistung
+                  name: PV-EcoFlow
+                  inverted_animation: true
+                  icon: mdi:solar-power-variant
+              home:
+                entity: sensor.plenticoreseelen_home_power
+                override_state: true
+                subtract_individual: false
+                hide: false
+                circle_animation: true
+                color_value: true
+                color_icon: true
+            clickable_entities: true
+            display_zero_lines:
+              mode: show
+              transparency: 50
+              grey_color:
+                - 189
+                - 189
+                - 189
+            use_new_flow_rate_model: true
+            base_decimals: 0
+            kilo_decimals: 1
+            min_flow_rate: 0.75
+            max_flow_rate: 6
+            max_expected_power: 11000
+            min_expected_power: 0.01
+            kilo_threshold: 1000
+            mega_threshold: 1000000
+            sort_individual_devices: false
+          - type: horizontal-stack
+            cards:
+              - type: gauge
+                entity: sensor.plenticoreseelen_battery_soc
+                name: Batterie
+                min: 0
+                max: 100
+              - type: gauge
+                entity: sensor.plenticoreseelen_autarky_day
+                name: Autarkie heute
+                min: 0
+                max: 100
+          - type: custom:mushroom-template-card
+            primary: Strom heute
+            secondary: >-
+              Netzbezug {{ states('sensor.kosten_netzbezug_heute') }} € · Saldo
+              {{ states('sensor.strom_saldo_heute') }} €
+            icon: mdi:currency-eur
+            icon_color: green
+            tap_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 22px;
+                  border: none;
+                  background: linear-gradient(135deg, rgba(76,175,80,.20), rgba(76,175,80,.04));
+                }
+            grid_options:
+              columns: 12
+              rows: 1
+      - type: grid
+        cards:
+          - type: heading
+            heading: Wetter
+            icon: mdi:weather-partly-cloudy
+          - type: weather-forecast
+            entity: weather.forecast_home
+            show_current: true
+            show_forecast: true
+            forecast_type: daily
+            card_mod:
+              style: |
+                ha-card { border-radius: 22px; }
+    cards: []
+  - title: Übersicht
+    path: uebersicht
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Alle Räume
+            subtitle: >-
+              Blau = ruhig · Gelb = Licht an · Rot = offen · Türkis =
+              Bewässerung läuft
+          - type: custom:mushroom-chips-card
+            alignment: start
+            chips:
+              - type: template
+                icon: >-
+                  {% set z = states('alarm_control_panel.alpen_alarm') %} {{
+                  {'disarmed': 'mdi:shield-off', 'armed_home':
+                  'mdi:shield-home', 'armed_away': 'mdi:shield-lock',
+                  'triggered': 'mdi:shield-alert'}.get(z, 'mdi:shield') }}
+                icon_color: >-
+                  {% set z = states('alarm_control_panel.alpen_alarm') %} {{
+                  {'disarmed': 'blue', 'armed_home': 'red', 'armed_away':
+                  'purple', 'triggered': 'red', 'arming': 'amber', 'pending':
+                  'amber'}.get(z, 'blue') }}
+                content: >-
+                  {% set z = states('alarm_control_panel.alpen_alarm') %} {{
+                  {'disarmed': 'Inaktiv', 'armed_home': 'Zuhause', 'armed_away':
+                  'Abwesend', 'arming': 'Scharf …', 'pending': 'Verzögerung',
+                  'triggered': 'ALARM'}.get(z, z) }}
+              - type: template
+                icon: mdi:window-open-variant
+                icon_color: >-
+                  {% set ns = namespace(o=0) %} {% for s in states.binary_sensor
+                  if s.attributes.get('device_class') in ['window', 'door',
+                  'garage_door', 'opening'] and s.state == 'on' %} {% set ns.o =
+                  ns.o + 1 %} {% endfor %} {{ 'green' if ns.o == 0 else 'red' }}
+                content: >-
+                  {% set ns = namespace(o=0) %} {% for s in states.binary_sensor
+                  if s.attributes.get('device_class') in ['window', 'door',
+                  'garage_door', 'opening'] and s.state == 'on' %} {% set ns.o =
+                  ns.o + 1 %} {% endfor %} {{ 'Alles zu' if ns.o == 0 else ns.o
+                  ~ ' offen' }}
+              - type: template
+                icon: mdi:window-shutter
+                icon_color: >-
+                  {% set r = states.cover | selectattr('entity_id', 'match',
+                  'cover.rollo_') | list %} {{ 'blue' if (r |
+                  rejectattr('state', 'eq', 'closed') | list | count) == 0 else
+                  'amber' }}
+                content: >-
+                  {% set r = states.cover | selectattr('entity_id', 'match',
+                  'cover.rollo_') | list %} {% set offen = r |
+                  rejectattr('state', 'eq', 'closed') | list | count %} {{
+                  'Rollos zu' if offen == 0 else offen ~ ' Rollos offen' }}
+              - type: template
+                icon: mdi:lightbulb-group
+                icon_color: >-
+                  {{ 'amber' if (expand(['light.vorgarten', 'light.terrasse',
+                  'light.gartenhutte', 'light.gastewc',
+                  'light.einfahrt_leuchte', 'light.haus_seite_leuchte',
+                  'switch.garage_aussenbeleuchtung',
+                  'switch.shelly1_e89f6d867192', 'switch.shellyplug_s_fdcccb',
+                  'switch.licht_haus_terrasse', 'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer']) | selectattr('state', 'eq', 'on') |
+                  list | count) > 0 else 'disabled' }}
+                content: >-
+                  {% set n = expand(['light.vorgarten', 'light.terrasse',
+                  'light.gartenhutte', 'light.gastewc',
+                  'light.einfahrt_leuchte', 'light.haus_seite_leuchte',
+                  'switch.garage_aussenbeleuchtung',
+                  'switch.shelly1_e89f6d867192', 'switch.shellyplug_s_fdcccb',
+                  'switch.licht_haus_terrasse', 'light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1',
+                  'light.kinderzimmer']) | selectattr('state', 'eq', 'on') |
+                  list | count %} {{ 'Licht aus' if n == 0 else n ~ ' Licht an'
+                  }}
+              - type: template
+                icon: >-
+                  {{ 'mdi:garage-open' if
+                  is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage',
+                  'open') else 'mdi:garage' }}
+                icon_color: >-
+                  {% set z =
+                  states('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage')
+                  %} {{ 'red' if z == 'open' else ('amber' if z in ['opening',
+                  'closing'] else ('disabled' if z in ['unavailable', 'unknown']
+                  else 'green')) }}
+                content: >-
+                  {% set z =
+                  states('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage')
+                  %} Garage {{ {'open': 'offen', 'closed': 'zu', 'opening':
+                  'öffnet', 'closing': 'schließt', 'unavailable': '?',
+                  'unknown': '?'}.get(z, z) }}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Erdgeschoss
+            icon: mdi:stairs-down
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Wohnzimmer
+                secondary: >-
+                  {% set l = expand(['light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2']) | selectattr('state', 'eq',
+                  'on') | list | count %} {% set f =
+                  expand(['binary_sensor.sensor_fenster_wohnzimmer',
+                  'binary_sensor.sensor_fenster_wohnzimmer_2',
+                  'binary_sensor.sensor_fenster_garten_mitte',
+                  'binary_sensor.sensor_fenster_garten_rechts',
+                  'binary_sensor.sensor_fenster_feld']) | selectattr('state',
+                  'eq', 'on') | list | count %} {% set r =
+                  expand(['cover.rollo_wohnzimmer_feld',
+                  'cover.rollo_wohnzimmer_garten_mitte',
+                  'cover.rollo_wohnzimmer_garten_rechts',
+                  'cover.rollo_wohnzimmer_strasse_links',
+                  'cover.rollo_wohnzimmer_strasse_rechts']) |
+                  rejectattr('state', 'eq', 'closed') | list | count %} 💡 {{ l
+                  }} an · 🪟 {{ f }} offen · ↕️ Rollos offen {{ r }}
+                multiline_secondary: true
+                icon: mdi:sofa
+                icon_color: >-
+                  {% set l = expand(['light.shelly_stehlampe_gross',
+                  'light.shelly_stehlampe_gross_2']) | selectattr('state', 'eq',
+                  'on') | list | count %} {% set f =
+                  expand(['binary_sensor.sensor_fenster_wohnzimmer',
+                  'binary_sensor.sensor_fenster_wohnzimmer_2',
+                  'binary_sensor.sensor_fenster_garten_mitte',
+                  'binary_sensor.sensor_fenster_garten_rechts',
+                  'binary_sensor.sensor_fenster_feld']) | selectattr('state',
+                  'eq', 'on') | list | count %} {{ 'red' if f > 0 else ('amber'
+                  if l > 0 else 'blue') }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/wohnzimmer
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      {% set l = expand(['light.shelly_stehlampe_gross', 'light.shelly_stehlampe_gross_2']) | selectattr('state', 'eq', 'on') | list | count %}
+                      {% set f = expand(['binary_sensor.sensor_fenster_wohnzimmer', 'binary_sensor.sensor_fenster_wohnzimmer_2', 'binary_sensor.sensor_fenster_garten_mitte', 'binary_sensor.sensor_fenster_garten_rechts', 'binary_sensor.sensor_fenster_feld']) | selectattr('state', 'eq', 'on') | list | count %}
+                      {% if f > 0 %}
+                      background: linear-gradient(135deg, rgba(244,67,54,.35), rgba(244,67,54,.08));
+                      {% elif l > 0 %}
+                      background: linear-gradient(135deg, rgba(255,193,7,.38), rgba(255,193,7,.08));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: Küche
+                secondary: >-
+                  {% set f =
+                  expand(['binary_sensor.sensor_fenster_kuche_links']) |
+                  selectattr('state', 'eq', 'on') | list | count %} {% set r =
+                  expand(['cover.rollo_kuche']) | rejectattr('state', 'eq',
+                  'closed') | list | count %} 🪟 {{ f }} offen · ↕️ Rollo {{
+                  'offen' if r > 0 else 'zu' }}
+                multiline_secondary: true
+                icon: mdi:silverware-fork-knife
+                icon_color: >-
+                  {{ 'red' if
+                  is_state('binary_sensor.sensor_fenster_kuche_links', 'on')
+                  else 'blue' }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/kueche
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      {% if is_state('binary_sensor.sensor_fenster_kuche_links', 'on') %}
+                      background: linear-gradient(135deg, rgba(244,67,54,.35), rgba(244,67,54,.08));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: Gäste-WC
+                secondary: >-
+                  {% set l = is_state('light.gastewc', 'on') %} {% set f =
+                  is_state('binary_sensor.sensor_fenster_gastewc', 'on') %} {%
+                  set r = not is_state('cover.rollo_gaste_wc', 'closed') %} 💡
+                  {{ 'an' if l else 'aus' }} · 🪟 {{ 'offen' if f else 'zu' }} ·
+                  ↕️ Rollo {{ 'offen' if r else 'zu' }}
+                multiline_secondary: true
+                icon: mdi:toilet
+                icon_color: >-
+                  {{ 'red' if is_state('binary_sensor.sensor_fenster_gastewc',
+                  'on') else ('amber' if is_state('light.gastewc', 'on') else
+                  'blue') }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/gaeste-wc
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      {% if is_state('binary_sensor.sensor_fenster_gastewc', 'on') %}
+                      background: linear-gradient(135deg, rgba(244,67,54,.35), rgba(244,67,54,.08));
+                      {% elif is_state('light.gastewc', 'on') %}
+                      background: linear-gradient(135deg, rgba(255,193,7,.38), rgba(255,193,7,.08));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: HWR
+                secondary: >-
+                  {% set f = expand(['binary_sensor.sensor_fenster_hrw',
+                  'binary_sensor.sensor_hwr_tur_garage']) | selectattr('state',
+                  'eq', 'on') | list | count %} {% set r = not
+                  is_state('cover.rollo_hwr', 'closed') %} 🪟 {{ f }} offen · ↕️
+                  Rollo {{ 'offen' if r else 'zu' }}
+                multiline_secondary: true
+                icon: mdi:washing-machine
+                icon_color: >-
+                  {% set f = expand(['binary_sensor.sensor_fenster_hrw',
+                  'binary_sensor.sensor_hwr_tur_garage']) | selectattr('state',
+                  'eq', 'on') | list | count %} {{ 'red' if f > 0 else 'blue' }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/hwr
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      {% set f = expand(['binary_sensor.sensor_fenster_hrw', 'binary_sensor.sensor_hwr_tur_garage']) | selectattr('state', 'eq', 'on') | list | count %}
+                      {% if f > 0 %}
+                      background: linear-gradient(135deg, rgba(244,67,54,.35), rgba(244,67,54,.08));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: Flur
+                secondary: >-
+                  {% set l = expand(['switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1']) |
+                  selectattr('state', 'eq', 'on') | list | count %} {% set r =
+                  expand(['cover.rollo_flur_links', 'cover.rollo_flur_rechts'])
+                  | rejectattr('state', 'eq', 'closed') | list | count %} 💡 {{
+                  l }} an · 🚪 Haustür {{ 'offen' if
+                  is_state('binary_sensor.sensor_haustur', 'on') else 'zu' }} ·
+                  ↕️ Rollos offen {{ r }}
+                multiline_secondary: true
+                icon: mdi:stairs
+                icon_color: >-
+                  {% set l = expand(['switch.shelly2pmg3_8cbfea97b4e0_output_0',
+                  'switch.shelly2pmg3_8cbfea97b4e0_output_1']) |
+                  selectattr('state', 'eq', 'on') | list | count %} {{ 'red' if
+                  is_state('binary_sensor.sensor_haustur', 'on') else ('amber'
+                  if l > 0 else 'blue') }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/flur
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      {% set l = expand(['switch.shelly2pmg3_8cbfea97b4e0_output_0', 'switch.shelly2pmg3_8cbfea97b4e0_output_1']) | selectattr('state', 'eq', 'on') | list | count %}
+                      {% if is_state('binary_sensor.sensor_haustur', 'on') %}
+                      background: linear-gradient(135deg, rgba(244,67,54,.35), rgba(244,67,54,.08));
+                      {% elif l > 0 %}
+                      background: linear-gradient(135deg, rgba(255,193,7,.38), rgba(255,193,7,.08));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                      {% endif %}
+                    }
+      - type: grid
+        cards:
+          - type: heading
+            heading: 1 OG
+            icon: mdi:stairs-up
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Badezimmer
+                secondary: >-
+                  🪟 {{ 'offen' if is_state('binary_sensor.sensor_badezimmer',
+                  'on') else 'zu' }} · ↕️ Rollo {{ 'zu' if
+                  is_state('cover.rollo_badezimmer', 'closed') else 'offen' }}
+                multiline_secondary: true
+                icon: mdi:shower
+                icon_color: >-
+                  {{ 'red' if is_state('binary_sensor.sensor_badezimmer', 'on')
+                  else 'blue' }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/badezimmer
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      {% if is_state('binary_sensor.sensor_badezimmer', 'on') %}
+                      background: linear-gradient(135deg, rgba(244,67,54,.35), rgba(244,67,54,.08));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: Schlafzimmer
+                secondary: >-
+                  🪟 {{ 'offen' if is_state('binary_sensor.sensor_schlafzimmer',
+                  'on') else 'zu' }} · ↕️ Rollo {{ 'zu' if
+                  is_state('cover.rollo_schlafzimmer', 'closed') else 'offen' }}
+                multiline_secondary: true
+                icon: mdi:bed
+                icon_color: >-
+                  {{ 'red' if is_state('binary_sensor.sensor_schlafzimmer',
+                  'on') else 'blue' }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/schlafzimmer
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      {% if is_state('binary_sensor.sensor_schlafzimmer', 'on') %}
+                      background: linear-gradient(135deg, rgba(244,67,54,.35), rgba(244,67,54,.08));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: Kinderzimmer Paul
+                secondary: >-
+                  💡 {{ 'an' if is_state('light.kinderzimmer', 'on') else 'aus'
+                  }} · ↕️ Rollo {{ 'zu' if
+                  is_state('cover.rollo_kinderzimmer_paul', 'closed') else
+                  'offen' }}
+                multiline_secondary: true
+                icon: mdi:teddy-bear
+                icon_color: >-
+                  {{ 'amber' if is_state('light.kinderzimmer', 'on') else 'blue'
+                  }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/paul
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      {% if is_state('light.kinderzimmer', 'on') %}
+                      background: linear-gradient(135deg, rgba(255,193,7,.38), rgba(255,193,7,.08));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: Kinderzimmer Clara
+                secondary: >-
+                  ↕️ Rollo {{ 'zu' if is_state('cover.rollo_kinderzimmer_clara',
+                  'closed') else 'offen' }}
+                multiline_secondary: true
+                icon: mdi:teddy-bear
+                icon_color: blue
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/clara
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                    }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Draußen
+            icon: mdi:tree
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Garten
+                secondary: >-
+                  {% set l = expand(['light.gartenhutte',
+                  'switch.shellyplug_s_fdcccb']) | selectattr('state', 'eq',
+                  'on') | list | count %} {% set b =
+                  expand(['switch.shellyplug_s_819696', 'switch.sprinkler',
+                  'switch.shellyplug_s_dddecc']) | selectattr('state', 'eq',
+                  'on') | list | count %} 💡 {{ l }} an · 💧 Bewässerung {{
+                  'läuft' if b > 0 else 'aus' }}
+                multiline_secondary: true
+                icon: mdi:tree
+                icon_color: >-
+                  {% set l = expand(['light.gartenhutte',
+                  'switch.shellyplug_s_fdcccb']) | selectattr('state', 'eq',
+                  'on') | list | count %} {% set b =
+                  expand(['switch.shellyplug_s_819696', 'switch.sprinkler',
+                  'switch.shellyplug_s_dddecc']) | selectattr('state', 'eq',
+                  'on') | list | count %} {{ 'cyan' if b > 0 else ('amber' if l
+                  > 0 else 'green') }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/garten
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      {% set l = expand(['light.gartenhutte', 'switch.shellyplug_s_fdcccb']) | selectattr('state', 'eq', 'on') | list | count %}
+                      {% set b = expand(['switch.shellyplug_s_819696', 'switch.sprinkler', 'switch.shellyplug_s_dddecc']) | selectattr('state', 'eq', 'on') | list | count %}
+                      {% if b > 0 %}
+                      background: linear-gradient(135deg, rgba(0,188,212,.36), rgba(0,188,212,.08));
+                      {% elif l > 0 %}
+                      background: linear-gradient(135deg, rgba(255,193,7,.38), rgba(255,193,7,.08));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(76,175,80,.26), rgba(76,175,80,.06));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: Vorgarten
+                secondary: >-
+                  💡 {{ 'an' if is_state('light.vorgarten', 'on') else 'aus' }}
+                  · 💧 Tropf {{ 'läuft' if is_state('switch.tropf_vorgarten',
+                  'on') else 'aus' }}
+                multiline_secondary: true
+                icon: mdi:flower
+                icon_color: >-
+                  {{ 'cyan' if is_state('switch.tropf_vorgarten', 'on') else
+                  ('amber' if is_state('light.vorgarten', 'on') else 'green') }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/vorgarten
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      {% if is_state('switch.tropf_vorgarten', 'on') %}
+                      background: linear-gradient(135deg, rgba(0,188,212,.36), rgba(0,188,212,.08));
+                      {% elif is_state('light.vorgarten', 'on') %}
+                      background: linear-gradient(135deg, rgba(255,193,7,.38), rgba(255,193,7,.08));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(76,175,80,.26), rgba(76,175,80,.06));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: Garage
+                secondary: >-
+                  {% set z =
+                  states('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage')
+                  %} 🚗 Tor {{ {'open': 'offen', 'closed': 'zu', 'opening':
+                  'öffnet', 'closing': 'schließt', 'unavailable': 'nicht
+                  erreichbar', 'unknown': '?'}.get(z, '?') }} · 💡 {{ 'an' if
+                  is_state('switch.garage_aussenbeleuchtung', 'on') else 'aus'
+                  }}
+                multiline_secondary: true
+                icon: >-
+                  {{ 'mdi:garage-open' if
+                  is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage',
+                  'open') else 'mdi:garage' }}
+                icon_color: >-
+                  {{ 'red' if
+                  is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage',
+                  'open') else ('amber' if
+                  is_state('switch.garage_aussenbeleuchtung', 'on') else
+                  'green') }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/garage
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      {% if is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage', 'open') %}
+                      background: linear-gradient(135deg, rgba(244,67,54,.35), rgba(244,67,54,.08));
+                      {% elif is_state('switch.garage_aussenbeleuchtung', 'on') %}
+                      background: linear-gradient(135deg, rgba(255,193,7,.38), rgba(255,193,7,.08));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(76,175,80,.26), rgba(76,175,80,.06));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: Außen
+                secondary: >-
+                  {% set l = expand(['light.terrasse',
+                  'switch.licht_haus_terrasse', 'switch.shelly1_e89f6d867192',
+                  'light.einfahrt_leuchte', 'light.haus_seite_leuchte']) |
+                  selectattr('state', 'eq', 'on') | list | count %} 💡 {{ l }}
+                  an · 🔌 Wallbox {{ states('sensor.keba_p30_charging_power') |
+                  float(0) | round(1) }} kW
+                multiline_secondary: true
+                icon: mdi:home-lightbulb
+                icon_color: >-
+                  {% set l = expand(['light.terrasse',
+                  'switch.licht_haus_terrasse', 'switch.shelly1_e89f6d867192',
+                  'light.einfahrt_leuchte', 'light.haus_seite_leuchte']) |
+                  selectattr('state', 'eq', 'on') | list | count %} {{ 'amber'
+                  if l > 0 else 'blue' }}
+                layout: vertical
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-raume/aussen
+                card_mod:
+                  style: |
+                    ha-card {
+                      --icon-size: 46px;
+                      border-radius: 22px;
+                      border: none;
+                      min-height: 130px;
+                      {% set l = expand(['light.terrasse', 'switch.licht_haus_terrasse', 'switch.shelly1_e89f6d867192', 'light.einfahrt_leuchte', 'light.haus_seite_leuchte']) | selectattr('state', 'eq', 'on') | list | count %}
+                      {% if l > 0 %}
+                      background: linear-gradient(135deg, rgba(255,193,7,.38), rgba(255,193,7,.08));
+                      {% else %}
+                      background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                      {% endif %}
+                    }
+  - title: Wohnzimmer
+    path: wohnzimmer
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Rollläden
+            icon: mdi:window-shutter
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:window-shutter-open
+                content: Alle auf
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_wohnzimmer_feld
+                      - cover.rollo_wohnzimmer_garten_mitte
+                      - cover.rollo_wohnzimmer_garten_rechts
+                      - cover.rollo_wohnzimmer_strasse_links
+                      - cover.rollo_wohnzimmer_strasse_rechts
+              - type: template
+                icon: mdi:window-shutter
+                content: Alle zu
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_wohnzimmer_feld
+                      - cover.rollo_wohnzimmer_garten_mitte
+                      - cover.rollo_wohnzimmer_garten_rechts
+                      - cover.rollo_wohnzimmer_strasse_links
+                      - cover.rollo_wohnzimmer_strasse_rechts
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_wohnzimmer_feld
+                name: Feld
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_wohnzimmer_feld_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+            grid_options:
+              columns: 6
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_wohnzimmer_garten_mitte
+                name: Garten Mitte
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_wohnzimmer_garten_mitte_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+            grid_options:
+              columns: 6
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_wohnzimmer_garten_rechts
+                name: Garten rechts
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_wohnzimmer_garten_rechts_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+            grid_options:
+              columns: 6
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_wohnzimmer_strasse_links
+                name: Straße links
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_wohnzimmer_strasse_links_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+            grid_options:
+              columns: 6
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_wohnzimmer_strasse_rechts
+                name: Straße rechts
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_wohnzimmer_strasse_rechts_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+            grid_options:
+              columns: 6
+      - type: grid
+        cards:
+          - type: heading
+            heading: Licht
+            icon: mdi:lightbulb
+          - type: custom:mushroom-light-card
+            entity: light.shelly_stehlampe_gross
+            name: Stehlampe 1
+            show_brightness_control: true
+            show_color_temp_control: true
+            show_color_control: true
+            use_light_color: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-light-card
+            entity: light.shelly_stehlampe_gross_2
+            name: Stehlampe 2
+            show_brightness_control: true
+            show_color_temp_control: true
+            show_color_control: true
+            use_light_color: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 6
+            chips:
+              - type: template
+                icon: mdi:white-balance-incandescent
+                icon_color: orange
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                  data:
+                    color_temp_kelvin: 2700
+              - type: template
+                icon: mdi:white-balance-sunny
+                icon_color: light-blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                  data:
+                    color_temp_kelvin: 5500
+              - type: template
+                icon: mdi:circle
+                icon_color: red
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                  data:
+                    rgb_color:
+                      - 255
+                      - 40
+                      - 0
+              - type: template
+                icon: mdi:circle
+                icon_color: purple
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                  data:
+                    rgb_color:
+                      - 160
+                      - 0
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                  data:
+                    rgb_color:
+                      - 0
+                      - 80
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                  data:
+                    rgb_color:
+                      - 0
+                      - 255
+                      - 60
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 6
+            chips:
+              - type: template
+                icon: mdi:white-balance-incandescent
+                icon_color: orange
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    color_temp_kelvin: 2700
+              - type: template
+                icon: mdi:white-balance-sunny
+                icon_color: light-blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    color_temp_kelvin: 5500
+              - type: template
+                icon: mdi:circle
+                icon_color: red
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 255
+                      - 40
+                      - 0
+              - type: template
+                icon: mdi:circle
+                icon_color: purple
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 160
+                      - 0
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 0
+                      - 80
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 0
+                      - 255
+                      - 60
+          - type: heading
+            heading: Beide Stehlampen
+            icon: mdi:lamps
+            heading_style: subtitle
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 12
+            chips:
+              - type: template
+                icon: mdi:brightness-6
+                content: 10 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    brightness_pct: 10
+              - type: template
+                icon: mdi:brightness-6
+                content: 30 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    brightness_pct: 30
+              - type: template
+                icon: mdi:brightness-6
+                content: 50 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    brightness_pct: 50
+              - type: template
+                icon: mdi:brightness-6
+                content: 75 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    brightness_pct: 75
+              - type: template
+                icon: mdi:brightness-6
+                content: 100 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    brightness_pct: 100
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 12
+            chips:
+              - type: template
+                icon: mdi:white-balance-incandescent
+                icon_color: orange
+                content: Warm
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    color_temp_kelvin: 2700
+              - type: template
+                icon: mdi:white-balance-sunny
+                icon_color: light-blue
+                content: Kalt
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    color_temp_kelvin: 5500
+              - type: template
+                icon: mdi:circle
+                icon_color: red
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 255
+                      - 40
+                      - 0
+              - type: template
+                icon: mdi:circle
+                icon_color: purple
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 160
+                      - 0
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 0
+                      - 80
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+                  data:
+                    rgb_color:
+                      - 0
+                      - 255
+                      - 60
+              - type: template
+                icon: mdi:power
+                content: Beide aus
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_off
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+              - type: template
+                icon: mdi:power
+                icon_color: amber
+                content: Beide an
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.shelly_stehlampe_gross
+                      - light.shelly_stehlampe_gross_2
+      - type: grid
+        cards:
+          - type: heading
+            heading: Fenster
+            icon: mdi:window-closed-variant
+          - type: tile
+            entity: binary_sensor.sensor_fenster_wohnzimmer
+            name: Wohnzimmer 1
+          - type: tile
+            entity: binary_sensor.sensor_fenster_wohnzimmer_2
+            name: Wohnzimmer 2
+          - type: tile
+            entity: binary_sensor.sensor_fenster_garten_mitte
+            name: Garten Mitte
+          - type: tile
+            entity: binary_sensor.sensor_fenster_garten_rechts
+            name: Garten rechts
+          - type: tile
+            entity: binary_sensor.sensor_fenster_feld
+            name: Feld
+      - type: grid
+        cards:
+          - type: heading
+            heading: Rauchmelder
+            icon: mdi:smoke-detector-variant
+          - type: tile
+            entity: binary_sensor.co2_melder_wohnzimmer_rauch
+            name: Rauch
+          - type: tile
+            entity: sensor.co2_melder_wohnzimmer_batteriestatus
+            name: Batteriestatus
+      - type: grid
+        cards:
+          - type: heading
+            heading: Musik
+            icon: mdi:speaker-wireless
+            grid_options:
+              columns: full
+          - type: custom:mushroom-media-player-card
+            entity: media_player.wohnzimmer
+            use_media_info: true
+            use_media_artwork: true
+            show_volume_level: true
+            volume_controls:
+              - volume_mute
+              - volume_set
+              - volume_buttons
+            media_controls:
+              - previous
+              - play_pause_stop
+              - next
+            collapsible_controls: false
+            layout: vertical
+            fill_container: true
+            card_mod:
+              style: |
+                ha-card { border-radius: 22px; border: none;
+                  {% set s = states('media_player.wohnzimmer') %}
+                  {% set rgb = '156,39,176' if s == 'playing' else ('63,81,181' if s == 'paused' else '120,144,156') %}
+                  background: linear-gradient(135deg, rgba({{ rgb }},.34), rgba({{ rgb }},.08)); }
+            grid_options:
+              columns: full
+          - type: custom:mushroom-media-player-card
+            entity: media_player.wohnzimmer_2
+            use_media_info: true
+            use_media_artwork: true
+            show_volume_level: true
+            volume_controls:
+              - volume_mute
+              - volume_set
+              - volume_buttons
+            media_controls:
+              - previous
+              - play_pause_stop
+              - next
+            collapsible_controls: false
+            layout: vertical
+            fill_container: true
+            card_mod:
+              style: |
+                ha-card { border-radius: 22px; border: none;
+                  {% set s = states('media_player.wohnzimmer_2') %}
+                  {% set rgb = '156,39,176' if s == 'playing' else ('63,81,181' if s == 'paused' else '120,144,156') %}
+                  background: linear-gradient(135deg, rgba({{ rgb }},.34), rgba({{ rgb }},.08)); }
+            grid_options:
+              columns: full
+          - type: custom:mushroom-media-player-card
+            entity: media_player.unnamed_room
+            use_media_info: true
+            use_media_artwork: true
+            show_volume_level: true
+            volume_controls:
+              - volume_mute
+              - volume_set
+              - volume_buttons
+            media_controls:
+              - previous
+              - play_pause_stop
+              - next
+            collapsible_controls: false
+            layout: vertical
+            fill_container: true
+            card_mod:
+              style: |
+                ha-card { border-radius: 22px; border: none;
+                  {% set s = states('media_player.unnamed_room') %}
+                  {% set rgb = '156,39,176' if s == 'playing' else ('63,81,181' if s == 'paused' else '120,144,156') %}
+                  background: linear-gradient(135deg, rgba({{ rgb }},.34), rgba({{ rgb }},.08)); }
+            grid_options:
+              columns: full
+          - type: custom:mushroom-media-player-card
+            entity: media_player.esszimmer
+            use_media_info: true
+            use_media_artwork: true
+            show_volume_level: true
+            volume_controls:
+              - volume_mute
+              - volume_set
+              - volume_buttons
+            media_controls:
+              - previous
+              - play_pause_stop
+              - next
+            collapsible_controls: false
+            layout: vertical
+            fill_container: true
+            card_mod:
+              style: |
+                ha-card { border-radius: 22px; border: none;
+                  {% set s = states('media_player.esszimmer') %}
+                  {% set rgb = '156,39,176' if s == 'playing' else ('63,81,181' if s == 'paused' else '120,144,156') %}
+                  background: linear-gradient(135deg, rgba({{ rgb }},.34), rgba({{ rgb }},.08)); }
+            grid_options:
+              columns: full
+          - type: custom:mushroom-media-player-card
+            entity: media_player.esszimmer_2
+            use_media_info: true
+            use_media_artwork: true
+            show_volume_level: true
+            volume_controls:
+              - volume_mute
+              - volume_set
+              - volume_buttons
+            media_controls:
+              - previous
+              - play_pause_stop
+              - next
+            collapsible_controls: false
+            layout: vertical
+            fill_container: true
+            card_mod:
+              style: |
+                ha-card { border-radius: 22px; border: none;
+                  {% set s = states('media_player.esszimmer_2') %}
+                  {% set rgb = '156,39,176' if s == 'playing' else ('63,81,181' if s == 'paused' else '120,144,156') %}
+                  background: linear-gradient(135deg, rgba({{ rgb }},.34), rgba({{ rgb }},.08)); }
+            grid_options:
+              columns: full
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: action
+                icon: mdi:speaker-multiple
+                content: Alle Sonos
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-sonos
+            grid_options:
+              columns: full
+  - title: Küche
+    path: kueche
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Rollladen
+            icon: mdi:window-shutter
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_kuche
+                name: Küche
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_kuche_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Fenster
+            icon: mdi:window-closed-variant
+          - type: tile
+            entity: binary_sensor.sensor_fenster_kuche_links
+            name: Küche links
+  - title: Gäste-WC
+    path: gaeste-wc
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Rollladen
+            icon: mdi:window-shutter
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_gaste_wc
+                name: Gäste-WC
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_gaste_wc_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Licht
+            icon: mdi:lightbulb
+          - type: custom:mushroom-light-card
+            entity: light.gastewc
+            name: Gäste-WC
+            show_brightness_control: true
+            use_light_color: true
+            collapsible_controls: true
+      - type: grid
+        cards:
+          - type: heading
+            heading: Fenster
+            icon: mdi:window-closed-variant
+          - type: tile
+            entity: binary_sensor.sensor_fenster_gastewc
+            name: Gäste-WC
+      - type: grid
+        cards:
+          - type: heading
+            heading: Musik
+            icon: mdi:speaker-wireless
+            grid_options:
+              columns: full
+          - type: custom:mushroom-media-player-card
+            entity: media_player.gaste
+            use_media_info: true
+            use_media_artwork: true
+            show_volume_level: true
+            volume_controls:
+              - volume_mute
+              - volume_set
+              - volume_buttons
+            media_controls:
+              - previous
+              - play_pause_stop
+              - next
+            collapsible_controls: false
+            layout: vertical
+            fill_container: true
+            card_mod:
+              style: |
+                ha-card { border-radius: 22px; border: none;
+                  {% set s = states('media_player.gaste') %}
+                  {% set rgb = '156,39,176' if s == 'playing' else ('63,81,181' if s == 'paused' else '120,144,156') %}
+                  background: linear-gradient(135deg, rgba({{ rgb }},.34), rgba({{ rgb }},.08)); }
+            grid_options:
+              columns: full
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: action
+                icon: mdi:speaker-multiple
+                content: Alle Sonos
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-sonos
+            grid_options:
+              columns: full
+  - title: HWR
+    path: hwr
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Rollladen
+            icon: mdi:window-shutter
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_hwr
+                name: HWR
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_hwr_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Fenster & Tür
+            icon: mdi:door
+          - type: tile
+            entity: binary_sensor.sensor_fenster_hrw
+            name: Fenster HWR
+          - type: tile
+            entity: binary_sensor.sensor_hwr_tur_garage
+            name: Tür zur Garage
+  - title: Flur
+    path: flur
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Rollläden
+            icon: mdi:window-shutter
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:window-shutter-open
+                content: Alle auf
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_flur_links
+                      - cover.rollo_flur_rechts
+              - type: template
+                icon: mdi:window-shutter
+                content: Alle zu
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_flur_links
+                      - cover.rollo_flur_rechts
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_flur_links
+                name: Flur links
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_flur_links_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+            grid_options:
+              columns: 6
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_flur_rechts
+                name: Flur rechts
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_flur_rechts_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+            grid_options:
+              columns: 6
+      - type: grid
+        cards:
+          - type: heading
+            heading: Licht
+            icon: mdi:lightbulb
+          - type: tile
+            entity: switch.shelly2pmg3_8cbfea97b4e0_output_0
+            name: Treppe
+            icon: mdi:stairs
+          - type: tile
+            entity: switch.shelly2pmg3_8cbfea97b4e0_output_1
+            name: Gallery
+            icon: mdi:ceiling-light
+      - type: grid
+        cards:
+          - type: heading
+            heading: Türen
+            icon: mdi:door
+          - type: tile
+            entity: binary_sensor.sensor_haustur
+            name: Haustür
+      - type: grid
+        cards:
+          - type: heading
+            heading: Musik
+            icon: mdi:speaker-wireless
+            grid_options:
+              columns: full
+          - type: custom:mushroom-media-player-card
+            entity: media_player.og_flur
+            use_media_info: true
+            use_media_artwork: true
+            show_volume_level: true
+            volume_controls:
+              - volume_mute
+              - volume_set
+              - volume_buttons
+            media_controls:
+              - previous
+              - play_pause_stop
+              - next
+            collapsible_controls: false
+            layout: vertical
+            fill_container: true
+            card_mod:
+              style: |
+                ha-card { border-radius: 22px; border: none;
+                  {% set s = states('media_player.og_flur') %}
+                  {% set rgb = '156,39,176' if s == 'playing' else ('63,81,181' if s == 'paused' else '120,144,156') %}
+                  background: linear-gradient(135deg, rgba({{ rgb }},.34), rgba({{ rgb }},.08)); }
+            grid_options:
+              columns: full
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: action
+                icon: mdi:speaker-multiple
+                content: Alle Sonos
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-sonos
+            grid_options:
+              columns: full
+  - title: Bad
+    path: badezimmer
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Rollladen
+            icon: mdi:window-shutter
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_badezimmer
+                name: Badezimmer
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_badezimmer_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Fenster
+            icon: mdi:window-closed-variant
+          - type: tile
+            entity: binary_sensor.sensor_badezimmer
+            name: Badezimmer
+      - type: grid
+        cards:
+          - type: heading
+            heading: Klima
+            icon: mdi:air-conditioner
+          - type: custom:mushroom-template-card
+            primary: >-
+              {{ state_attr('climate.wf_rac_9707','current_temperature') |
+              float(0) | round(1) | string | replace('.', ',') }} °C
+            secondary: >-
+              {% set s = states('climate.wf_rac_9707') %} {{
+              {'off':'Aus','cool':'Kühlen','heat':'Heizen','auto':'Auto','dry':'Entfeuchten','fan_only':'Lüften','unavailable':'Nicht
+              erreichbar'}.get(s, s) }} · Soll {{
+              state_attr('climate.wf_rac_9707','temperature') | float(0) |
+              round(1) | string | replace('.', ',') }} °C
+            icon: mdi:air-conditioner
+            icon_color: >-
+              {% set s = states('climate.wf_rac_9707') %} {{ 'red' if s in
+              ['heat','unavailable'] else ('blue' if s == 'cool' else ('teal' if
+              s in ['dry','fan_only'] else ('green' if s == 'auto' else
+              'disabled'))) }}
+            layout: vertical
+            fill_container: true
+            tap_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  --card-primary-font-size: 38px;
+                  --card-primary-font-weight: 600;
+                  --card-secondary-font-size: 15px;
+                  text-align: center;
+                  padding: 12px 0;
+                  border-radius: 22px;
+                  border: none;
+                  {% set s = states('climate.wf_rac_9707') %}
+                  {% if s == 'heat' %}
+                  background: linear-gradient(135deg, rgba(244,67,54,.30), rgba(244,67,54,.06));
+                  {% elif s == 'cool' %}
+                  background: linear-gradient(135deg, rgba(33,150,243,.30), rgba(33,150,243,.06));
+                  {% elif s == 'auto' %}
+                  background: linear-gradient(135deg, rgba(76,175,80,.28), rgba(76,175,80,.06));
+                  {% elif s in ['dry','fan_only'] %}
+                  background: linear-gradient(135deg, rgba(0,150,136,.28), rgba(0,150,136,.06));
+                  {% else %}
+                  background: linear-gradient(135deg, rgba(158,158,158,.18), rgba(158,158,158,.04));
+                  {% endif %}
+                }
+          - type: tile
+            entity: climate.wf_rac_9707
+            name: Steuerung
+            icon: mdi:tune-variant
+            hide_state: true
+            vertical: false
+            features_position: bottom
+            features:
+              - type: climate-hvac-modes
+                style: icons
+                hvac_modes:
+                  - 'off'
+                  - auto
+                  - cool
+                  - heat
+                  - dry
+                  - fan_only
+              - type: target-temperature
+          - type: heading
+            heading: Solltemperatur
+            heading_style: subtitle
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: 18°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off') and
+                  state_attr('climate.wf_rac_9707','temperature') | float(0) ==
+                  18) else '' }}
+                icon: mdi:snowflake
+                icon_color: blue
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_9707
+                  data:
+                    temperature: 18
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 18) %}
+                      border: 3px solid rgb(33,150,243);
+                      background: linear-gradient(160deg, rgba(33,150,243,.55), rgba(33,150,243,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(33,150,243,.22), rgba(33,150,243,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 20°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off') and
+                  state_attr('climate.wf_rac_9707','temperature') | float(0) ==
+                  20) else '' }}
+                icon: mdi:thermometer-low
+                icon_color: cyan
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_9707
+                  data:
+                    temperature: 20
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 20) %}
+                      border: 3px solid rgb(0,188,212);
+                      background: linear-gradient(160deg, rgba(0,188,212,.55), rgba(0,188,212,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(0,188,212,.22), rgba(0,188,212,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 22°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off') and
+                  state_attr('climate.wf_rac_9707','temperature') | float(0) ==
+                  22) else '' }}
+                icon: mdi:thermometer
+                icon_color: green
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_9707
+                  data:
+                    temperature: 22
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 22) %}
+                      border: 3px solid rgb(76,175,80);
+                      background: linear-gradient(160deg, rgba(76,175,80,.55), rgba(76,175,80,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(76,175,80,.22), rgba(76,175,80,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 24°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off') and
+                  state_attr('climate.wf_rac_9707','temperature') | float(0) ==
+                  24) else '' }}
+                icon: mdi:thermometer-high
+                icon_color: orange
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_9707
+                  data:
+                    temperature: 24
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 24) %}
+                      border: 3px solid rgb(255,152,0);
+                      background: linear-gradient(160deg, rgba(255,152,0,.55), rgba(255,152,0,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(255,152,0,.22), rgba(255,152,0,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 26°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off') and
+                  state_attr('climate.wf_rac_9707','temperature') | float(0) ==
+                  26) else '' }}
+                icon: mdi:fire
+                icon_color: red
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_9707
+                  data:
+                    temperature: 26
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 26) %}
+                      border: 3px solid rgb(244,67,54);
+                      background: linear-gradient(160deg, rgba(244,67,54,.55), rgba(244,67,54,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(244,67,54,.22), rgba(244,67,54,.05));
+                      {% endif %}
+                    }
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:thermometer
+                icon_color: blue
+                content: >-
+                  {% set d = device_id('climate.wf_rac_9707') %} {% set a =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Außentemperatur') | list %} Außen
+                  {{ (a[0].state | float(0) | round(1) | string | replace('.',
+                  ',')) if a else '–' }} °C
+              - type: template
+                icon: mdi:account
+                icon_color: >-
+                  {% set d = device_id('climate.wf_rac_9707') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Anwesenheit') | list %} {{ 'green'
+                  if p and p[0].state == 'on' else 'disabled' }}
+                content: >-
+                  {% set d = device_id('climate.wf_rac_9707') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Anwesenheit') | list %} {{ 'Person
+                  erkannt' if p and p[0].state == 'on' else 'Niemand erkannt' }}
+              - type: template
+                icon: >-
+                  {% set d = device_id('climate.wf_rac_9707') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Problem') | list %} {{
+                  'mdi:alert-circle' if p and p[0].state == 'on' else
+                  'mdi:check-circle' }}
+                icon_color: >-
+                  {% set d = device_id('climate.wf_rac_9707') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Problem') | list %} {{ 'red' if p
+                  and p[0].state == 'on' else 'green' }}
+                content: >-
+                  {% set d = device_id('climate.wf_rac_9707') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Problem') | list %} {{ 'Störung'
+                  if p and p[0].state == 'on' else 'Kein Fehler' }}
+  - title: Schlafzimmer
+    path: schlafzimmer
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Rollladen
+            icon: mdi:window-shutter
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_schlafzimmer
+                name: Schlafzimmer
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_schlafzimmer_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Fenster
+            icon: mdi:window-closed-variant
+          - type: tile
+            entity: binary_sensor.sensor_schlafzimmer
+            name: Schlafzimmer
+      - type: grid
+        cards:
+          - type: heading
+            heading: Klima
+            icon: mdi:air-conditioner
+          - type: custom:mushroom-template-card
+            primary: >-
+              {{ state_attr('climate.wf_rac_71fb','current_temperature') |
+              float(0) | round(1) | string | replace('.', ',') }} °C
+            secondary: >-
+              {% set s = states('climate.wf_rac_71fb') %} {{
+              {'off':'Aus','cool':'Kühlen','heat':'Heizen','auto':'Auto','dry':'Entfeuchten','fan_only':'Lüften','unavailable':'Nicht
+              erreichbar'}.get(s, s) }} · Soll {{
+              state_attr('climate.wf_rac_71fb','temperature') | float(0) |
+              round(1) | string | replace('.', ',') }} °C
+            icon: mdi:air-conditioner
+            icon_color: >-
+              {% set s = states('climate.wf_rac_71fb') %} {{ 'red' if s in
+              ['heat','unavailable'] else ('blue' if s == 'cool' else ('teal' if
+              s in ['dry','fan_only'] else ('green' if s == 'auto' else
+              'disabled'))) }}
+            layout: vertical
+            fill_container: true
+            tap_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  --card-primary-font-size: 38px;
+                  --card-primary-font-weight: 600;
+                  --card-secondary-font-size: 15px;
+                  text-align: center;
+                  padding: 12px 0;
+                  border-radius: 22px;
+                  border: none;
+                  {% set s = states('climate.wf_rac_71fb') %}
+                  {% if s == 'heat' %}
+                  background: linear-gradient(135deg, rgba(244,67,54,.30), rgba(244,67,54,.06));
+                  {% elif s == 'cool' %}
+                  background: linear-gradient(135deg, rgba(33,150,243,.30), rgba(33,150,243,.06));
+                  {% elif s == 'auto' %}
+                  background: linear-gradient(135deg, rgba(76,175,80,.28), rgba(76,175,80,.06));
+                  {% elif s in ['dry','fan_only'] %}
+                  background: linear-gradient(135deg, rgba(0,150,136,.28), rgba(0,150,136,.06));
+                  {% else %}
+                  background: linear-gradient(135deg, rgba(158,158,158,.18), rgba(158,158,158,.04));
+                  {% endif %}
+                }
+          - type: tile
+            entity: climate.wf_rac_71fb
+            name: Steuerung
+            icon: mdi:tune-variant
+            hide_state: true
+            vertical: false
+            features_position: bottom
+            features:
+              - type: climate-hvac-modes
+                style: icons
+                hvac_modes:
+                  - 'off'
+                  - auto
+                  - cool
+                  - heat
+                  - dry
+                  - fan_only
+              - type: target-temperature
+          - type: heading
+            heading: Solltemperatur
+            heading_style: subtitle
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: 18°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off') and
+                  state_attr('climate.wf_rac_71fb','temperature') | float(0) ==
+                  18) else '' }}
+                icon: mdi:snowflake
+                icon_color: blue
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_71fb
+                  data:
+                    temperature: 18
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 18) %}
+                      border: 3px solid rgb(33,150,243);
+                      background: linear-gradient(160deg, rgba(33,150,243,.55), rgba(33,150,243,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(33,150,243,.22), rgba(33,150,243,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 20°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off') and
+                  state_attr('climate.wf_rac_71fb','temperature') | float(0) ==
+                  20) else '' }}
+                icon: mdi:thermometer-low
+                icon_color: cyan
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_71fb
+                  data:
+                    temperature: 20
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 20) %}
+                      border: 3px solid rgb(0,188,212);
+                      background: linear-gradient(160deg, rgba(0,188,212,.55), rgba(0,188,212,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(0,188,212,.22), rgba(0,188,212,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 22°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off') and
+                  state_attr('climate.wf_rac_71fb','temperature') | float(0) ==
+                  22) else '' }}
+                icon: mdi:thermometer
+                icon_color: green
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_71fb
+                  data:
+                    temperature: 22
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 22) %}
+                      border: 3px solid rgb(76,175,80);
+                      background: linear-gradient(160deg, rgba(76,175,80,.55), rgba(76,175,80,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(76,175,80,.22), rgba(76,175,80,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 24°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off') and
+                  state_attr('climate.wf_rac_71fb','temperature') | float(0) ==
+                  24) else '' }}
+                icon: mdi:thermometer-high
+                icon_color: orange
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_71fb
+                  data:
+                    temperature: 24
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 24) %}
+                      border: 3px solid rgb(255,152,0);
+                      background: linear-gradient(160deg, rgba(255,152,0,.55), rgba(255,152,0,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(255,152,0,.22), rgba(255,152,0,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 26°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off') and
+                  state_attr('climate.wf_rac_71fb','temperature') | float(0) ==
+                  26) else '' }}
+                icon: mdi:fire
+                icon_color: red
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_71fb
+                  data:
+                    temperature: 26
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 26) %}
+                      border: 3px solid rgb(244,67,54);
+                      background: linear-gradient(160deg, rgba(244,67,54,.55), rgba(244,67,54,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(244,67,54,.22), rgba(244,67,54,.05));
+                      {% endif %}
+                    }
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:thermometer
+                icon_color: blue
+                content: >-
+                  {% set d = device_id('climate.wf_rac_71fb') %} {% set a =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Außentemperatur') | list %} Außen
+                  {{ (a[0].state | float(0) | round(1) | string | replace('.',
+                  ',')) if a else '–' }} °C
+              - type: template
+                icon: mdi:account
+                icon_color: >-
+                  {% set d = device_id('climate.wf_rac_71fb') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Anwesenheit') | list %} {{ 'green'
+                  if p and p[0].state == 'on' else 'disabled' }}
+                content: >-
+                  {% set d = device_id('climate.wf_rac_71fb') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Anwesenheit') | list %} {{ 'Person
+                  erkannt' if p and p[0].state == 'on' else 'Niemand erkannt' }}
+              - type: template
+                icon: >-
+                  {% set d = device_id('climate.wf_rac_71fb') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Problem') | list %} {{
+                  'mdi:alert-circle' if p and p[0].state == 'on' else
+                  'mdi:check-circle' }}
+                icon_color: >-
+                  {% set d = device_id('climate.wf_rac_71fb') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Problem') | list %} {{ 'red' if p
+                  and p[0].state == 'on' else 'green' }}
+                content: >-
+                  {% set d = device_id('climate.wf_rac_71fb') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Problem') | list %} {{ 'Störung'
+                  if p and p[0].state == 'on' else 'Kein Fehler' }}
+  - title: Paul
+    path: paul
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Rollladen
+            icon: mdi:window-shutter
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_kinderzimmer_paul
+                name: Paul
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_kinderzimmer_paul_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Licht
+            icon: mdi:lightbulb
+          - type: custom:mushroom-light-card
+            entity: light.kinderzimmer
+            name: Paul (Gruppe)
+            show_brightness_control: true
+            use_light_color: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.paul_kinderzimmer
+            name: Paul Kinderzimmer (Einzellampe)
+            show_brightness_control: true
+            use_light_color: true
+            collapsible_controls: true
+      - type: grid
+        cards:
+          - type: heading
+            heading: Geräte
+            icon: mdi:power-socket-eu
+          - type: custom:mushroom-template-card
+            entity: switch.shellyazplug_e4b3232c242c
+            primary: Fernseher Paul
+            secondary: >-
+              {% set p = states.sensor |
+              selectattr('entity_id','search','shellyazplug_e4b3232c242c') |
+              selectattr('attributes.device_class','eq','power') | list %}{% set
+              e = states.sensor |
+              selectattr('entity_id','search','shellyazplug_e4b3232c242c') |
+              selectattr('attributes.device_class','eq','energy') | list %}{%
+              set w = p[0].state | float(0) if p else none %}{% set k =
+              e[0].state | float(0) if e else none %}{% set preis =
+              states('sensor.preis_netzbezug_fix') | float(0) %}{{ 'An' if
+              is_state('switch.shellyazplug_e4b3232c242c','on') else 'Aus' }}{%
+              if w is not none %} · {{ w | round(0) | int }} W{% endif %}{% if k
+              is not none %}
+
+              {{ k | round(1) | string | replace('.', ',') }} kWh gesamt{% if
+              preis > 0 %} · ca. {{ (k * preis) | round(2) | string |
+              replace('.', ',') }} €{% endif %}{% endif %}
+            multiline_secondary: true
+            icon: mdi:television
+            icon_color: >-
+              {{ 'blue' if is_state('switch.shellyazplug_e4b3232c242c','on')
+              else 'disabled' }}
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: toggle
+            grid_options:
+              columns: full
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 22px;
+                  border: none;
+                  {% if is_state('switch.shellyazplug_e4b3232c242c','on') %}
+                  background: linear-gradient(135deg, rgba(33,150,243,.36), rgba(33,150,243,.08));
+                  {% else %}
+                  background: linear-gradient(135deg, rgba(158,158,158,.18), rgba(158,158,158,.04));
+                  {% endif %}
+                }
+  - title: Clara
+    path: clara
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Rollladen
+            icon: mdi:window-shutter
+          - type: vertical-stack
+            cards:
+              - type: tile
+                entity: cover.rollo_kinderzimmer_clara
+                name: Clara
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_kinderzimmer_clara_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+  - title: Garten
+    path: garten
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Licht
+            icon: mdi:lightbulb
+          - type: custom:mushroom-light-card
+            entity: light.gartenhutte
+            name: Gartenhütte
+            show_brightness_control: true
+            show_color_temp_control: true
+            use_light_color: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.aussenbeleuchtung_hutte_li
+            name: Hütte links
+            show_brightness_control: true
+            show_color_temp_control: true
+            use_light_color: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.aussenbeleuchtung_hutte_re
+            name: Hütte rechts
+            show_brightness_control: true
+            show_color_temp_control: true
+            use_light_color: true
+            collapsible_controls: true
+          - type: tile
+            entity: switch.shellyplug_s_fdcccb
+            name: Spalierbäume
+            icon: mdi:string-lights
+          - type: tile
+            entity: switch.shellyplus1pm_d4d4da0a291c_aussensteckdose
+            name: Whirlpool-Steckdose
+            icon: mdi:hot-tub
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:lightbulb-off
+                content: Garten aus
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - light.gartenhutte
+                      - switch.shellyplug_s_fdcccb
+      - type: grid
+        cards:
+          - type: heading
+            heading: Bewässerung (Status)
+            icon: mdi:sprinkler-variant
+          - type: tile
+            entity: switch.shellyplug_s_819696
+            name: Gartenpumpe
+            icon: mdi:water-pump
+            tap_action:
+              action: none
+            icon_tap_action:
+              action: none
+          - type: tile
+            entity: switch.sprinkler
+            name: Sprinkler
+            icon: mdi:sprinkler
+            tap_action:
+              action: none
+            icon_tap_action:
+              action: none
+          - type: tile
+            entity: switch.shellyplug_s_dddecc
+            name: Tropf Garten
+            icon: mdi:water
+            tap_action:
+              action: none
+            icon_tap_action:
+              action: none
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:sprinkler-variant
+                content: Bewässerung bedienen
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-bewasserung
+      - type: grid
+        cards:
+          - type: heading
+            heading: Kameras
+            icon: mdi:cctv
+          - type: picture-entity
+            entity: camera.garten_live_ansicht
+            name: Garten
+            show_state: false
+          - type: picture-entity
+            entity: camera.gartenhutte_live_ansicht
+            name: Gartenhütte
+            show_state: false
+  - title: Vorgarten
+    path: vorgarten
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Licht
+            icon: mdi:lightbulb
+          - type: custom:mushroom-light-card
+            entity: light.vorgarten
+            name: Vorgarten
+            show_brightness_control: true
+            show_color_temp_control: true
+            show_color_control: true
+            use_light_color: true
+            collapsible_controls: true
+          - type: custom:mushroom-select-card
+            entity: select.aussenbeleuchtung_vorgarten_szene
+            name: Szene Vorgarten
+            icon: mdi:palette
+          - type: custom:mushroom-light-card
+            entity: light.licht_mauer_links
+            name: Mauer links
+            show_brightness_control: true
+            show_color_temp_control: true
+            show_color_control: true
+            use_light_color: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-light-card
+            entity: light.licht_mauer_rechts
+            name: Mauer rechts
+            show_brightness_control: true
+            show_color_temp_control: true
+            show_color_control: true
+            use_light_color: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 6
+            chips:
+              - type: template
+                icon: mdi:white-balance-incandescent
+                icon_color: orange
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                  data:
+                    color_temp_kelvin: 2700
+              - type: template
+                icon: mdi:white-balance-sunny
+                icon_color: light-blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                  data:
+                    color_temp_kelvin: 5500
+              - type: template
+                icon: mdi:circle
+                icon_color: red
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                  data:
+                    rgb_color:
+                      - 255
+                      - 40
+                      - 0
+              - type: template
+                icon: mdi:circle
+                icon_color: purple
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                  data:
+                    rgb_color:
+                      - 160
+                      - 0
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                  data:
+                    rgb_color:
+                      - 0
+                      - 80
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                  data:
+                    rgb_color:
+                      - 0
+                      - 255
+                      - 60
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 6
+            chips:
+              - type: template
+                icon: mdi:white-balance-incandescent
+                icon_color: orange
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_rechts
+                  data:
+                    color_temp_kelvin: 2700
+              - type: template
+                icon: mdi:white-balance-sunny
+                icon_color: light-blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_rechts
+                  data:
+                    color_temp_kelvin: 5500
+              - type: template
+                icon: mdi:circle
+                icon_color: red
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 255
+                      - 40
+                      - 0
+              - type: template
+                icon: mdi:circle
+                icon_color: purple
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 160
+                      - 0
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 0
+                      - 80
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 0
+                      - 255
+                      - 60
+          - type: heading
+            heading: Beide Mauerlampen
+            icon: mdi:wall-sconce-flat
+            heading_style: subtitle
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 12
+            chips:
+              - type: template
+                icon: mdi:brightness-6
+                content: 10 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    brightness_pct: 10
+              - type: template
+                icon: mdi:brightness-6
+                content: 30 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    brightness_pct: 30
+              - type: template
+                icon: mdi:brightness-6
+                content: 50 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    brightness_pct: 50
+              - type: template
+                icon: mdi:brightness-6
+                content: 75 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    brightness_pct: 75
+              - type: template
+                icon: mdi:brightness-6
+                content: 100 %
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    brightness_pct: 100
+          - type: custom:mushroom-chips-card
+            alignment: center
+            grid_options:
+              columns: 12
+            chips:
+              - type: template
+                icon: mdi:white-balance-incandescent
+                icon_color: orange
+                content: Warm
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    color_temp_kelvin: 2700
+              - type: template
+                icon: mdi:white-balance-sunny
+                icon_color: light-blue
+                content: Kalt
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    color_temp_kelvin: 5500
+              - type: template
+                icon: mdi:circle
+                icon_color: red
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 255
+                      - 40
+                      - 0
+              - type: template
+                icon: mdi:circle
+                icon_color: purple
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 160
+                      - 0
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links
+                      - light.licht_mauer_rechts
+                  data:
+                    rgb_color:
+                      - 0
+                      - 80
+                      - 255
+              - type: template
+                icon: mdi:circle
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: light.turn_on
+                  target:
+                    entity_id:
+                      - light.licht_mauer_links

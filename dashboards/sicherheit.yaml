@@ -1,0 +1,507 @@
+title: Sicherheit
+views:
+  - title: Sicherheit
+    path: sicherheit
+    icon: mdi:shield-home
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Notfall
+            icon: mdi:alarm-light
+          - type: custom:mushroom-template-card
+            primary: Sirenen
+            secondary: >-
+              {% set s = expand(['siren.bambulab1_sirene',
+              'siren.einfahrt_sirene', 'siren.einfahrt_sirene_2',
+              'siren.garage_sirene', 'siren.garage_sirene_2',
+              'siren.garten_sirene', 'siren.gartenhutte_sirene',
+              'siren.haus_seite_sirene', 'siren.mulltonnen_sirene',
+              'siren.seite_sirene', 'switch.alpen_alarm_siren']) |
+              selectattr('state', 'eq', 'on') | list %} {{ 'Alle aus' if s |
+              count == 0 else 'LÄUFT: ' ~ s | count ~ ' Sirenen an' }}
+            icon: mdi:alarm-light
+            icon_color: >-
+              {{ 'red' if (expand(['siren.bambulab1_sirene',
+              'siren.einfahrt_sirene', 'siren.einfahrt_sirene_2',
+              'siren.garage_sirene', 'siren.garage_sirene_2',
+              'siren.garten_sirene', 'siren.gartenhutte_sirene',
+              'siren.haus_seite_sirene', 'siren.mulltonnen_sirene',
+              'siren.seite_sirene', 'switch.alpen_alarm_siren']) |
+              selectattr('state', 'eq', 'on') | list | count) > 0 else 'green'
+              }}
+            layout: vertical
+            fill_container: true
+            grid_options:
+              columns: full
+            tap_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  text-align: center;
+                  border-radius: 22px;
+                  {% set n = expand(['siren.bambulab1_sirene', 'siren.einfahrt_sirene', 'siren.einfahrt_sirene_2', 'siren.garage_sirene', 'siren.garage_sirene_2', 'siren.garten_sirene', 'siren.gartenhutte_sirene', 'siren.haus_seite_sirene', 'siren.mulltonnen_sirene', 'siren.seite_sirene', 'switch.alpen_alarm_siren']) | selectattr('state', 'eq', 'on') | list | count %}
+                  {% if n > 0 %}
+                  border: 3px solid var(--red-color);
+                  background: linear-gradient(135deg, rgba(244,67,54,.45), rgba(244,67,54,.12));
+                  {% else %}
+                  border: none;
+                  background: linear-gradient(135deg, rgba(76,175,80,.22), rgba(76,175,80,.05));
+                  {% endif %}
+                }
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: NOTFALL AN
+                secondary: Sirenen · alle Lichter · alle Rollos hoch
+                multiline_secondary: true
+                icon: mdi:alarm-light
+                layout: vertical
+                tap_action:
+                  action: perform-action
+                  perform_action: script.turn_on
+                  target:
+                    entity_id: script.notfall_an
+                  confirmation:
+                    text: >-
+                      Notfall auslösen? Sirenen an, alle Lichter an, alle
+                      Rollläden hoch.
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: #c62828;
+                      color: white;
+                      border-radius: 22px;
+                      --card-secondary-color: rgba(255,255,255,.85);
+                    }
+              - type: custom:mushroom-template-card
+                primary: Sirenen AUS
+                secondary: Alles stoppen
+                icon: mdi:alarm-light-off
+                icon_color: green
+                layout: vertical
+                tap_action:
+                  action: perform-action
+                  perform_action: script.turn_on
+                  target:
+                    entity_id: script.notfall_sirenen_ring_stop
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 22px;
+                      border: 3px solid var(--green-color);
+                      background: linear-gradient(135deg, rgba(76,175,80,.40), rgba(76,175,80,.10));
+                    }
+          - type: custom:mushroom-template-card
+            primary: NOTFALL AUS
+            secondary: Sirenen aus · Lichter aus
+            icon: mdi:shield-check
+            icon_color: blue
+            layout: vertical
+            fill_container: true
+            grid_options:
+              columns: full
+            tap_action:
+              action: perform-action
+              perform_action: script.turn_on
+              target:
+                entity_id: script.notfall_aus
+              confirmation:
+                text: Notfall beenden? Sirenen aus und alle Lichter aus.
+            card_mod:
+              style: |
+                ha-card {
+                  text-align: center;
+                  border-radius: 22px;
+                  border: 3px solid var(--blue-color);
+                  background: linear-gradient(135deg, rgba(33,150,243,.38), rgba(33,150,243,.10));
+                }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Alarmanlage
+            icon: mdi:shield-home
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-template-card
+                entity: alarm_control_panel.alpen_alarm
+                primary: >-
+                  {% set z = states('alarm_control_panel.alpen_alarm') %} {{
+                  {'disarmed': 'Inaktiv', 'armed_home': 'Zuhause', 'armed_away':
+                  'Abwesend', 'arming': 'Wird scharf geschaltet …', 'pending':
+                  'Eingangsverzögerung', 'triggered': 'ALARM!'}.get(z, z) }}
+                secondary: >-
+                  {% set ns = namespace(o=0) %} {% for s in states.binary_sensor
+                  if s.attributes.get('device_class') in ['window', 'door',
+                  'garage_door', 'opening'] and s.state == 'on' %} {% set ns.o =
+                  ns.o + 1 %} {% endfor %} {{ 'Alle Fenster und Türen
+                  geschlossen' if ns.o == 0 else ns.o ~ ' Fenster oder Türen
+                  offen' }}
+                icon: >-
+                  {% set z = states('alarm_control_panel.alpen_alarm') %} {{
+                  {'disarmed': 'mdi:shield-off', 'armed_home':
+                  'mdi:shield-home', 'armed_away': 'mdi:shield-lock',
+                  'triggered': 'mdi:shield-alert'}.get(z, 'mdi:shield') }}
+                icon_color: >-
+                  {% set z = states('alarm_control_panel.alpen_alarm') %} {{
+                  {'disarmed': 'blue', 'armed_home': 'red', 'armed_away':
+                  'purple', 'triggered': 'red', 'arming': 'amber', 'pending':
+                  'amber'}.get(z, 'blue') }}
+                multiline_secondary: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 22px;
+                      {% set z = states('alarm_control_panel.alpen_alarm') %}
+                      {% if z == 'triggered' %}
+                      border: 3px solid var(--red-color);
+                      background: linear-gradient(135deg, rgba(244,67,54,.55), rgba(244,67,54,.15));
+                      {% elif z == 'armed_home' %}
+                      border: 3px solid var(--red-color);
+                      background: linear-gradient(135deg, rgba(244,67,54,.30), rgba(244,67,54,.07));
+                      {% elif z == 'armed_away' %}
+                      border: 3px solid var(--purple-color);
+                      background: linear-gradient(135deg, rgba(156,39,176,.34), rgba(156,39,176,.08));
+                      {% elif z == 'disarmed' %}
+                      border: 3px solid var(--blue-color);
+                      background: linear-gradient(135deg, rgba(33,150,243,.26), rgba(33,150,243,.06));
+                      {% else %}
+                      border: 3px solid var(--amber-color);
+                      background: linear-gradient(135deg, rgba(255,193,7,.30), rgba(255,193,7,.07));
+                      {% endif %}
+                    }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Inaktiv
+                    icon: mdi:shield-off
+                    layout: vertical
+                    icon_color: >-
+                      {{ 'blue' if is_state('alarm_control_panel.alpen_alarm',
+                      'disarmed') else 'disabled' }}
+                    tap_action:
+                      action: perform-action
+                      perform_action: alarm_control_panel.alarm_disarm
+                      target:
+                        entity_id: alarm_control_panel.alpen_alarm
+                      confirmation:
+                        text: Alarmanlage wirklich ausschalten?
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 22px;
+                          {% if is_state('alarm_control_panel.alpen_alarm', 'disarmed') %}
+                          border: 3px solid var(--blue-color);
+                          {% endif %}
+                        }
+                  - type: custom:mushroom-template-card
+                    primary: Zuhause
+                    icon: mdi:shield-home
+                    layout: vertical
+                    icon_color: >-
+                      {{ 'red' if is_state('alarm_control_panel.alpen_alarm',
+                      'armed_home') else 'disabled' }}
+                    tap_action:
+                      action: perform-action
+                      perform_action: alarm_control_panel.alarm_arm_home
+                      target:
+                        entity_id: alarm_control_panel.alpen_alarm
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 22px;
+                          {% if is_state('alarm_control_panel.alpen_alarm', 'armed_home') %}
+                          border: 3px solid var(--red-color);
+                          {% endif %}
+                        }
+                  - type: custom:mushroom-template-card
+                    primary: Abwesend
+                    icon: mdi:shield-lock
+                    layout: vertical
+                    icon_color: >-
+                      {{ 'purple' if is_state('alarm_control_panel.alpen_alarm',
+                      'armed_away') else 'disabled' }}
+                    tap_action:
+                      action: perform-action
+                      perform_action: alarm_control_panel.alarm_arm_away
+                      target:
+                        entity_id: alarm_control_panel.alpen_alarm
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 22px;
+                          {% if is_state('alarm_control_panel.alpen_alarm', 'armed_away') %}
+                          border: 3px solid var(--purple-color);
+                          {% endif %}
+                        }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Bewegungsmelder
+            icon: mdi:motion-sensor
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Bewegungsmelder Garage
+                secondary: >-
+                  {% set m = states('binary_sensor.bewegungsmelder_garage') %}
+                  {% set t =
+                  states('binary_sensor.bewegungsmelder_garage_tamper') %} {%
+                  set b = states('sensor.bewegungsmelder_garage_battery') %} {%
+                  set i = states('sensor.bewegungsmelder_garage_info') %} {% if
+                  t == 'on' %}SABOTAGE!{% elif m == 'on' %}Bewegung erkannt{%
+                  elif m in ['unavailable', 'unknown'] %}Nicht erreichbar{% else
+                  %}Keine Bewegung{% endif %} · Batterie {{ b }} % · Funk {{ i
+                  }}
+                multiline_secondary: true
+                icon: >-
+                  {{ 'mdi:motion-sensor' if
+                  is_state('binary_sensor.bewegungsmelder_garage', 'on') else
+                  'mdi:motion-sensor-off' }}
+                icon_color: >-
+                  {% set m = states('binary_sensor.bewegungsmelder_garage') %}
+                  {% set t =
+                  states('binary_sensor.bewegungsmelder_garage_tamper') %} {%
+                  set b = states('sensor.bewegungsmelder_garage_battery') |
+                  float(100) %} {{ 'red' if t == 'on' else ('amber' if m == 'on'
+                  or b < 20 else ('disabled' if m in ['unavailable', 'unknown']
+                  else 'green')) }}
+                tap_action:
+                  action: none
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 22px;
+                      {% set m = states('binary_sensor.bewegungsmelder_garage') %}
+                      {% set t = states('binary_sensor.bewegungsmelder_garage_tamper') %}
+                      {% if t == 'on' %}
+                      border: 3px solid var(--red-color);
+                      background: linear-gradient(135deg, rgba(244,67,54,.45), rgba(244,67,54,.12));
+                      {% elif m == 'on' %}
+                      border: none;
+                      background: linear-gradient(135deg, rgba(255,193,7,.38), rgba(255,193,7,.08));
+                      {% elif m in ['unavailable', 'unknown'] %}
+                      border: none;
+                      background: linear-gradient(135deg, rgba(158,158,158,.20), rgba(158,158,158,.05));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(135deg, rgba(76,175,80,.24), rgba(76,175,80,.05));
+                      {% endif %}
+                    }
+              - type: horizontal-stack
+                cards:
+                  - type: tile
+                    entity: sensor.bewegungsmelder_garage_battery
+                    name: Batterie
+                  - type: tile
+                    entity: binary_sensor.bewegungsmelder_garage_tamper
+                    name: Sabotage
+      - type: grid
+        cards:
+          - type: heading
+            heading: Eingang & Einfahrt
+            icon: mdi:door
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: picture-entity
+                entity: camera.haustur_live_ansicht
+                name: Haustür
+                show_state: false
+              - type: picture-entity
+                entity: camera.einfahrt_live_ansicht
+                name: Einfahrt 1
+                show_state: false
+              - type: picture-entity
+                entity: camera.einfahrt_live_ansicht_2
+                name: Einfahrt 2
+                show_state: false
+              - type: picture-entity
+                entity: camera.mulltonnen_live_ansicht
+                name: Mülltonnen
+                show_state: false
+      - type: grid
+        cards:
+          - type: heading
+            heading: Haus & Garage
+            icon: mdi:home
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: picture-entity
+                entity: camera.haus_seite_live_ansicht
+                name: Haus Seite
+                show_state: false
+              - type: picture-entity
+                entity: camera.seite_live_ansicht
+                name: Seite
+                show_state: false
+              - type: picture-entity
+                entity: camera.garage_live_ansicht
+                name: Garage 1
+                show_state: false
+              - type: picture-entity
+                entity: camera.garage_live_ansicht_2
+                name: Garage 2
+                show_state: false
+      - type: grid
+        cards:
+          - type: heading
+            heading: Garten & Innen
+            icon: mdi:tree
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: picture-entity
+                entity: camera.garten_live_ansicht
+                name: Garten
+                show_state: false
+              - type: picture-entity
+                entity: camera.gartenhutte_live_ansicht
+                name: Gartenhütte
+                show_state: false
+              - type: picture-entity
+                entity: camera.bambulab1_live_ansicht
+                name: BambuLab1
+                show_state: false
+      - type: grid
+        cards:
+          - type: heading
+            heading: Fenster & Türen
+            icon: mdi:window-open-variant
+          - type: markdown
+            content: >
+              {% set klassen = ['window', 'door', 'garage_door', 'opening'] %}
+
+              {% set ns = namespace(kontakte=[], batt=[]) %}
+
+              {% for s in states.binary_sensor if
+              s.attributes.get('device_class') in klassen %}
+
+              {% set ns.kontakte = ns.kontakte + [s] %}
+
+              {% endfor %}
+
+              {% for s in states.sensor if s.attributes.get('device_class') ==
+              'battery' and s.entity_id.startswith('sensor.sensor_') and s.state
+              | is_number and s.state | float(100) < 25 %}
+
+              {% set ns.batt = ns.batt + [s.name | replace('Sensor ', '') |
+              replace(' Battery', '') ~ ' (' ~ s.state ~ ' %)'] %}
+
+              {% endfor %}
+
+              {% set offen = ns.kontakte | selectattr('state', 'eq', 'on') |
+              list %}
+
+              {% set ausfall = ns.kontakte | selectattr('state', 'in',
+              ['unavailable', 'unknown']) | list %}
+
+              {% if ns.kontakte | count == 0 %}
+
+              Keine Melder gefunden.
+
+              {% elif offen | count == 0 %}
+
+              ## ✅ Alles geschlossen
+
+              {% else %}
+
+              ## 🔓 {{ offen | count }} offen
+
+              {% for s in offen %}
+
+              - 🔴 {{ s.name | replace('Sensor ', '') }}
+
+              {% endfor %}
+
+              {% endif %}
+
+
+              {{ ns.kontakte | count }} Melder
+
+              {% if ausfall | count > 0 %}
+
+
+              ⚠️ Nicht erreichbar: {{ ausfall | map(attribute='name') | join(',
+              ') }}
+
+              {% endif %}
+
+              {% if ns.batt | count > 0 %}
+
+
+              🪫 Batterie schwach: {{ ns.batt | join(', ') }}
+
+              {% endif %}
+          - type: heading
+            heading: Türen
+            heading_style: subtitle
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: binary_sensor.sensor_haustur
+                name: Haustür
+              - type: tile
+                entity: binary_sensor.sensor_hwr_tur_garage
+                name: HWR Tür Garage
+          - type: heading
+            heading: Wohnbereich
+            heading_style: subtitle
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: binary_sensor.sensor_fenster_wohnzimmer
+                name: Wohnzimmer 1
+              - type: tile
+                entity: binary_sensor.sensor_fenster_wohnzimmer_2
+                name: Wohnzimmer 2
+              - type: tile
+                entity: binary_sensor.sensor_fenster_garten_mitte
+                name: Garten Mitte
+              - type: tile
+                entity: binary_sensor.sensor_fenster_garten_rechts
+                name: Garten rechts
+              - type: tile
+                entity: binary_sensor.sensor_fenster_feld
+                name: Feld
+          - type: heading
+            heading: Küche & Nebenräume
+            heading_style: subtitle
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: binary_sensor.sensor_fenster_kuche_links
+                name: Küche links
+              - type: tile
+                entity: binary_sensor.sensor_fenster_gastewc
+                name: Gäste-WC
+              - type: tile
+                entity: binary_sensor.sensor_fenster_hrw
+                name: HWR
+          - type: heading
+            heading: 1 OG
+            heading_style: subtitle
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: binary_sensor.sensor_badezimmer
+                name: Badezimmer
+              - type: tile
+                entity: binary_sensor.sensor_schlafzimmer
+                name: Schlafzimmer

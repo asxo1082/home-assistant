@@ -1,0 +1,712 @@
+title: Rollosteuerung
+views:
+  - title: Rollosteuerung
+    path: rollos
+    icon: mdi:window-shutter
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Alle Rollläden
+            icon: mdi:window-shutter
+          - type: custom:mushroom-template-card
+            primary: Gesamtstatus
+            secondary: >-
+              {% set r = states.cover | selectattr('entity_id', 'match',
+              'cover.rollo_') | list %} {% set offen = r | rejectattr('state',
+              'eq', 'closed') | list %} {{ 'Alle geschlossen' if offen | count
+              == 0 else offen | count ~ ' von ' ~ r | count ~ ' nicht
+              geschlossen' }}
+            icon: mdi:window-shutter
+            icon_color: >-
+              {% set r = states.cover | selectattr('entity_id', 'match',
+              'cover.rollo_') | list %} {{ 'blue' if (r | rejectattr('state',
+              'eq', 'closed') | list | count) == 0 else 'amber' }}
+            tap_action:
+              action: none
+            layout: vertical
+            fill_container: true
+            grid_options:
+              columns: full
+            card_mod:
+              style: |-
+                ha-card {
+                  text-align: center;
+                  border-radius: 22px;
+                  border: none;
+                  {% set r = states.cover | selectattr('entity_id', 'match', 'cover.rollo_') | list %}
+                  {% set offen = r | rejectattr('state', 'eq', 'closed') | list | count %}
+                  {% if offen == 0 %}
+                  background: linear-gradient(135deg, rgba(33,150,243,.30), rgba(33,150,243,.07));
+                  {% else %}
+                  background: linear-gradient(135deg, rgba(255,193,7,.34), rgba(255,193,7,.08));
+                  {% endif %}
+                }
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Alle auf
+                icon: mdi:window-shutter-open
+                icon_color: amber
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_badezimmer
+                      - cover.rollo_flur_links
+                      - cover.rollo_flur_rechts
+                      - cover.rollo_gaste_wc
+                      - cover.rollo_hwr
+                      - cover.rollo_kinderzimmer_clara
+                      - cover.rollo_kinderzimmer_paul
+                      - cover.rollo_kuche
+                      - cover.rollo_schlafzimmer
+                      - cover.rollo_wohnzimmer_feld
+                      - cover.rollo_wohnzimmer_garten_mitte
+                      - cover.rollo_wohnzimmer_garten_rechts
+                      - cover.rollo_wohnzimmer_strasse_links
+                      - cover.rollo_wohnzimmer_strasse_rechts
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(255,193,7,0.3),
+                    rgba(255,193,7,0.07)); }
+              - type: custom:mushroom-template-card
+                primary: Alle zu
+                icon: mdi:window-shutter
+                icon_color: blue
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_badezimmer
+                      - cover.rollo_flur_links
+                      - cover.rollo_flur_rechts
+                      - cover.rollo_gaste_wc
+                      - cover.rollo_hwr
+                      - cover.rollo_kinderzimmer_clara
+                      - cover.rollo_kinderzimmer_paul
+                      - cover.rollo_kuche
+                      - cover.rollo_schlafzimmer
+                      - cover.rollo_wohnzimmer_feld
+                      - cover.rollo_wohnzimmer_garten_mitte
+                      - cover.rollo_wohnzimmer_garten_rechts
+                      - cover.rollo_wohnzimmer_strasse_links
+                      - cover.rollo_wohnzimmer_strasse_rechts
+                  confirmation:
+                    text: Alle Rollläden schließen?
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(33,150,243,0.3),
+                    rgba(33,150,243,0.07)); }
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: EG auf
+                icon: mdi:stairs-down
+                icon_color: amber
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_flur_links
+                      - cover.rollo_flur_rechts
+                      - cover.rollo_gaste_wc
+                      - cover.rollo_hwr
+                      - cover.rollo_kuche
+                      - cover.rollo_wohnzimmer_feld
+                      - cover.rollo_wohnzimmer_garten_mitte
+                      - cover.rollo_wohnzimmer_garten_rechts
+                      - cover.rollo_wohnzimmer_strasse_links
+                      - cover.rollo_wohnzimmer_strasse_rechts
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(255,193,7,0.3),
+                    rgba(255,193,7,0.07)); }
+              - type: custom:mushroom-template-card
+                primary: EG zu
+                icon: mdi:stairs-down
+                icon_color: blue
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_flur_links
+                      - cover.rollo_flur_rechts
+                      - cover.rollo_gaste_wc
+                      - cover.rollo_hwr
+                      - cover.rollo_kuche
+                      - cover.rollo_wohnzimmer_feld
+                      - cover.rollo_wohnzimmer_garten_mitte
+                      - cover.rollo_wohnzimmer_garten_rechts
+                      - cover.rollo_wohnzimmer_strasse_links
+                      - cover.rollo_wohnzimmer_strasse_rechts
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(33,150,243,0.3),
+                    rgba(33,150,243,0.07)); }
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: OG auf
+                icon: mdi:stairs-up
+                icon_color: amber
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_badezimmer
+                      - cover.rollo_schlafzimmer
+                      - cover.rollo_kinderzimmer_clara
+                      - cover.rollo_kinderzimmer_paul
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(255,193,7,0.3),
+                    rgba(255,193,7,0.07)); }
+              - type: custom:mushroom-template-card
+                primary: OG zu
+                icon: mdi:stairs-up
+                icon_color: blue
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_badezimmer
+                      - cover.rollo_schlafzimmer
+                      - cover.rollo_kinderzimmer_clara
+                      - cover.rollo_kinderzimmer_paul
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(33,150,243,0.3),
+                    rgba(33,150,243,0.07)); }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Wohnzimmer
+            icon: mdi:sofa
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Alle auf
+                icon: mdi:window-shutter-open
+                icon_color: amber
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_wohnzimmer_feld
+                      - cover.rollo_wohnzimmer_garten_mitte
+                      - cover.rollo_wohnzimmer_garten_rechts
+                      - cover.rollo_wohnzimmer_strasse_links
+                      - cover.rollo_wohnzimmer_strasse_rechts
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(255,193,7,0.3),
+                    rgba(255,193,7,0.07)); }
+              - type: custom:mushroom-template-card
+                primary: Alle zu
+                icon: mdi:window-shutter
+                icon_color: blue
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_wohnzimmer_feld
+                      - cover.rollo_wohnzimmer_garten_mitte
+                      - cover.rollo_wohnzimmer_garten_rechts
+                      - cover.rollo_wohnzimmer_strasse_links
+                      - cover.rollo_wohnzimmer_strasse_rechts
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(33,150,243,0.3),
+                    rgba(33,150,243,0.07)); }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_wohnzimmer_feld
+                name: Feld
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_wohnzimmer_feld_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_wohnzimmer_garten_mitte
+                name: Garten Mitte
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_wohnzimmer_garten_mitte_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_wohnzimmer_garten_rechts
+                name: Garten rechts
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_wohnzimmer_garten_rechts_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_wohnzimmer_strasse_links
+                name: Straße links
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_wohnzimmer_strasse_links_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_wohnzimmer_strasse_rechts
+                name: Straße rechts
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_wohnzimmer_strasse_rechts_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Küche & Nebenräume
+            icon: mdi:silverware-fork-knife
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Alle auf
+                icon: mdi:window-shutter-open
+                icon_color: amber
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_kuche
+                      - cover.rollo_gaste_wc
+                      - cover.rollo_hwr
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(255,193,7,0.3),
+                    rgba(255,193,7,0.07)); }
+              - type: custom:mushroom-template-card
+                primary: Alle zu
+                icon: mdi:window-shutter
+                icon_color: blue
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_kuche
+                      - cover.rollo_gaste_wc
+                      - cover.rollo_hwr
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(33,150,243,0.3),
+                    rgba(33,150,243,0.07)); }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_kuche
+                name: Küche
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_kuche_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_gaste_wc
+                name: Gäste-WC
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_gaste_wc_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_hwr
+                name: HWR
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_hwr_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Flur
+            icon: mdi:door-open
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Alle auf
+                icon: mdi:window-shutter-open
+                icon_color: amber
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_flur_links
+                      - cover.rollo_flur_rechts
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(255,193,7,0.3),
+                    rgba(255,193,7,0.07)); }
+              - type: custom:mushroom-template-card
+                primary: Alle zu
+                icon: mdi:window-shutter
+                icon_color: blue
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_flur_links
+                      - cover.rollo_flur_rechts
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(33,150,243,0.3),
+                    rgba(33,150,243,0.07)); }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_flur_links
+                name: Flur links
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_flur_links_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_flur_rechts
+                name: Flur rechts
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_flur_rechts_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+      - type: grid
+        cards:
+          - type: heading
+            heading: Obergeschoss
+            icon: mdi:stairs-up
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Alle auf
+                icon: mdi:window-shutter-open
+                icon_color: amber
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_badezimmer
+                      - cover.rollo_schlafzimmer
+                      - cover.rollo_kinderzimmer_clara
+                      - cover.rollo_kinderzimmer_paul
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(255,193,7,0.3),
+                    rgba(255,193,7,0.07)); }
+              - type: custom:mushroom-template-card
+                primary: Alle zu
+                icon: mdi:window-shutter
+                icon_color: blue
+                layout: horizontal
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id:
+                      - cover.rollo_badezimmer
+                      - cover.rollo_schlafzimmer
+                      - cover.rollo_kinderzimmer_clara
+                      - cover.rollo_kinderzimmer_paul
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none;  background:
+                    linear-gradient(135deg, rgba(33,150,243,0.3),
+                    rgba(33,150,243,0.07)); }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_badezimmer
+                name: Badezimmer
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_badezimmer_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_schlafzimmer
+                name: Schlafzimmer
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_schlafzimmer_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_kinderzimmer_clara
+                name: Clara
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_kinderzimmer_clara_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }
+          - type: vertical-stack
+            grid_options:
+              columns: 6
+            cards:
+              - type: tile
+                entity: cover.rollo_kinderzimmer_paul
+                name: Paul
+                color: blue
+                state_content:
+                  - state
+                features:
+                  - type: cover-open-close
+              - type: custom:mushroom-number-card
+                entity: number.rollo_kinderzimmer_paul_schliessgrad
+                name: Schließgrad
+                icon: mdi:window-shutter
+                icon_color: blue
+                display_mode: slider
+                fill_container: true
+                card_mod:
+                  style: >-
+                    ha-card { border: none; box-shadow: none; background:
+                    transparent; }

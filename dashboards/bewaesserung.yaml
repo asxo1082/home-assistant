@@ -1,0 +1,442 @@
+title: Bewässerung
+views:
+  - title: Bewässerung
+    path: bewaesserung
+    icon: mdi:sprinkler-variant
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Pumpe
+            icon: mdi:water-pump
+          - type: custom:mushroom-template-card
+            primary: Bewässerung
+            secondary: >-
+              {% set p = is_state('switch.shellyplug_s_819696', 'on') %}{% set n
+              = expand(['switch.sprinkler', 'switch.tropf_vorgarten',
+              'switch.shellyplug_s_dddecc']) | selectattr('state', 'eq', 'on') |
+              list | count %}{{ ('Pumpe läuft' if p else 'Pumpe aus') ~ ' · ' ~
+              n ~ (' Zone aktiv' if n == 1 else ' Zonen aktiv') }}
+            icon: mdi:sprinkler-variant
+            icon_color: >-
+              {{ 'blue' if is_state('switch.shellyplug_s_819696', 'on') or
+              is_state('switch.sprinkler', 'on') or
+              is_state('switch.tropf_vorgarten', 'on') or
+              is_state('switch.shellyplug_s_dddecc', 'on') else 'disabled' }}
+            layout: vertical
+            fill_container: true
+            grid_options:
+              columns: full
+            tap_action:
+              action: none
+            card_mod:
+              style: |-
+                ha-card {
+                  text-align: center;
+                  border-radius: 22px;
+                  border: none;
+                  {% if is_state('switch.shellyplug_s_819696', 'on') or is_state('switch.sprinkler', 'on') or is_state('switch.tropf_vorgarten', 'on') or is_state('switch.shellyplug_s_dddecc', 'on') %}
+                  background: linear-gradient(135deg, rgba(33,150,243,.36), rgba(33,150,243,.08));
+                  {% else %}
+                  background: linear-gradient(135deg, rgba(158,158,158,.20), rgba(158,158,158,.05));
+                  {% endif %}
+                }
+          - type: custom:mushroom-template-card
+            primary: STOPP – alles aus
+            icon: mdi:stop-circle
+            icon_color: red
+            layout: vertical
+            fill_container: true
+            grid_options:
+              columns: full
+            tap_action:
+              action: perform-action
+              perform_action: script.turn_on
+              target:
+                entity_id: script.bewasserung_stopp
+            card_mod:
+              style: |
+                ha-card {
+                  background: rgba(244, 67, 54, 0.15);
+                  border: 1px solid rgba(244, 67, 54, 0.5);
+                }
+          - type: vertical-stack
+            grid_options:
+              columns: full
+            cards:
+              - type: custom:mushroom-template-card
+                entity: switch.shellyplug_s_819696
+                primary: Gartenpumpe
+                secondary: >-
+                  {% if is_state('switch.shellyplug_s_819696', 'on') %}läuft ·
+                  {{ states('sensor.shellyplug_s_819696_leistung') | float(0) |
+                  round(0) }} W{% elif is_state('switch.shellyplug_s_819696',
+                  'unavailable') %}Nicht erreichbar{% else %}aus{% endif %}
+                icon: mdi:water-pump
+                icon_color: >-
+                  {% if is_state('switch.shellyplug_s_819696', 'on') %}blue{%
+                  elif is_state('switch.shellyplug_s_819696', 'unavailable')
+                  %}red{% else %}grey{% endif %}
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: switch.toggle
+                  target:
+                    entity_id: switch.shellyplug_s_819696
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% if is_state('switch.shellyplug_s_819696', 'on') %}
+                      background: rgba(33, 150, 243, 0.18);
+                      border: 2px solid rgba(33, 150, 243, 0.8);
+                      {% elif is_state('switch.shellyplug_s_819696', 'unavailable') %}
+                      background: rgba(244, 67, 54, 0.12);
+                      border: 2px solid rgba(244, 67, 54, 0.6);
+                      {% else %}
+                      background: rgba(120, 120, 120, 0.10);
+                      border: 2px solid rgba(120, 120, 120, 0.35);
+                      {% endif %}
+                    }
+              - type: custom:mushroom-chips-card
+                alignment: center
+                chips:
+                  - type: template
+                    icon: mdi:play
+                    content: An
+                    tap_action:
+                      action: perform-action
+                      perform_action: switch.turn_on
+                      target:
+                        entity_id: switch.shellyplug_s_819696
+                    icon_color: green
+                  - type: template
+                    icon: mdi:timer-outline
+                    content: 10 min
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_zeit
+                      data:
+                        zone: switch.shellyplug_s_819696
+                        minuten: 10
+                    icon_color: blue
+                  - type: template
+                    icon: mdi:timer-outline
+                    content: 30 min
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_zeit
+                      data:
+                        zone: switch.shellyplug_s_819696
+                        minuten: 30
+                    icon_color: blue
+                  - type: template
+                    icon: mdi:timer-outline
+                    content: 60 min
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_zeit
+                      data:
+                        zone: switch.shellyplug_s_819696
+                        minuten: 60
+                    icon_color: blue
+                  - type: template
+                    icon: mdi:stop
+                    content: Pumpe aus
+                    tap_action:
+                      action: perform-action
+                      perform_action: switch.turn_off
+                      target:
+                        entity_id: switch.shellyplug_s_819696
+                    icon_color: red
+      - type: grid
+        cards:
+          - type: heading
+            heading: Zonen (Pumpe startet automatisch)
+            icon: mdi:sprinkler
+          - type: vertical-stack
+            grid_options:
+              columns: full
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Sprinkler
+                secondary: >-
+                  {% if is_state('switch.sprinkler', 'on') %}läuft{% else %}aus
+                  · bereit (Pumpe startet automatisch){% endif %}
+                multiline_secondary: true
+                icon: mdi:sprinkler
+                icon_color: >-
+                  {{ 'blue' if is_state('switch.sprinkler', 'on') else
+                  'disabled' }}
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: |-
+                    ha-card {
+                      text-align: center;
+                      border-radius: 22px;
+                      {% if is_state('switch.sprinkler', 'on') %}
+                      border: 3px solid var(--blue-color);
+                      background: linear-gradient(135deg, rgba(33,150,243,.40), rgba(33,150,243,.10));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(135deg, rgba(158,158,158,.18), rgba(158,158,158,.04));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-chips-card
+                alignment: center
+                chips:
+                  - type: template
+                    icon: mdi:play
+                    content: An + Pumpe
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_an
+                      data:
+                        zone: switch.sprinkler
+                    icon_color: green
+                  - type: template
+                    icon: mdi:hand-back-right
+                    content: An manuell
+                    tap_action:
+                      action: perform-action
+                      perform_action: switch.turn_on
+                      target:
+                        entity_id: switch.sprinkler
+                    icon_color: orange
+                  - type: template
+                    icon: mdi:timer-outline
+                    content: 10 min
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_zeit
+                      data:
+                        zone: switch.sprinkler
+                        minuten: 10
+                    icon_color: blue
+                  - type: template
+                    icon: mdi:timer-outline
+                    content: 20 min
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_zeit
+                      data:
+                        zone: switch.sprinkler
+                        minuten: 20
+                    icon_color: blue
+                  - type: template
+                    icon: mdi:timer-outline
+                    content: 30 min
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_zeit
+                      data:
+                        zone: switch.sprinkler
+                        minuten: 30
+                    icon_color: blue
+                  - type: template
+                    icon: mdi:stop
+                    content: Aus
+                    tap_action:
+                      action: perform-action
+                      perform_action: switch.turn_off
+                      target:
+                        entity_id: switch.sprinkler
+                    icon_color: red
+            card_mod:
+              style: |
+                ha-card { opacity: 1; }
+          - type: vertical-stack
+            grid_options:
+              columns: full
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Tropf Vorgarten
+                secondary: >-
+                  {% if is_state('switch.tropf_vorgarten', 'on') %}läuft{% else
+                  %}aus · bereit (Pumpe startet automatisch){% endif %}
+                multiline_secondary: true
+                icon: mdi:water
+                icon_color: >-
+                  {{ 'blue' if is_state('switch.tropf_vorgarten', 'on') else
+                  'disabled' }}
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: |-
+                    ha-card {
+                      text-align: center;
+                      border-radius: 22px;
+                      {% if is_state('switch.tropf_vorgarten', 'on') %}
+                      border: 3px solid var(--blue-color);
+                      background: linear-gradient(135deg, rgba(33,150,243,.40), rgba(33,150,243,.10));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(135deg, rgba(158,158,158,.18), rgba(158,158,158,.04));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-chips-card
+                alignment: center
+                chips:
+                  - type: template
+                    icon: mdi:play
+                    content: An + Pumpe
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_an
+                      data:
+                        zone: switch.tropf_vorgarten
+                    icon_color: green
+                  - type: template
+                    icon: mdi:hand-back-right
+                    content: An manuell
+                    tap_action:
+                      action: perform-action
+                      perform_action: switch.turn_on
+                      target:
+                        entity_id: switch.tropf_vorgarten
+                    icon_color: orange
+                  - type: template
+                    icon: mdi:timer-outline
+                    content: 15 min
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_zeit
+                      data:
+                        zone: switch.tropf_vorgarten
+                        minuten: 15
+                    icon_color: blue
+                  - type: template
+                    icon: mdi:timer-outline
+                    content: 30 min
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_zeit
+                      data:
+                        zone: switch.tropf_vorgarten
+                        minuten: 30
+                    icon_color: blue
+                  - type: template
+                    icon: mdi:timer-outline
+                    content: 60 min
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_zeit
+                      data:
+                        zone: switch.tropf_vorgarten
+                        minuten: 60
+                    icon_color: blue
+                  - type: template
+                    icon: mdi:stop
+                    content: Aus
+                    tap_action:
+                      action: perform-action
+                      perform_action: switch.turn_off
+                      target:
+                        entity_id: switch.tropf_vorgarten
+                    icon_color: red
+            card_mod:
+              style: |
+                ha-card { opacity: 1; }
+          - type: vertical-stack
+            grid_options:
+              columns: full
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Tropf Garten
+                secondary: >-
+                  {% if is_state('switch.shellyplug_s_dddecc', 'on') %}läuft ·
+                  {{ states('sensor.shellyplug_s_dddecc_leistung') | float(0) |
+                  round(0) }} W{% else %}aus · bereit (Pumpe startet
+                  automatisch){% endif %}
+                multiline_secondary: true
+                icon: mdi:water
+                icon_color: >-
+                  {{ 'blue' if is_state('switch.shellyplug_s_dddecc', 'on') else
+                  'disabled' }}
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: |-
+                    ha-card {
+                      text-align: center;
+                      border-radius: 22px;
+                      {% if is_state('switch.shellyplug_s_dddecc', 'on') %}
+                      border: 3px solid var(--blue-color);
+                      background: linear-gradient(135deg, rgba(33,150,243,.40), rgba(33,150,243,.10));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(135deg, rgba(158,158,158,.18), rgba(158,158,158,.04));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-chips-card
+                alignment: center
+                chips:
+                  - type: template
+                    icon: mdi:play
+                    content: An + Pumpe
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_an
+                      data:
+                        zone: switch.shellyplug_s_dddecc
+                    icon_color: green
+                  - type: template
+                    icon: mdi:hand-back-right
+                    content: An manuell
+                    tap_action:
+                      action: perform-action
+                      perform_action: switch.turn_on
+                      target:
+                        entity_id: switch.shellyplug_s_dddecc
+                    icon_color: orange
+                  - type: template
+                    icon: mdi:timer-outline
+                    content: 15 min
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_zeit
+                      data:
+                        zone: switch.shellyplug_s_dddecc
+                        minuten: 15
+                    icon_color: blue
+                  - type: template
+                    icon: mdi:timer-outline
+                    content: 30 min
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_zeit
+                      data:
+                        zone: switch.shellyplug_s_dddecc
+                        minuten: 30
+                    icon_color: blue
+                  - type: template
+                    icon: mdi:timer-outline
+                    content: 60 min
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.bewasserung_zeit
+                      data:
+                        zone: switch.shellyplug_s_dddecc
+                        minuten: 60
+                    icon_color: blue
+                  - type: template
+                    icon: mdi:stop
+                    content: Aus
+                    tap_action:
+                      action: perform-action
+                      perform_action: switch.turn_off
+                      target:
+                        entity_id: switch.shellyplug_s_dddecc
+                    icon_color: red
+            card_mod:
+              style: |
+                ha-card { opacity: 1; }

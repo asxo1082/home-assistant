@@ -1,0 +1,560 @@
+title: Klima
+views:
+  - title: Klima
+    path: klima
+    icon: mdi:air-conditioner
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Klimaanlagen
+            icon: mdi:air-conditioner
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:power
+                content: Alle aus
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.turn_off
+                  target:
+                    entity_id:
+                      - climate.wf_rac_71fb
+                      - climate.wf_rac_9707
+                  confirmation:
+                    text: Beide Klimaanlagen ausschalten?
+            grid_options:
+              columns: 24
+              rows: 1
+      - type: grid
+        cards:
+          - type: heading
+            heading: Schlafzimmer
+            icon: mdi:bed
+          - type: custom:mushroom-template-card
+            primary: >-
+              {{ state_attr('climate.wf_rac_71fb','current_temperature') |
+              float(0) | round(1) | string | replace('.', ',') }} °C
+            secondary: >-
+              {% set s = states('climate.wf_rac_71fb') %} {{
+              {'off':'Aus','cool':'Kühlen','heat':'Heizen','auto':'Auto','dry':'Entfeuchten','fan_only':'Lüften','unavailable':'Nicht
+              erreichbar'}.get(s, s) }} · Soll {{
+              state_attr('climate.wf_rac_71fb','temperature') | float(0) |
+              round(1) | string | replace('.', ',') }} °C
+            icon: mdi:air-conditioner
+            icon_color: >-
+              {% set s = states('climate.wf_rac_71fb') %} {{ 'red' if s ==
+              'heat' else ('blue' if s == 'cool' else ('teal' if s in
+              ['dry','fan_only'] else ('green' if s == 'auto' else ('red' if s
+              == 'unavailable' else 'disabled')))) }}
+            layout: vertical
+            fill_container: true
+            tap_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  --card-primary-font-size: 38px;
+                  --card-primary-font-weight: 600;
+                  --card-secondary-font-size: 15px;
+                  text-align: center;
+                  padding: 12px 0;
+                }
+            grid_options:
+              columns: 12
+              rows: 2
+          - type: tile
+            entity: climate.wf_rac_71fb
+            name: Steuerung
+            icon: mdi:tune-variant
+            hide_state: true
+            vertical: false
+            features_position: bottom
+            features:
+              - type: climate-hvac-modes
+                style: icons
+                hvac_modes:
+                  - 'off'
+                  - auto
+                  - cool
+                  - heat
+                  - dry
+                  - fan_only
+              - type: target-temperature
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: heading
+            heading: Solltemperatur
+            heading_style: subtitle
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: 18°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off') and
+                  state_attr('climate.wf_rac_71fb','temperature') | float(0) ==
+                  18) else '' }}
+                icon: mdi:snowflake
+                icon_color: blue
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_71fb
+                  data:
+                    temperature: 18
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 18) %}
+                      border: 3px solid rgb(33,150,243);
+                      background: linear-gradient(160deg, rgba(33,150,243,.55), rgba(33,150,243,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(33,150,243,.22), rgba(33,150,243,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 20°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off') and
+                  state_attr('climate.wf_rac_71fb','temperature') | float(0) ==
+                  20) else '' }}
+                icon: mdi:thermometer-low
+                icon_color: cyan
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_71fb
+                  data:
+                    temperature: 20
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 20) %}
+                      border: 3px solid rgb(0,188,212);
+                      background: linear-gradient(160deg, rgba(0,188,212,.55), rgba(0,188,212,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(0,188,212,.22), rgba(0,188,212,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 22°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off') and
+                  state_attr('climate.wf_rac_71fb','temperature') | float(0) ==
+                  22) else '' }}
+                icon: mdi:thermometer
+                icon_color: green
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_71fb
+                  data:
+                    temperature: 22
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 22) %}
+                      border: 3px solid rgb(76,175,80);
+                      background: linear-gradient(160deg, rgba(76,175,80,.55), rgba(76,175,80,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(76,175,80,.22), rgba(76,175,80,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 24°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off') and
+                  state_attr('climate.wf_rac_71fb','temperature') | float(0) ==
+                  24) else '' }}
+                icon: mdi:thermometer-high
+                icon_color: orange
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_71fb
+                  data:
+                    temperature: 24
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 24) %}
+                      border: 3px solid rgb(255,152,0);
+                      background: linear-gradient(160deg, rgba(255,152,0,.55), rgba(255,152,0,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(255,152,0,.22), rgba(255,152,0,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 26°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_71fb','off') and
+                  state_attr('climate.wf_rac_71fb','temperature') | float(0) ==
+                  26) else '' }}
+                icon: mdi:fire
+                icon_color: red
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_71fb
+                  data:
+                    temperature: 26
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_71fb','off') and state_attr('climate.wf_rac_71fb','temperature') | float(0) == 26) %}
+                      border: 3px solid rgb(244,67,54);
+                      background: linear-gradient(160deg, rgba(244,67,54,.55), rgba(244,67,54,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(244,67,54,.22), rgba(244,67,54,.05));
+                      {% endif %}
+                    }
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:thermometer
+                icon_color: blue
+                content: >-
+                  {% set d = device_id('climate.wf_rac_71fb') %} {% set a =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Außentemperatur') | list %} Außen
+                  {{ (a[0].state | float(0) | round(1) | string | replace('.',
+                  ',')) if a else '–' }} °C
+              - type: template
+                icon: mdi:account
+                icon_color: >-
+                  {% set d = device_id('climate.wf_rac_71fb') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Anwesenheit') | list %} {{ 'green'
+                  if p and p[0].state == 'on' else 'disabled' }}
+                content: >-
+                  {% set d = device_id('climate.wf_rac_71fb') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Anwesenheit') | list %} {{ 'Person
+                  erkannt' if p and p[0].state == 'on' else 'Niemand erkannt' }}
+              - type: template
+                icon: >-
+                  {% set d = device_id('climate.wf_rac_71fb') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Problem') | list %} {{
+                  'mdi:alert-circle' if p and p[0].state == 'on' else
+                  'mdi:check-circle' }}
+                icon_color: >-
+                  {% set d = device_id('climate.wf_rac_71fb') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Problem') | list %} {{ 'red' if p
+                  and p[0].state == 'on' else 'green' }}
+                content: >-
+                  {% set d = device_id('climate.wf_rac_71fb') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Problem') | list %} {{ 'Störung'
+                  if p and p[0].state == 'on' else 'Kein Fehler' }}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Badezimmer
+            icon: mdi:shower-head
+          - type: custom:mushroom-template-card
+            primary: >-
+              {{ state_attr('climate.wf_rac_9707','current_temperature') |
+              float(0) | round(1) | string | replace('.', ',') }} °C
+            secondary: >-
+              {% set s = states('climate.wf_rac_9707') %} {{
+              {'off':'Aus','cool':'Kühlen','heat':'Heizen','auto':'Auto','dry':'Entfeuchten','fan_only':'Lüften','unavailable':'Nicht
+              erreichbar'}.get(s, s) }} · Soll {{
+              state_attr('climate.wf_rac_9707','temperature') | float(0) |
+              round(1) | string | replace('.', ',') }} °C
+            icon: mdi:air-conditioner
+            icon_color: >-
+              {% set s = states('climate.wf_rac_9707') %} {{ 'red' if s ==
+              'heat' else ('blue' if s == 'cool' else ('teal' if s in
+              ['dry','fan_only'] else ('green' if s == 'auto' else ('red' if s
+              == 'unavailable' else 'disabled')))) }}
+            layout: vertical
+            fill_container: true
+            tap_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  --card-primary-font-size: 38px;
+                  --card-primary-font-weight: 600;
+                  --card-secondary-font-size: 15px;
+                  text-align: center;
+                  padding: 12px 0;
+                }
+            grid_options:
+              columns: 12
+              rows: 2
+          - type: tile
+            entity: climate.wf_rac_9707
+            name: Steuerung
+            icon: mdi:tune-variant
+            hide_state: true
+            vertical: false
+            features_position: bottom
+            features:
+              - type: climate-hvac-modes
+                style: icons
+                hvac_modes:
+                  - 'off'
+                  - auto
+                  - cool
+                  - heat
+                  - dry
+                  - fan_only
+              - type: target-temperature
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: heading
+            heading: Solltemperatur
+            heading_style: subtitle
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: 18°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off') and
+                  state_attr('climate.wf_rac_9707','temperature') | float(0) ==
+                  18) else '' }}
+                icon: mdi:snowflake
+                icon_color: blue
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_9707
+                  data:
+                    temperature: 18
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 18) %}
+                      border: 3px solid rgb(33,150,243);
+                      background: linear-gradient(160deg, rgba(33,150,243,.55), rgba(33,150,243,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(33,150,243,.22), rgba(33,150,243,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 20°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off') and
+                  state_attr('climate.wf_rac_9707','temperature') | float(0) ==
+                  20) else '' }}
+                icon: mdi:thermometer-low
+                icon_color: cyan
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_9707
+                  data:
+                    temperature: 20
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 20) %}
+                      border: 3px solid rgb(0,188,212);
+                      background: linear-gradient(160deg, rgba(0,188,212,.55), rgba(0,188,212,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(0,188,212,.22), rgba(0,188,212,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 22°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off') and
+                  state_attr('climate.wf_rac_9707','temperature') | float(0) ==
+                  22) else '' }}
+                icon: mdi:thermometer
+                icon_color: green
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_9707
+                  data:
+                    temperature: 22
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 22) %}
+                      border: 3px solid rgb(76,175,80);
+                      background: linear-gradient(160deg, rgba(76,175,80,.55), rgba(76,175,80,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(76,175,80,.22), rgba(76,175,80,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 24°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off') and
+                  state_attr('climate.wf_rac_9707','temperature') | float(0) ==
+                  24) else '' }}
+                icon: mdi:thermometer-high
+                icon_color: orange
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_9707
+                  data:
+                    temperature: 24
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 24) %}
+                      border: 3px solid rgb(255,152,0);
+                      background: linear-gradient(160deg, rgba(255,152,0,.55), rgba(255,152,0,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(255,152,0,.22), rgba(255,152,0,.05));
+                      {% endif %}
+                    }
+              - type: custom:mushroom-template-card
+                primary: 26°
+                secondary: >-
+                  {{ 'Aktiv' if (not is_state('climate.wf_rac_9707','off') and
+                  state_attr('climate.wf_rac_9707','temperature') | float(0) ==
+                  26) else '' }}
+                icon: mdi:fire
+                icon_color: red
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.wf_rac_9707
+                  data:
+                    temperature: 26
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      --card-primary-font-size: 20px;
+                      --card-primary-font-weight: 700;
+                      --card-secondary-font-size: 11px;
+                      {% if (not is_state('climate.wf_rac_9707','off') and state_attr('climate.wf_rac_9707','temperature') | float(0) == 26) %}
+                      border: 3px solid rgb(244,67,54);
+                      background: linear-gradient(160deg, rgba(244,67,54,.55), rgba(244,67,54,.15));
+                      {% else %}
+                      border: none;
+                      background: linear-gradient(160deg, rgba(244,67,54,.22), rgba(244,67,54,.05));
+                      {% endif %}
+                    }
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:thermometer
+                icon_color: blue
+                content: >-
+                  {% set d = device_id('climate.wf_rac_9707') %} {% set a =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Außentemperatur') | list %} Außen
+                  {{ (a[0].state | float(0) | round(1) | string | replace('.',
+                  ',')) if a else '–' }} °C
+              - type: template
+                icon: mdi:account
+                icon_color: >-
+                  {% set d = device_id('climate.wf_rac_9707') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Anwesenheit') | list %} {{ 'green'
+                  if p and p[0].state == 'on' else 'disabled' }}
+                content: >-
+                  {% set d = device_id('climate.wf_rac_9707') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Anwesenheit') | list %} {{ 'Person
+                  erkannt' if p and p[0].state == 'on' else 'Niemand erkannt' }}
+              - type: template
+                icon: >-
+                  {% set d = device_id('climate.wf_rac_9707') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Problem') | list %} {{
+                  'mdi:alert-circle' if p and p[0].state == 'on' else
+                  'mdi:check-circle' }}
+                icon_color: >-
+                  {% set d = device_id('climate.wf_rac_9707') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Problem') | list %} {{ 'red' if p
+                  and p[0].state == 'on' else 'green' }}
+                content: >-
+                  {% set d = device_id('climate.wf_rac_9707') %} {% set p =
+                  expand(device_entities(d)) |
+                  selectattr('name','search','Problem') | list %} {{ 'Störung'
+                  if p and p[0].state == 'on' else 'Kein Fehler' }}
