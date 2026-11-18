@@ -14,6 +14,7 @@ Archiv der Home-Assistant-Konfiguration. Privat. Keine Zugangsdaten im Repositor
 
 ## Regeln
 
+- **Dieses Repository ist die Quelle aller Stände.** Jede Anpassung startet mit dem Stand von hier und endet mit einem Commit hier.
 - Dieses Repository ist ein Archiv. Änderungen in Home Assistant landen nicht automatisch hier.
 - Vor jedem Neustart: Entwicklerwerkzeuge → YAML → Konfiguration prüfen.
 - Passwörter gehören in den Passwortmanager, nicht in Dashboards oder Dateien hier.
