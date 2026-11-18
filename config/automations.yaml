@@ -431,3 +431,50 @@
           data:
             tag: kostal_stoerung
   mode: queued
+- id: '1795002600001'
+  alias: Sonnenstrom Waschen Hinweis
+  description: Einmal am Tag melden, wenn genug PV-Überschuss für Waschmaschine oder Trockner da ist
+  triggers:
+  - trigger: state
+    entity_id: sensor.sonnenstrom_ampel
+    to: gruen
+    for: 00:10:00
+  conditions:
+  - condition: time
+    after: 08:00:00
+    before: '17:00:00'
+  - condition: template
+    value_template: "{{ this.attributes.last_triggered is none or as_local(this.attributes.last_triggered).date()
+      != now().date() }}"
+  actions:
+  - action: notify.mobile_app_iphone_andreas
+    data:
+      title: Sonnenstrom ☀️
+      message: >-
+        Jetzt ist ein guter Moment für Waschmaschine oder Trockner.
+        Überschuss {{ (states('sensor.sonnenstrom_uberschuss') | float(0) / 1000) | round(1) | string | replace('.', ',') }} kW,
+        Speicher {{ states('sensor.plenticoreseelen_battery_soc') | float(0) | round(0) | int }} %.
+  mode: single
+- id: '1795002600002'
+  alias: Update verfügbar
+  description: Täglich um 18:30 eine Push-Nachricht, wenn Updates bereitstehen (übersprungene zählen nicht)
+  triggers:
+  - trigger: time
+    at: '18:30:00'
+  conditions:
+  - condition: template
+    value_template: "{{ states.update | selectattr('state', 'eq', 'on') | list | count > 0 }}"
+  actions:
+  - variables:
+      liste: >-
+        {% set u = states.update | selectattr('state', 'eq', 'on') | list %}
+        {% for s in u[:8] %}{{ s.name }} ({{ s.attributes.latest_version }}){{ '\n' if not loop.last }}{% endfor %}{{ '\n… und ' ~ (u | count - 8) ~ ' weitere' if u | count > 8 }}
+      anzahl: "{{ states.update | selectattr('state', 'eq', 'on') | list | count }}"
+  - action: notify.mobile_app_iphone_andreas
+    data:
+      title: "\U0001F504 {{ anzahl }} {{ 'Update' if anzahl | int == 1 else 'Updates' }} verfügbar"
+      message: "{{ liste }}"
+      data:
+        url: /config/updates
+        tag: updates
+  mode: single
