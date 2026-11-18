@@ -23,7 +23,6 @@ Archiv der Home-Assistant-Konfiguration. Privat. Keine Zugangsdaten im Repositor
 
 - Bewässerung: Pumpe läuft weiter, wenn die letzte Zone einzeln ausgeschaltet wird → Automation „Pumpe aus, wenn keine Zone an“
 - Gute Nacht: Außenlicht-Schritte doppelt zu „Außen an“ → durch `script.aussen_an` ersetzen
-- Speicher: Rückfall des Kostal in die interne Regelung nach „Automatik Aus“ noch nicht getestet
 - Archiv: Theme Glass Navy sowie Dashboards Tablet und Standorte im Live-Stand fehlen
 
 ## Stand

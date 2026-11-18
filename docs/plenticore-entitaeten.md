@@ -49,7 +49,7 @@ Stand: 28.10.2026 · Gerät „PlenticoreSeelen“ · Bereich „Energie“
 
 - Sollwert Lade-/Entladeleistung, float32, Wortreihenfolge getauscht, negativ = laden
 - Werte im Repository: `config/automations.yaml` → „Speicher: Steuerung Kostal“
-- 0 W = halten; ohne neue Befehle fällt der Kostal nach seiner Rückfallzeit in die interne Regelung (am 18.11.2026 noch nicht bestätigt)
+- 0 W = halten; ohne neue Befehle fällt der Kostal nach seiner Rückfallzeit in die interne Regelung – bestätigt am 18.11.2026: nach Ende des Autoladens mit aktivem Entladeschutz entlud die Batterie wieder normal ins Haus
 - „Ausgleichsladung“ (Kalibrierung, lädt notfalls aus dem Netz) macht der Kostal selbst und ignoriert externe Befehle – beobachtet am 18.11.2026 bei 13 % Ladestand
 
 ## Störungserkennung
