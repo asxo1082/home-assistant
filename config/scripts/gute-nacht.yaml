@@ -9,7 +9,7 @@ sequence:
         - light.kinderzimmer
         - switch.shelly2pmg3_8cbfea97b4e0_output_0
         - switch.shelly2pmg3_8cbfea97b4e0_output_1
-        - light.shelly_stehlampe_gross_2   # Stehlampe groß – geht bei Gute Nacht aus
+        - light.shelly_stehlampe_gross_2
   - action: cover.close_cover
     continue_on_error: true
     target:
@@ -66,25 +66,31 @@ sequence:
   - action: light.turn_on
     continue_on_error: true
     target:
-      entity_id: light.shelly_stehlampe_gross   # nur Stehlampe klein als Nachtlicht
+      entity_id: light.shelly_stehlampe_gross
     data:
       brightness_pct: 15
-  - delay: "00:00:10"
+  - delay: '00:00:10'
   - variables:
       offen: >-
-        {% set ns = namespace(o=[]) %}
-        {% for s in states.binary_sensor if s.attributes.get('device_class') in ['window', 'door', 'garage_door', 'opening'] and s.state == 'on' %}
-        {% set ns.o = ns.o + [s.name | replace('Sensor ', '')] %}
-        {% endfor %}
-        {{ ns.o | join(', ') }}
+        {% set ns = namespace(o=[]) %} {% for s in states.binary_sensor if
+        s.attributes.get('device_class') in ['window', 'door', 'garage_door',
+        'opening'] and s.state == 'on' %} {% set ns.o = ns.o + [s.name |
+        replace('Sensor ', '')] %} {% endfor %} {{ ns.o | join(', ') }}
   - choose:
       - conditions:
           - condition: template
             value_template: >-
-              {{ not is_state('alarm_control_panel.alpen_alarm', 'armed_home') or offen != '' or is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage', 'open') }}
+              {{ not is_state('alarm_control_panel.alpen_alarm', 'armed_home')
+              or offen != '' or
+              is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage',
+              'open') }}
         sequence:
           - action: persistent_notification.create
             data:
               title: Gute Nacht
               message: >-
-                {% if not is_state('alarm_control_panel.alpen_alarm', 'armed_home') %}Die Alarmanlage ist NICHT scharf. {% endif %}{% if offen != '' %}Offen: {{ offen }}. {% endif %}{% if is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage', 'open') %}Das Garagentor ist noch offen.{% endif %}
+                {% if not is_state('alarm_control_panel.alpen_alarm',
+                'armed_home') %}Die Alarmanlage ist NICHT scharf. {% endif %}{%
+                if offen != '' %}Offen: {{ offen }}. {% endif %}{% if
+                is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage',
+                'open') %}Das Garagentor ist noch offen.{% endif %}
