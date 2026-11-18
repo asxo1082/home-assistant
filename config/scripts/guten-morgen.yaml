@@ -1,0 +1,44 @@
+alias: Guten Morgen
+mode: single
+sequence:
+  - action: alarm_control_panel.alarm_disarm
+    continue_on_error: true
+    target:
+      entity_id: alarm_control_panel.alpen_alarm
+  - action: homeassistant.turn_off
+    continue_on_error: true
+    target:
+      entity_id:
+        - light.vorgarten
+        - light.terrasse
+        - light.gartenhutte
+        - light.gastewc
+        - light.einfahrt_leuchte
+        - light.haus_seite_leuchte
+        - switch.garage_aussenbeleuchtung
+        - switch.shelly1_e89f6d867192
+        - switch.shellyplug_s_fdcccb
+        - switch.licht_haus_terrasse
+        - light.shelly_stehlampe_gross
+        - light.shelly_stehlampe_gross_2
+        - switch.shelly2pmg3_8cbfea97b4e0_output_0
+        - switch.shelly2pmg3_8cbfea97b4e0_output_1
+        - light.kinderzimmer
+  - action: cover.open_cover
+    continue_on_error: true
+    target:
+      entity_id:
+        - cover.rollo_badezimmer
+        - cover.rollo_flur_links
+        - cover.rollo_flur_rechts
+        - cover.rollo_gaste_wc
+        - cover.rollo_hwr
+        - cover.rollo_kinderzimmer_clara
+        - cover.rollo_kinderzimmer_paul
+        - cover.rollo_kuche
+        - cover.rollo_schlafzimmer
+        - cover.rollo_wohnzimmer_feld
+        - cover.rollo_wohnzimmer_garten_mitte
+        - cover.rollo_wohnzimmer_garten_rechts
+        - cover.rollo_wohnzimmer_strasse_links
+        - cover.rollo_wohnzimmer_strasse_rechts
