@@ -1,0 +1,28 @@
+alias: Notfall Sirenen AUS
+icon: mdi:alarm-light-off
+mode: single
+sequence:
+  - action: script.turn_off
+    target:
+      entity_id:
+        - script.notfall_an
+        - script.notfall_sirenen_ring
+    continue_on_error: true
+  - action: siren.turn_off
+    target:
+      entity_id:
+        - siren.bambulab1_sirene
+        - siren.einfahrt_sirene
+        - siren.einfahrt_sirene_2
+        - siren.garage_sirene
+        - siren.garage_sirene_2
+        - siren.garten_sirene
+        - siren.gartenhutte_sirene
+        - siren.haus_seite_sirene
+        - siren.mulltonnen_sirene
+        - siren.seite_sirene
+    continue_on_error: true
+  - action: switch.turn_off
+    target:
+      entity_id: switch.alpen_alarm_siren
+    continue_on_error: true
