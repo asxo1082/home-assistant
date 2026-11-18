@@ -144,6 +144,40 @@ views:
                       background: linear-gradient(135deg, rgba({{ rgb }},.36), rgba({{ rgb }},.08)); }
                 tap_action:
                   action: none
+          - type: custom:mushroom-template-card
+            entity: sensor.sonnenstrom_ampel
+            primary: >-
+              {% set a = states('sensor.sonnenstrom_ampel') %}{{ {'gruen':
+              'Jetzt waschen oder trocknen ☀️', 'gelb': 'Geht so – lieber noch
+              etwas warten', 'rot': 'Gerade kein Sonnenstrom übrig'}.get(a,
+              'Sonnenstrom-Ampel nicht verfügbar') }}
+            secondary: >-
+              {% if states('sensor.sonnenstrom_ampel') in ['gruen', 'gelb',
+              'rot'] %}Überschuss {{ (states('sensor.sonnenstrom_uberschuss') |
+              float(0) / 1000) | round(1) | string | replace('.', ',') }} kW ·
+              Speicher {{ states('sensor.plenticoreseelen_battery_soc') |
+              float(0) | round(0) | int }} %{% else %}Helfer
+              sensor.sonnenstrom_ampel prüfen{% endif %}
+            icon: >-
+              {{ {'gruen': 'mdi:washing-machine', 'gelb':
+              'mdi:weather-partly-cloudy', 'rot':
+              'mdi:weather-cloudy'}.get(states('sensor.sonnenstrom_ampel'),
+              'mdi:help-circle') }}
+            icon_color: >-
+              {{ {'gruen': 'green', 'gelb': 'amber', 'rot':
+              'red'}.get(states('sensor.sonnenstrom_ampel'), 'grey') }}
+            layout: horizontal
+            fill_container: true
+            grid_options:
+              columns: full
+            tap_action:
+              action: more-info
+              entity: sensor.sonnenstrom_uberschuss
+            card_mod:
+              style: >
+                ha-card { border-radius: 22px; border: none;
+                  {% set c = {'gruen': '76,175,80', 'gelb': '255,193,7', 'rot': '244,67,54'}.get(states('sensor.sonnenstrom_ampel'), '120,144,156') %}
+                  background: linear-gradient(135deg, rgba({{ c }},.30), rgba({{ c }},.08)); }
           - type: vertical-stack
             cards:
               - type: custom:power-flow-card-plus
