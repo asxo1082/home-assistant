@@ -1,0 +1,25 @@
+alias: Bewässerung An
+icon: mdi:sprinkler-variant
+mode: parallel
+max: 10
+fields:
+  zone:
+    name: Zone
+    selector:
+      entity:
+        domain: switch
+sequence:
+  - if:
+      - condition: template
+        value_template: >-
+          {{ zone != 'switch.shellyplug_s_819696' and
+          is_state('switch.shellyplug_s_819696', 'off') }}
+    then:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.shellyplug_s_819696
+      - delay:
+          seconds: 3
+  - action: switch.turn_on
+    target:
+      entity_id: '{{ zone }}'
