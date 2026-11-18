@@ -18,6 +18,13 @@ Archiv der Home-Assistant-Konfiguration. Privat. Keine Zugangsdaten im Repositor
 - Vor jedem Neustart: Entwicklerwerkzeuge → YAML → Konfiguration prüfen.
 - Passwörter gehören in den Passwortmanager, nicht in Dashboards oder Dateien hier.
 
+## Offene Punkte
+
+- Bewässerung: Pumpe läuft weiter, wenn die letzte Zone einzeln ausgeschaltet wird → Automation „Pumpe aus, wenn keine Zone an“
+- Gute Nacht: Außenlicht-Schritte doppelt zu „Außen an“ → durch `script.aussen_an` ersetzen
+- Speicher: Rückfall des Kostal in die interne Regelung nach „Automatik Aus“ noch nicht getestet
+- Archiv: Theme Glass Navy sowie Dashboards Tablet und Standorte im Live-Stand fehlen
+
 ## Stand
 
 - 18.11.2026: Erstbestand. Energie-Automatik neu (Wallbox/Speicher), Kostal-Störungsmeldung, Statuskarte im Energie-Dashboard. HA-Version 2026.11 (HACS → Marketplace).
