@@ -1,0 +1,42 @@
+{# Kostal Plenticore – Störungserkennung
+   Liefert eine Zeile pro erkannter Störung, leer = alles in Ordnung.
+   Ablage: /config/custom_templates/kostal.jinja #}
+{% macro kostal_stoerungen() -%}
+{%- set jetzt = now() -%}
+{%- set ns = namespace(l=[]) -%}
+{%- set nicht_da = ['unavailable', 'unknown'] -%}
+
+{#- 1. Wechselrichter erreichbar? / 2. Status plausibel? -#}
+{%- set ws = states.sensor.plenticoreseelen_inverter_state -%}
+{%- if ws is none -%}
+  {%- set ns.l = ns.l + ['Wechselrichter-Status fehlt in Home Assistant'] -%}
+{%- else -%}
+  {%- set min_ws = ((jetzt - ws.last_changed).total_seconds() / 60) | int -%}
+  {%- if ws.state in nicht_da and min_ws >= 10 -%}
+    {%- set ns.l = ns.l + ['Wechselrichter seit ' ~ min_ws ~ ' min nicht erreichbar'] -%}
+  {%- elif ws.state not in nicht_da + ['FeedIn', 'Throttled', 'Off', 'Standby'] and min_ws >= 30 -%}
+    {%- set ns.l = ns.l + ['Wechselrichter-Status „' ~ ws.state ~ '“ seit ' ~ min_ws ~ ' min'] -%}
+  {%- endif -%}
+{%- endif -%}
+
+{#- 3. Keine PV-Erzeugung, obwohl die Sonne hoch genug steht -#}
+{%- set pv = states.sensor.plenticoreseelen_sum_power_of_all_pv_dc_inputs -%}
+{%- set hoehe = state_attr('sun.sun', 'elevation') | float(0) -%}
+{%- if pv is not none and hoehe > 8 and (pv.state | float(0)) < 1 -%}
+  {%- set min_pv = ((jetzt - pv.last_changed).total_seconds() / 60) | int -%}
+  {%- if min_pv >= 60 -%}
+    {%- set ns.l = ns.l + ['Keine PV-Erzeugung seit ' ~ min_pv ~ ' min trotz Tageslicht (Ausfall oder Schnee?)'] -%}
+  {%- endif -%}
+{%- endif -%}
+
+{#- 4. Messwerte eingefroren (Integration hängt) -#}
+{%- set g = states.sensor.plenticoreseelen_grid_power -%}
+{%- if g is not none and g.state not in nicht_da -%}
+  {%- set min_g = ((jetzt - g.last_updated).total_seconds() / 60) | int -%}
+  {%- if min_g >= 15 -%}
+    {%- set ns.l = ns.l + ['Messwerte seit ' ~ min_g ~ ' min unverändert (Verbindung hängt?)'] -%}
+  {%- endif -%}
+{%- endif -%}
+
+{{- ns.l | join('\n') -}}
+{%- endmacro %}

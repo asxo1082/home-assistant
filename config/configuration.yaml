@@ -1,0 +1,1119 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+keba:
+  # TODO: IP im UniFi prüfen (.88 vs. .89 Wallbox mit zwei MACs) und feste IP/DHCP-Reservierung setzen
+  host: 192.168.1.88
+  refresh_interval: 5
+
+modbus:
+  - name: kostal
+    type: tcp
+    host: 192.168.1.225
+    port: 1502
+    delay: 2
+    timeout: 5
+    sensors:
+      - name: "Kostal Modbus Test AC Leistung"
+        unique_id: kostal_modbus_test_ac_leistung
+        slave: 71
+        address: 172
+        input_type: holding
+        data_type: float32
+        swap: word
+        unit_of_measurement: "W"
+        scan_interval: 30
+
+input_select:
+  energie_modus:
+    name: "Energie Automatik"
+    options:
+      - "Automatik Aus"
+      - "Automatik An"
+      - "Stop / Sperren"
+    # Kein initial mehr: nach einem Neustart gilt wieder der letzte Zustand.
+    # "Automatik Aus" bedeutet: HA greift nicht ein (Wallbox frei, Kostal intern) – das ist kein sicherer Standard.
+    icon: mdi:robot
+  netzladeleistung:
+    name: "Netzladeleistung (W)"
+    options: ["500", "1000", "1500", "2000", "2500"]
+    icon: mdi:battery-charging
+  ladung_zeitraum:
+    name: "Ladung Zeitraum"
+    options:
+      - "Aktueller Monat"
+      - "Letzter Monat"
+      - "Vorletzter Monat"
+      - "Gesamt aktuelles Jahr"
+      - "Gesamt letztes Jahr"
+    icon: mdi:calendar-month
+
+input_boolean:
+  entladeschutz_autoladen:
+    name: "Batterie nicht ins Auto entladen"
+    icon: mdi:battery-lock
+
+input_number:
+  tibber_max_preis:
+    name: "Tibber: Max-Preis zum Laden"
+    min: 0.05
+    max: 0.50
+    step: 0.01
+    unit_of_measurement: "€/kWh"
+    mode: slider
+  netzladen_max_soc:
+    name: "Netzladen bis Ladestand"
+    min: 20
+    max: 100
+    step: 5
+    unit_of_measurement: "%"
+    mode: slider
+  sofort_laden_kw:
+    name: "Sofort laden: Ladeleistung"
+    min: 4
+    max: 11
+    step: 1
+    unit_of_measurement: "kW"
+    mode: slider
+    icon: mdi:ev-station
+  preis_aufschlag_ct:
+    name: "Tibber Aufschlag"
+    min: 0
+    max: 10
+    step: 0.01
+    unit_of_measurement: "ct/kWh"
+    mode: box
+  preis_netz_umlagen_ct:
+    name: "Netzentgelt, Konzessionsabgabe, Umlagen"
+    min: 0
+    max: 30
+    step: 0.01
+    unit_of_measurement: "ct/kWh"
+    mode: box
+  preis_stromsteuer_ct:
+    name: "Stromsteuer"
+    min: 0
+    max: 5
+    step: 0.01
+    unit_of_measurement: "ct/kWh"
+    mode: box
+  preis_mwst:
+    name: "Mehrwertsteuer"
+    min: 0
+    max: 25
+    step: 0.1
+    unit_of_measurement: "%"
+    mode: box
+  tarif_fix_arbeitspreis_ct:
+    name: "Fixtarif Arbeitspreis (brutto)"
+    min: 0
+    max: 80
+    step: 0.01
+    unit_of_measurement: "ct/kWh"
+    mode: box
+  tarif_fix_grundpreis_jahr:
+    name: "Fixtarif Grundpreis (brutto)"
+    min: 0
+    max: 600
+    step: 0.01
+    unit_of_measurement: "€/Jahr"
+    mode: box
+  tibber_grundgebuehr_monat:
+    name: "Tibber Grundgebühr"
+    min: 0
+    max: 30
+    step: 0.01
+    unit_of_measurement: "€/Monat"
+    mode: box
+  tarif_einspeiseverguetung_ct:
+    name: "Einspeisevergütung"
+    min: 0
+    max: 30
+    step: 0.01
+    unit_of_measurement: "ct/kWh"
+    mode: box
+    icon: mdi:transmission-tower-export
+  winter_verbrauch_kwh_monat:
+    name: "Winter-Verbrauch (Schätzung)"
+    min: 0
+    max: 3000
+    step: 10
+    unit_of_measurement: "kWh/Monat"
+    mode: box
+    icon: mdi:snowflake
+  abschlag_monat:
+    name: "Monatlicher Abschlag"
+    min: 0
+    max: 2000
+    step: 1
+    unit_of_measurement: "€/Monat"
+    mode: box
+    icon: mdi:cash-register
+
+template:
+  - sensor:
+      - name: "PV Ueberschuss Wallbox"
+        unique_id: pv_ueberschuss_wallbox
+        unit_of_measurement: "W"
+        device_class: power
+        availability: >
+          {{ states('sensor.plenticoreseelen_grid_power') | is_number
+             and states('sensor.keba_p30_charging_power') | is_number }}
+        state: >
+          {% set netz = states('sensor.plenticoreseelen_grid_power') | float(0) %}
+          {% set wallbox = states('sensor.keba_p30_charging_power') | float(0) * 1000 %}
+          {{ (wallbox - netz) | round(0) }}
+
+      - name: "PV Erzeugung"
+        unique_id: pv_erzeugung
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.plenticoreseelen_sum_power_of_all_pv_dc_inputs') | is_number }}"
+        state: >
+          {% set dc = states('sensor.plenticoreseelen_sum_power_of_all_pv_dc_inputs') | float(0) %}
+          {{ [dc, 0] | max | round(0) }}
+
+      - name: "Strompreis Tibber berechnet"
+        unique_id: strompreis_tibber_berechnet
+        unit_of_measurement: "€/kWh"
+        state_class: measurement
+        availability: "{{ states('sensor.nord_pool_ger_aktueller_preis') | is_number }}"
+        state: >
+          {% set boerse = states('sensor.nord_pool_ger_aktueller_preis') | float(0) %}
+          {% set aufschlag = states('input_number.preis_aufschlag_ct') | float(0) / 100 %}
+          {% set netz = states('input_number.preis_netz_umlagen_ct') | float(0) / 100 %}
+          {% set steuer = states('input_number.preis_stromsteuer_ct') | float(0) / 100 %}
+          {% set mwst = 1 + states('input_number.preis_mwst') | float(0) / 100 %}
+          {{ ((boerse + aufschlag + netz + steuer) * mwst) | round(4) }}
+
+      - name: "Netzbezug Leistung kW"
+        unique_id: netzbezug_leistung_kw
+        unit_of_measurement: "kW"
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.plenticoreseelen_grid_power') | is_number }}"
+        state: >
+          {% set w = states('sensor.plenticoreseelen_grid_power') | float(0) %}
+          {{ (([w, 0] | max) / 1000) | round(3) }}
+
+      - name: "Kosten dynamisch pro Stunde"
+        unique_id: kosten_dynamisch_pro_stunde
+        unit_of_measurement: "EUR/h"
+        state_class: measurement
+        state: >
+          {% set kw = states('sensor.netzbezug_leistung_kw') | float(0) %}
+          {% set preis = states('sensor.strompreis_tibber_berechnet') | float(0) %}
+          {% set grund = states('input_number.tibber_grundgebuehr_monat') | float(0) * 12 / 8760 %}
+          {{ (kw * preis + grund) | round(5) }}
+
+      - name: "Kosten fix pro Stunde"
+        unique_id: kosten_fix_pro_stunde
+        unit_of_measurement: "EUR/h"
+        state_class: measurement
+        state: >
+          {% set kw = states('sensor.netzbezug_leistung_kw') | float(0) %}
+          {% set preis = states('input_number.tarif_fix_arbeitspreis_ct') | float(0) / 100 %}
+          {% set grund = states('input_number.tarif_fix_grundpreis_jahr') | float(0) / 8760 %}
+          {{ (kw * preis + grund) | round(5) }}
+
+      - name: "Saldo Differenz Monat"
+        unique_id: saldo_differenz_monat
+        unit_of_measurement: "EUR"
+        state: >
+          {% set fix = states('sensor.saldo_monat_fix') | float(0) %}
+          {% set dyn = states('sensor.saldo_monat_dynamisch') | float(0) %}
+          {{ (fix - dyn) | round(2) }}
+
+      - name: "Kosten Differenz gesamt"
+        unique_id: kosten_differenz_gesamt
+        unit_of_measurement: "EUR"
+        state: >
+          {% set fix = states('sensor.kosten_fix_gesamt') | float(0) %}
+          {% set dyn = states('sensor.kosten_dynamisch_gesamt') | float(0) %}
+          {{ (fix - dyn) | round(2) }}
+
+      - name: "Ladung Energie 24h"
+        unique_id: ladung_energie_24h
+        unit_of_measurement: "kWh"
+        state: >
+          {% set kwh = states('sensor.ladung_kwh_24h_statistik') | float(0) %}
+          {{ ([kwh, 0] | max) | round(2) }}
+
+      - name: "Ladung Kosten 24h"
+        unique_id: ladung_kosten_24h
+        unit_of_measurement: "EUR"
+        state: >
+          {% set kwh = states('sensor.ladung_energie_24h') | float(0) %}
+          {% set preis = states('input_number.tarif_fix_arbeitspreis_ct') | float(0) / 100 %}
+          {{ (kwh * preis) | round(2) }}
+
+      - name: "Ladung Kosten Heute"
+        unique_id: ladung_kosten_heute
+        unit_of_measurement: "EUR"
+        state: >
+          {% set kwh = states('sensor.ladung_kwh_tag') | float(0) %}
+          {% set preis = states('input_number.tarif_fix_arbeitspreis_ct') | float(0) / 100 %}
+          {{ (kwh * preis) | round(2) }}
+
+      - name: "Ladung Kosten Monat"
+        unique_id: ladung_kosten_monat
+        unit_of_measurement: "EUR"
+        state: >
+          {% set kwh = state_attr('sensor.ladung_statistik_perioden', 'aktueller_monat') | float(0) %}
+          {% set preis = states('input_number.tarif_fix_arbeitspreis_ct') | float(0) / 100 %}
+          {{ (kwh * preis) | round(2) }}
+
+      - name: "Ladung Hochrechnung Monat"
+        unique_id: ladung_hochrechnung_monat
+        unit_of_measurement: "EUR"
+        state: >
+          {% set jetzt = now() %}
+          {% set anfang = jetzt.replace(day=1, hour=0, minute=0, second=0, microsecond=0) %}
+          {% set ende = (jetzt.replace(day=28) + timedelta(days=4)).replace(day=1, hour=0, minute=0, second=0, microsecond=0) %}
+          {% set tage_monat = (ende - anfang).days %}
+          {% set vergangen = (jetzt - anfang).total_seconds() / 86400 %}
+          {% set kosten = states('sensor.ladung_kosten_monat') | float(0) %}
+          {% if vergangen >= 3 %}
+            {{ (kosten / vergangen * tage_monat) | round(2) }}
+          {% else %}
+            unknown
+          {% endif %}
+
+      - name: "Ladung Auswahl Kosten"
+        unique_id: ladung_auswahl_kosten
+        unit_of_measurement: "EUR"
+        state: >
+          {% set kwh = states('sensor.ladung_auswahl_kwh') | float(0) %}
+          {% set preis = states('input_number.tarif_fix_arbeitspreis_ct') | float(0) / 100 %}
+          {{ (kwh * preis) | round(2) }}
+
+      - name: "Preis Netzbezug Fix"
+        unique_id: preis_netzbezug_fix
+        unit_of_measurement: "€/kWh"
+        state_class: measurement
+        state: >
+          {{ (states('input_number.tarif_fix_arbeitspreis_ct') | float(0) / 100) | round(4) }}
+
+      - name: "Preis Einspeisung"
+        unique_id: preis_einspeisung
+        unit_of_measurement: "€/kWh"
+        state_class: measurement
+        state: >
+          {{ (states('input_number.tarif_einspeiseverguetung_ct') | float(0) / 100) | round(4) }}
+
+      - name: "Kosten Netzbezug heute"
+        unique_id: kosten_netzbezug_heute
+        unit_of_measurement: "€"
+        state: >
+          {% set s = 'sensor.plenticoreseelen_home_consumption_from_grid_day' %}
+          {% set e = states(s) | float(0) %}
+          {% set kwh = e / 1000 if state_attr(s, 'unit_of_measurement') == 'Wh' else e %}
+          {% set preis = states('input_number.tarif_fix_arbeitspreis_ct') | float(0) / 100 %}
+          {{ (kwh * preis) | round(2) }}
+
+      - name: "Gutschrift Einspeisung heute"
+        unique_id: gutschrift_einspeisung_heute
+        unit_of_measurement: "€"
+        state: >
+          {% set s = 'sensor.plenticoreseelen_energy_to_grid_day' %}
+          {% set e = states(s) | float(0) %}
+          {% set kwh = e / 1000 if state_attr(s, 'unit_of_measurement') == 'Wh' else e %}
+          {% set preis = states('input_number.tarif_einspeiseverguetung_ct') | float(0) / 100 %}
+          {{ (kwh * preis) | round(2) }}
+
+      - name: "Strom Saldo heute"
+        unique_id: strom_saldo_heute
+        unit_of_measurement: "€"
+        state: >
+          {% set k = states('sensor.kosten_netzbezug_heute') | float(0) %}
+          {% set g = states('sensor.gutschrift_einspeisung_heute') | float(0) %}
+          {{ (k - g) | round(2) }}
+
+      - name: "Einspeisung Leistung kW"
+        unique_id: einspeisung_leistung_kw
+        unit_of_measurement: "kW"
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.plenticoreseelen_grid_power') | is_number }}"
+        state: >
+          {% set w = states('sensor.plenticoreseelen_grid_power') | float(0) %}
+          {{ (([-w, 0] | max) / 1000) | round(3) }}
+
+      - name: "Verdienst Einspeisung pro Stunde"
+        unique_id: verdienst_einspeisung_pro_stunde
+        unit_of_measurement: "EUR/h"
+        state_class: measurement
+        state: >
+          {% set kw = states('sensor.einspeisung_leistung_kw') | float(0) %}
+          {% set preis = states('input_number.tarif_einspeiseverguetung_ct') | float(0) / 100 %}
+          {{ (kw * preis) | round(5) }}
+
+      - name: "Saldo Monat fix"
+        unique_id: saldo_monat_fix
+        unit_of_measurement: "EUR"
+        state: >
+          {% set k = states('sensor.kosten_fix_monat') | float(0) %}
+          {% set v = states('sensor.verdienst_monat') | float(0) %}
+          {{ (k - v) | round(2) }}
+
+      - name: "Saldo Monat dynamisch"
+        unique_id: saldo_monat_dynamisch
+        unit_of_measurement: "EUR"
+        state: >
+          {% set k = states('sensor.kosten_dyn_monat') | float(0) %}
+          {% set v = states('sensor.verdienst_monat') | float(0) %}
+          {{ (k - v) | round(2) }}
+
+      # Jahreswerte direkt vom Wechselrichter (setzen sich am 1.1. selbst zurück, können nicht springen)
+      - name: "Netzbezug kWh Jahr"
+        unique_id: netzbezug_kwh_jahr_kostal
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        availability: "{{ states('sensor.plenticoreseelen_home_consumption_from_grid_year') | is_number }}"
+        state: >
+          {% set s = 'sensor.plenticoreseelen_home_consumption_from_grid_year' %}
+          {% set e = states(s) | float(0) %}
+          {{ ((e / 1000) if state_attr(s, 'unit_of_measurement') == 'Wh' else e) | round(1) }}
+
+      - name: "Einspeisung Jahr kWh"
+        unique_id: einspeisung_jahr_kwh_kostal
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        availability: "{{ states('sensor.plenticoreseelen_energy_to_grid_year') | is_number }}"
+        state: >
+          {% set s = 'sensor.plenticoreseelen_energy_to_grid_year' %}
+          {% set e = states(s) | float(0) %}
+          {{ ((e / 1000) if state_attr(s, 'unit_of_measurement') == 'Wh' else e) | round(1) }}
+
+      - name: "Netzbezug Jahr Kosten"
+        unique_id: netzbezug_jahr_kosten
+        unit_of_measurement: "€"
+        device_class: monetary
+        availability: "{{ states('sensor.netzbezug_kwh_jahr') | is_number }}"
+        state: >
+          {{ (states('sensor.netzbezug_kwh_jahr') | float(0) * states('sensor.preis_netzbezug_fix') | float(0)) | round(2) }}
+
+      - name: "Einspeisung Jahr Verguetung"
+        unique_id: einspeisung_jahr_verguetung
+        unit_of_measurement: "€"
+        device_class: monetary
+        availability: "{{ states('sensor.einspeisung_jahr_kwh') | is_number }}"
+        state: >
+          {{ (states('sensor.einspeisung_jahr_kwh') | float(0) * states('sensor.preis_einspeisung') | float(0)) | round(2) }}
+
+      - name: "Abschlag Jahr bezahlt"
+        unique_id: abschlag_jahr_bezahlt
+        unit_of_measurement: "€"
+        device_class: monetary
+        state: >
+          {{ (states('input_number.abschlag_monat') | float(0) * now().month) | round(2) }}
+
+      - name: "Grundpreis Jahr anteilig"
+        unique_id: grundpreis_jahr_anteilig
+        unit_of_measurement: "€"
+        device_class: monetary
+        state: >
+          {{ (states('input_number.tarif_fix_grundpreis_jahr') | float(0) / 12 * now().month) | round(2) }}
+
+      - name: "Guthaben Jahr"
+        unique_id: guthaben_jahr
+        unit_of_measurement: "€"
+        device_class: monetary
+        availability: "{{ states('sensor.netzbezug_kwh_jahr') | is_number }}"
+        state: >
+          {% set a = states('sensor.abschlag_jahr_bezahlt') | float(0) %}
+          {% set k = states('sensor.netzbezug_jahr_kosten') | float(0) %}
+          {% set g = states('sensor.grundpreis_jahr_anteilig') | float(0) %}
+          {{ (a - k - g) | round(2) }}
+
+      - name: "Kosten Jahr Prognose linear"
+        unique_id: kosten_jahr_prognose_linear
+        unit_of_measurement: "€"
+        device_class: monetary
+        availability: "{{ states('sensor.netzbezug_kwh_jahr') | is_number }}"
+        state: >
+          {% set m = now().month %}
+          {% set y = now().year %}
+          {% set dim = [31, 29 if (y % 4 == 0 and (y % 100 != 0 or y % 400 == 0)) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1] %}
+          {% set done = (m - 1) + (now().day / dim) %}
+          {% set k = states('sensor.netzbezug_jahr_kosten') | float(0) %}
+          {% set g = states('input_number.tarif_fix_grundpreis_jahr') | float(0) %}
+          {{ ((k / done * 12) + g) | round(2) if done > 0 else 0 }}
+
+      - name: "Kosten Jahr Prognose Winter"
+        unique_id: kosten_jahr_prognose_winter
+        unit_of_measurement: "€"
+        device_class: monetary
+        availability: "{{ states('sensor.netzbezug_kwh_jahr') | is_number }}"
+        state: >
+          {% set m = now().month %}
+          {% set y = now().year %}
+          {% set dim = [31, 29 if (y % 4 == 0 and (y % 100 != 0 or y % 400 == 0)) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1] %}
+          {% set done = (m - 1) + (now().day / dim) %}
+          {% set k = states('sensor.netzbezug_jahr_kosten') | float(0) %}
+          {% set g = states('input_number.tarif_fix_grundpreis_jahr') | float(0) %}
+          {% set rate = states('input_number.winter_verbrauch_kwh_monat') | float(0) %}
+          {% set p = states('sensor.preis_netzbezug_fix') | float(0) %}
+          {{ (k + (12 - done) * rate * p + g) | round(2) }}
+
+      - name: "Abschlag Jahr gesamt"
+        unique_id: abschlag_jahr_gesamt
+        unit_of_measurement: "€"
+        device_class: monetary
+        state: >
+          {{ (states('input_number.abschlag_monat') | float(0) * 12) | round(2) }}
+
+      - name: "Ergebnis Jahresende Prognose"
+        unique_id: ergebnis_jahresende_prognose
+        unit_of_measurement: "€"
+        device_class: monetary
+        availability: "{{ states('sensor.netzbezug_kwh_jahr') | is_number }}"
+        state: >
+          {{ (states('sensor.abschlag_jahr_gesamt') | float(0) - states('sensor.kosten_jahr_prognose_winter') | float(0)) | round(2) }}
+
+      - name: "Abschlag empfohlen"
+        unique_id: abschlag_empfohlen
+        unit_of_measurement: "€/Monat"
+        availability: "{{ states('sensor.netzbezug_kwh_jahr') | is_number }}"
+        state: >
+          {% set rest = [12 - now().month, 1] | max %}
+          {{ ((states('sensor.kosten_jahr_prognose_winter') | float(0) - states('sensor.abschlag_jahr_bezahlt') | float(0)) / rest) | round(0) | int }}
+
+      - name: "Saldo Jahr"
+        unique_id: saldo_jahr
+        unit_of_measurement: "€"
+        device_class: monetary
+        availability: "{{ states('sensor.netzbezug_kwh_jahr') | is_number and states('sensor.einspeisung_jahr_kwh') | is_number }}"
+        state: >
+          {{ (states('sensor.netzbezug_jahr_kosten') | float(0) - states('sensor.einspeisung_jahr_verguetung') | float(0)) | round(2) }}
+
+  - binary_sensor:
+      - name: "PV Laden Freigabe"
+        unique_id: pv_laden_freigabe
+        delay_on: "00:02:00"
+        delay_off: "00:05:00"
+        state: >
+          {% set s = states('sensor.pv_ueberschuss_wallbox') | float(0) %}
+          {% if is_state('binary_sensor.pv_laden_freigabe', 'on') %}
+            {{ s >= 3800 }}
+          {% else %}
+            {{ s >= 4300 }}
+          {% endif %}
+
+      # Störungserkennung Kostal – Logik in custom_templates/kostal.jinja
+      - name: "Kostal Störung"
+        unique_id: kostal_stoerung
+        device_class: problem
+        delay_on: "00:02:00"
+        state: >
+          {% from 'kostal.jinja' import kostal_stoerungen %}
+          {{ kostal_stoerungen() | trim != '' }}
+        attributes:
+          gruende: >
+            {% from 'kostal.jinja' import kostal_stoerungen %}
+            {{ kostal_stoerungen() | trim }}
+
+      - name: "Tibber Laden Freigabe"
+        unique_id: tibber_laden_freigabe
+        state: >
+          {% set preis = states('sensor.strompreis_tibber_berechnet') | float(99) %}
+          {% set limit = states('input_number.tibber_max_preis') | float(0) %}
+          {{ preis <= limit }}
+
+  - trigger:
+      - trigger: time_pattern
+        minutes: "/15"
+      - trigger: homeassistant
+        event: start
+    action:
+      - action: nordpool.get_prices_for_date
+        data:
+          config_entry: 01M4D9KB3ATP7KX0QCVZK20SC4
+          date: "{{ now().date() }}"
+          areas: GER
+          currency: EUR
+        response_variable: preise_heute
+      - action: nordpool.get_prices_for_date
+        continue_on_error: true
+        data:
+          config_entry: 01M4D9KB3ATP7KX0QCVZK20SC4
+          date: "{{ now().date() + timedelta(days=1) }}"
+          areas: GER
+          currency: EUR
+        response_variable: preise_morgen
+    sensor:
+      - name: "Nord Pool Preise Verlauf"
+        unique_id: nordpool_preise_verlauf
+        state: "{{ preise_heute['GER'] | length }}"
+        attributes:
+          heute: >
+            {% set zuschlag = (states('input_number.preis_aufschlag_ct') | float(0) + states('input_number.preis_netz_umlagen_ct') | float(0) + states('input_number.preis_stromsteuer_ct') | float(0)) / 100 %}
+            {% set mwst = 1 + states('input_number.preis_mwst') | float(0) / 100 %}
+            {% set ns = namespace(l=[]) %}
+            {% for p in preise_heute['GER'] %}
+              {% set netto = p.price / 1000 %}
+              {% set ns.l = ns.l + [[(as_timestamp(p.start) * 1000) | int, netto | round(4), ((netto + zuschlag) * mwst) | round(4)]] %}
+            {% endfor %}
+            {{ ns.l }}
+          morgen: >
+            {% set zuschlag = (states('input_number.preis_aufschlag_ct') | float(0) + states('input_number.preis_netz_umlagen_ct') | float(0) + states('input_number.preis_stromsteuer_ct') | float(0)) / 100 %}
+            {% set mwst = 1 + states('input_number.preis_mwst') | float(0) / 100 %}
+            {% set liste = preise_morgen['GER'] if preise_morgen is defined and preise_morgen is mapping and 'GER' in preise_morgen else [] %}
+            {% set ns = namespace(l=[]) %}
+            {% for p in liste %}
+              {% set netto = p.price / 1000 %}
+              {% set ns.l = ns.l + [[(as_timestamp(p.start) * 1000) | int, netto | round(4), ((netto + zuschlag) * mwst) | round(4)]] %}
+            {% endfor %}
+            {{ ns.l }}
+
+  - trigger:
+      - trigger: state
+        entity_id: input_select.ladung_zeitraum
+      - trigger: state
+        entity_id: sensor.ladung_statistik_perioden
+      - trigger: homeassistant
+        event: start
+      - trigger: time_pattern
+        minutes: "/5"
+    sensor:
+      - name: "Ladung Auswahl kWh"
+        unique_id: ladung_auswahl_kwh
+        unit_of_measurement: "kWh"
+        state: >
+          {% set a = states('input_select.ladung_zeitraum') %}
+          {% set s = 'sensor.ladung_statistik_perioden' %}
+          {% set m = {
+            'Aktueller Monat': state_attr(s, 'aktueller_monat'),
+            'Letzter Monat': state_attr(s, 'letzter_monat'),
+            'Vorletzter Monat': state_attr(s, 'vorletzter_monat'),
+            'Gesamt aktuelles Jahr': state_attr(s, 'jahr_aktuell'),
+            'Gesamt letztes Jahr': state_attr(s, 'jahr_letztes')
+          } %}
+          {{ m.get(a, 0) | float(0) | round(2) }}
+
+  - trigger:
+      - trigger: time_pattern
+        minutes: "/15"
+      - trigger: homeassistant
+        event: start
+      - trigger: state
+        entity_id: calendar.google_kalender
+    action:
+      - action: calendar.get_events
+        target:
+          entity_id: calendar.google_kalender
+        data:
+          duration:
+            days: 7
+        response_variable: ev
+    sensor:
+      - name: "Termine Woche"
+        unique_id: termine_woche
+        state: "{{ ev['calendar.google_kalender'].events | count }}"
+        attributes:
+          text: >
+            {% set wt = ['Mo','Di','Mi','Do','Fr','Sa','So'] %}
+            {% set heute = now().strftime('%Y-%m-%d') %}
+            {% set morgen = (now() + timedelta(days=1)).strftime('%Y-%m-%d') %}
+            {% set ns = namespace(l=[]) %}
+            {% for e in ev['calendar.google_kalender'].events[:6] %}
+              {% set d = e.start[:10] %}
+              {% set tag = 'Heute' if d == heute else ('Morgen' if d == morgen else wt[as_datetime(d).weekday()] ~ ' ' ~ d[8:10] ~ '.' ~ d[5:7] ~ '.') %}
+              {% set zeit = e.start[11:16] if e.start | length > 10 else 'ganztägig' %}
+              {% set ns.l = ns.l + [tag ~ ' · ' ~ zeit ~ ' · ' ~ e.summary] %}
+            {% endfor %}
+            {{ ns.l | join('\n') if ns.l | count > 0 else 'Keine Termine in den nächsten 7 Tagen' }}
+
+  # Müllkalender (Waste Collection Schedule / Schönmackers) – nächste Abfuhr je Tonne
+  - trigger:
+      - trigger: time_pattern
+        hours: "/1"
+      - trigger: time
+        at: "00:01:00"
+      - trigger: time
+        at: "12:00:30"
+      - trigger: homeassistant
+        event: start
+    action:
+      - action: calendar.get_events
+        target:
+          entity_id: >-
+            {{ integration_entities('waste_collection_schedule')
+               | select('match', 'calendar\\.') | list }}
+        data:
+          start_date_time: "{{ today_at('00:00') }}"
+          duration:
+            days: 40
+        response_variable: muell_ev
+      - variables:
+          muell: >
+            {% set typen = {'Restabfall': 'rest', 'Bioabfall': 'bio', 'Papier': 'papier', 'Leichtverpackungen': 'gelb'} %}
+            {% set ns = namespace(d={}, l=[]) %}
+            {% for cal in (muell_ev.values() | list if muell_ev is mapping else []) %}
+              {% set ns.l = ns.l + (cal.get('events', []) | list) %}
+            {% endfor %}
+            {% for e in ns.l | sort(attribute='start') %}
+              {% for name, key in typen.items() %}
+                {% set tag = e.start[:10] %}
+                {% set tage = (strptime(tag, '%Y-%m-%d').date() - now().date()).days %}
+                {# Heutige Abfuhr gilt ab 12 Uhr als erledigt #}
+                {% if name in e.summary and key not in ns.d and tage >= 0 and not (tage == 0 and now().hour >= 12) %}
+                  {% set ns.d = ns.d | combine({key: {'datum': tag, 'tage': tage}}) %}
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+            {{ ns.d }}
+    sensor:
+      - name: "Müll Nächste Abfuhr"
+        unique_id: muell_naechste_abfuhr
+        icon: mdi:trash-can
+        unit_of_measurement: "Tage"
+        state: >
+          {% set t = muell.values() | map(attribute='tage') | list %}
+          {{ t | min if t else 'unknown' }}
+        attributes:
+          rest: "{{ muell.get('rest') }}"
+          bio: "{{ muell.get('bio') }}"
+          papier: "{{ muell.get('papier') }}"
+          gelb: "{{ muell.get('gelb') }}"
+          heute: >
+            {% set n = {'rest': 'Restabfall', 'bio': 'Bioabfall', 'papier': 'Papier', 'gelb': 'Gelbe Tonne'} %}
+            {% set ns = namespace(l=[]) %}
+            {% for k, v in muell.items() if v.tage == 0 %}{% set ns.l = ns.l + [n[k]] %}{% endfor %}
+            {{ ns.l | join(', ') }}
+          morgen: >
+            {% set n = {'rest': 'Restabfall', 'bio': 'Bioabfall', 'papier': 'Papier', 'gelb': 'Gelbe Tonne'} %}
+            {% set ns = namespace(l=[]) %}
+            {% for k, v in muell.items() if v.tage == 1 %}{% set ns.l = ns.l + [n[k]] %}{% endfor %}
+            {{ ns.l | join(', ') }}
+          text: >
+            {% set n = {'rest': '⚫ Restabfall', 'bio': '🟤 Bioabfall', 'papier': '🔵 Papier', 'gelb': '🟡 Gelbe Tonne'} %}
+            {% set wt = ['Mo','Di','Mi','Do','Fr','Sa','So'] %}
+            {% set ns = namespace(l=[]) %}
+            {% for k, v in muell.items() | sort(attribute='1.tage') %}
+              {% set d = strptime(v.datum, '%Y-%m-%d') %}
+              {% set wann = 'heute' if v.tage == 0 else ('morgen' if v.tage == 1 else 'in ' ~ v.tage ~ ' Tagen') %}
+              {% set ns.l = ns.l + [n[k] ~ ' · ' ~ wt[d.weekday()] ~ ' ' ~ d.strftime('%d.%m.') ~ ' · ' ~ wann] %}
+            {% endfor %}
+            {{ ns.l | join('\n') if ns.l else 'Keine Termine gefunden' }}
+
+  - trigger:
+      - trigger: time_pattern
+        minutes: "/5"
+      - trigger: homeassistant
+        event: start
+    action:
+      - action: recorder.get_statistics
+        data:
+          statistic_ids:
+            - sensor.keba_p30_total_energy
+          start_time: "{{ now().year - 1 }}-01-01 00:00:00"
+          period: month
+          types:
+            - change
+            - state
+        response_variable: ladung_stats
+      - variables:
+          lm: >
+            {# Manuelle Korrekturwerte (kWh) je Monat - bei neuem Monat ggf. ergänzen/anpassen #}
+            {% set korr = {'2026-07': 126.63, '2026-08': 448.66, '2026-09': 393.83, '2026-10': 113.66} %}
+            {% set d = ladung_stats['statistics'] if ladung_stats is mapping and 'statistics' in ladung_stats else ladung_stats %}
+            {% set liste = d.get('sensor.keba_p30_total_energy', []) if d is mapping else [] %}
+            {% set live = states('sensor.keba_p30_total_energy') | float(0) %}
+            {% set jetzt = now() %}
+            {% set ym_akt = '%04d-%02d' | format(jetzt.year, jetzt.month) %}
+            {% set letzter = jetzt.replace(day=1) - timedelta(days=1) %}
+            {% set ym_letzt = '%04d-%02d' | format(letzter.year, letzter.month) %}
+            {% set vorletzter = letzter.replace(day=1) - timedelta(days=1) %}
+            {% set ym_vorletzt = '%04d-%02d' | format(vorletzter.year, vorletzter.month) %}
+            {% set ns = namespace(akt=0, letzt=0, vorletzt=0, jahr=0, vorjahr=0, basis=none, m={}) %}
+            {% for b in liste %}
+              {% set ym = as_timestamp(b.start) | timestamp_custom('%Y-%m') %}
+              {% set ch = b.change | float(0) %}
+              {% set ns.m = ns.m | combine({ym: ch}) %}
+              {% if ym == ym_akt %}
+                {% set ns.akt = ch %}
+                {% set ns.basis = b.state | float(0) %}
+              {% endif %}
+              {% if ym == ym_letzt %}
+                {% set ns.letzt = ch %}
+              {% endif %}
+              {% if ym == ym_vorletzt %}
+                {% set ns.vorletzt = ch %}
+              {% endif %}
+              {% if ym[:4] | int == jetzt.year %}
+                {% set ns.jahr = ns.jahr + ch %}
+              {% endif %}
+              {% if ym[:4] | int == jetzt.year - 1 %}
+                {% set ns.vorjahr = ns.vorjahr + ch %}
+              {% endif %}
+            {% endfor %}
+            {% for key, wert in korr.items() %}
+              {% set ns.m = ns.m | combine({key: ((ns.m.get(key, 0) + wert) | round(2))}) %}
+              {% if key == ym_akt %}
+                {% set ns.akt = ns.akt + wert %}
+              {% endif %}
+              {% if key == ym_letzt %}
+                {% set ns.letzt = ns.letzt + wert %}
+              {% endif %}
+              {% if key == ym_vorletzt %}
+                {% set ns.vorletzt = ns.vorletzt + wert %}
+              {% endif %}
+              {% if key[:4] | int == jetzt.year %}
+                {% set ns.jahr = ns.jahr + wert %}
+              {% endif %}
+              {% if key[:4] | int == jetzt.year - 1 %}
+                {% set ns.vorjahr = ns.vorjahr + wert %}
+              {% endif %}
+            {% endfor %}
+            {% set zusatz = (live - ns.basis) if (ns.basis is not none and live >= ns.basis) else 0 %}
+            {% set ns.m = ns.m | combine({ym_akt: ((ns.m.get(ym_akt, 0) + zusatz) | round(2))}) %}
+            {{ {'akt': ((ns.akt + zusatz) | round(2)), 'letzt': (ns.letzt | round(2)), 'vorletzt': (ns.vorletzt | round(2)), 'jahr': ((ns.jahr + zusatz) | round(2)), 'vorjahr': (ns.vorjahr | round(2)), 'monate': ns.m} }}
+    sensor:
+      - name: "Ladung Statistik Perioden"
+        unique_id: ladung_statistik_perioden
+        unit_of_measurement: "kWh"
+        state: "{{ lm.akt }}"
+        attributes:
+          aktueller_monat: "{{ lm.akt }}"
+          letzter_monat: "{{ lm.letzt }}"
+          vorletzter_monat: "{{ lm.vorletzt }}"
+          jahr_aktuell: "{{ lm.jahr }}"
+          jahr_letztes: "{{ lm.vorjahr }}"
+          monate: "{{ lm.monate }}"
+
+  - number:
+      - name: "Rollo Wohnzimmer Feld Schliessgrad"
+        unique_id: rollo_wohnzimmer_feld_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_wohnzimmer_feld', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_wohnzimmer_feld', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_wohnzimmer_feld
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Wohnzimmer Garten Mitte Schliessgrad"
+        unique_id: rollo_wohnzimmer_garten_mitte_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_wohnzimmer_garten_mitte', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_wohnzimmer_garten_mitte', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_wohnzimmer_garten_mitte
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Wohnzimmer Garten Rechts Schliessgrad"
+        unique_id: rollo_wohnzimmer_garten_rechts_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_wohnzimmer_garten_rechts', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_wohnzimmer_garten_rechts', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_wohnzimmer_garten_rechts
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Wohnzimmer Strasse Links Schliessgrad"
+        unique_id: rollo_wohnzimmer_strasse_links_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_wohnzimmer_strasse_links', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_wohnzimmer_strasse_links', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_wohnzimmer_strasse_links
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Wohnzimmer Strasse Rechts Schliessgrad"
+        unique_id: rollo_wohnzimmer_strasse_rechts_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_wohnzimmer_strasse_rechts', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_wohnzimmer_strasse_rechts', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_wohnzimmer_strasse_rechts
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Kuche Schliessgrad"
+        unique_id: rollo_kuche_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_kuche', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_kuche', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_kuche
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Gaste Wc Schliessgrad"
+        unique_id: rollo_gaste_wc_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_gaste_wc', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_gaste_wc', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_gaste_wc
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Hwr Schliessgrad"
+        unique_id: rollo_hwr_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_hwr', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_hwr', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_hwr
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Flur Links Schliessgrad"
+        unique_id: rollo_flur_links_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_flur_links', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_flur_links', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_flur_links
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Flur Rechts Schliessgrad"
+        unique_id: rollo_flur_rechts_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_flur_rechts', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_flur_rechts', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_flur_rechts
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Badezimmer Schliessgrad"
+        unique_id: rollo_badezimmer_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_badezimmer', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_badezimmer', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_badezimmer
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Schlafzimmer Schliessgrad"
+        unique_id: rollo_schlafzimmer_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_schlafzimmer', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_schlafzimmer', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_schlafzimmer
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Kinderzimmer Clara Schliessgrad"
+        unique_id: rollo_kinderzimmer_clara_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_kinderzimmer_clara', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_kinderzimmer_clara', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_kinderzimmer_clara
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+      - name: "Rollo Kinderzimmer Paul Schliessgrad"
+        unique_id: rollo_kinderzimmer_paul_schliessgrad
+        unit_of_measurement: "%"
+        icon: mdi:window-shutter
+        min: 0
+        max: 100
+        step: 1
+        availability: "{{ state_attr('cover.rollo_kinderzimmer_paul', 'current_position') is number }}"
+        state: "{{ (100 - state_attr('cover.rollo_kinderzimmer_paul', 'current_position') | float(0)) | round(0) | int }}"
+        set_value:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.rollo_kinderzimmer_paul
+            data:
+              position: "{{ 100 - (value | int) }}"
+
+
+sensor:
+  - platform: integration
+    source: sensor.kosten_dynamisch_pro_stunde
+    name: "Kosten dynamisch gesamt"
+    unique_id: kosten_dynamisch_gesamt
+    unit_time: h
+    round: 3
+    method: left
+    max_sub_interval:
+      minutes: 5
+  - platform: integration
+    source: sensor.kosten_fix_pro_stunde
+    name: "Kosten fix gesamt"
+    unique_id: kosten_fix_gesamt
+    unit_time: h
+    round: 3
+    method: left
+    max_sub_interval:
+      minutes: 5
+  - platform: statistics
+    name: "Ladung kWh 24h Statistik"
+    unique_id: ladung_kwh_24h_statistik
+    entity_id: sensor.keba_p30_total_energy
+    state_characteristic: change
+    max_age:
+      hours: 24
+    sampling_size: 25000
+    keep_last_sample: true
+    precision: 2
+
+  - platform: integration
+    source: sensor.verdienst_einspeisung_pro_stunde
+    name: "Verdienst Einspeisung gesamt"
+    unique_id: verdienst_einspeisung_gesamt
+    unit_time: h
+    round: 3
+    method: left
+    max_sub_interval:
+      minutes: 5
+  - platform: integration
+    source: sensor.einspeisung_leistung_kw
+    name: "Einspeisung gesamt kWh"
+    unique_id: einspeisung_gesamt_kwh
+    unit_time: h
+    round: 3
+    method: left
+    max_sub_interval:
+      minutes: 5
+
+
+utility_meter:
+  klima_kwh_jahr:
+    source: sensor.garage_klima_energie
+    cycle: yearly
+  klima_kwh_monat:
+    source: sensor.garage_klima_energie
+    cycle: monthly
+  kosten_dyn_tag:
+    source: sensor.kosten_dynamisch_gesamt
+    cycle: daily
+  kosten_dyn_woche:
+    source: sensor.kosten_dynamisch_gesamt
+    cycle: weekly
+  kosten_dyn_monat:
+    source: sensor.kosten_dynamisch_gesamt
+    cycle: monthly
+  kosten_fix_tag:
+    source: sensor.kosten_fix_gesamt
+    cycle: daily
+  kosten_fix_woche:
+    source: sensor.kosten_fix_gesamt
+    cycle: weekly
+  kosten_fix_monat:
+    source: sensor.kosten_fix_gesamt
+    cycle: monthly
+  ladung_kwh_tag:
+    source: sensor.keba_p30_total_energy
+    cycle: daily
+  verdienst_tag:
+    source: sensor.verdienst_einspeisung_gesamt
+    cycle: daily
+  verdienst_woche:
+    source: sensor.verdienst_einspeisung_gesamt
+    cycle: weekly
+  verdienst_monat:
+    source: sensor.verdienst_einspeisung_gesamt
+    cycle: monthly
+  einspeisung_kwh_tag:
+    source: sensor.einspeisung_gesamt_kwh
+    cycle: daily
+  einspeisung_kwh_woche:
+    source: sensor.einspeisung_gesamt_kwh
+    cycle: weekly
+  einspeisung_kwh_monat:
+    source: sensor.einspeisung_gesamt_kwh
+    cycle: monthly
+  # netzbezug_kwh_jahr / einspeisung_jahr_kwh: entfernt am 09.11.2026 (Sprung nach Stromausfall).
+  # Ersetzt durch Template-Sensoren "Netzbezug kWh Jahr" / "Einspeisung Jahr kWh" aus den Kostal-Jahreswerten.

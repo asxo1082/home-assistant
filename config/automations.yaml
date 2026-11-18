@@ -1,0 +1,433 @@
+- id: '1791281393453'
+  alias: 'Wallbox: Modus-Steuerung KEBA'
+  description: >-
+    Hauptschalter: "Automatik Aus" = Wallbox frei mit 16 A (einmalig beim Umschalten,
+    danach greift HA nicht mehr ein). "Stop / Sperren" = Wallbox gesperrt.
+    "Automatik An" = der Lade-Modus entscheidet. Der Zielstrom wird an einer Stelle berechnet.
+  triggers:
+  - trigger: state
+    entity_id: input_select.energie_modus
+    id: hauptschalter
+  - trigger: state
+    entity_id:
+    - input_select.wallbox
+    - binary_sensor.pv_laden_freigabe
+    - binary_sensor.tibber_laden_freigabe
+    - input_boolean.tibber_tarif_aktiv
+    - input_number.sofort_laden_kw
+    id: sonstige
+  - trigger: time_pattern
+    minutes: /1
+    id: sonstige
+  - trigger: homeassistant
+    event: start
+    id: sonstige
+  variables:
+    hauptschalter: "{{ states('input_select.energie_modus') }}"
+    ziel_ampere: >-
+      {% set m = states('input_select.wallbox') %}
+      {% set pv_ok = is_state('binary_sensor.pv_laden_freigabe', 'on') %}
+      {% set tib_ok = is_state('binary_sensor.tibber_laden_freigabe', 'on') %}
+      {% set tarif = is_state('input_boolean.tibber_tarif_aktiv', 'on') %}
+      {% set a_max = [16, [6, (states('input_number.sofort_laden_kw') | float(11) * 1000 / 690) | round(0) | int] | max] | min %}
+      {% set a_pv = [16, [6, (states('sensor.pv_ueberschuss_wallbox') | float(0) / 690) | int] | max] | min %}
+      {% if m == 'Sofort laden (Max 11 kW)' %}{{ a_max }}
+      {% elif m == 'PV-Ueberschuss' %}{{ a_pv if pv_ok else 0 }}
+      {% elif m == 'Smart (Tibber Tiefpreis)' %}{{ a_max if tib_ok else 0 }}
+      {% elif m == 'Automatisch' %}{{ a_pv if pv_ok else (a_max if (tarif and tib_ok) else 0) }}
+      {% else %}0{% endif %}
+  actions:
+  - choose:
+    - alias: Automatik Aus – Wallbox einmalig freigeben
+      conditions:
+      - "{{ hauptschalter == 'Automatik Aus' and trigger.id == 'hauptschalter' }}"
+      sequence:
+      - action: keba.set_current
+        data:
+          current: 16
+      - action: keba.enable
+    - alias: Stop / Sperren – Wallbox gesperrt
+      conditions:
+      - "{{ hauptschalter == 'Stop / Sperren' }}"
+      sequence:
+      - action: keba.disable
+    - alias: Automatik An – laden
+      conditions:
+      - "{{ hauptschalter == 'Automatik An' and (ziel_ampere | int(0)) >= 6 }}"
+      sequence:
+      - action: keba.set_current
+        data:
+          current: "{{ ziel_ampere | int }}"
+      - action: keba.enable
+    - alias: Automatik An – nicht laden
+      conditions:
+      - "{{ hauptschalter == 'Automatik An' }}"
+      sequence:
+      - action: keba.disable
+  mode: restart
+- id: '1791456198847'
+  alias: 'Speicher: Steuerung Kostal'
+  description: >-
+    Schreibt Register 1034 (Lade-/Entladesollwert, negativ = laden).
+    Freigabe = einmalig 0 W schreiben, danach nichts mehr, damit der Kostal nach
+    seiner Rückfallzeit in die interne Regelung zurückgeht. Hold und Netzladen
+    werden alle 30 s erneuert. Netzladen schaltet sich am Ziel-Ladestand selbst ab.
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_select.energie_modus
+    - input_select.batterie_modus
+    - input_boolean.entladeschutz_autoladen
+    id: wechsel
+  - trigger: homeassistant
+    event: start
+    id: wechsel
+  - trigger: time_pattern
+    seconds: /30
+    id: takt
+  variables:
+    hauptschalter: "{{ states('input_select.energie_modus') }}"
+    modus: "{{ states('input_select.batterie_modus') }}"
+    soc_ok: "{{ states('sensor.plenticoreseelen_battery_soc') | is_number }}"
+    soc: "{{ states('sensor.plenticoreseelen_battery_soc') | float(0) }}"
+    soc_max: "{{ states('input_number.netzladen_max_soc') | float(80) }}"
+    auto_laedt: "{{ states('sensor.keba_p30_charging_power') | float(0) > 1 }}"
+    schutz: "{{ is_state('input_boolean.entladeschutz_autoladen', 'on') }}"
+    werte:
+      '500':
+      - 0
+      - 50170
+      '1000':
+      - 0
+      - 50298
+      '1500':
+      - 32768
+      - 50363
+      '2000':
+      - 0
+      - 50426
+      '2500':
+      - 16384
+      - 50460
+    ladewert: "{{ werte.get(states('input_select.netzladeleistung'), werte['1000']) }}"
+  actions:
+  - choose:
+    - alias: Freigabe – HA greift nicht ein
+      conditions:
+      - >-
+        {{ hauptschalter != 'Automatik An'
+           or (modus == 'Automatik' and not (schutz and auto_laedt)) }}
+      sequence:
+      - if:
+        - "{{ trigger.id == 'wechsel' }}"
+        then:
+        - action: modbus.write_register
+          continue_on_error: true
+          data:
+            hub: kostal
+            slave: 71
+            address: 1034
+            value:
+            - 0
+            - 0
+    - alias: Entladeschutz – Auto lädt, Batterie halten
+      conditions:
+      - "{{ modus == 'Automatik' and schutz and auto_laedt }}"
+      sequence:
+      - action: modbus.write_register
+        continue_on_error: true
+        data:
+          hub: kostal
+          slave: 71
+          address: 1034
+          value:
+          - 0
+          - 0
+    - alias: Entladung sperren (Hold)
+      conditions:
+      - "{{ modus == 'Entladung sperren (Hold)' }}"
+      sequence:
+      - action: modbus.write_register
+        continue_on_error: true
+        data:
+          hub: kostal
+          slave: 71
+          address: 1034
+          value:
+          - 0
+          - 0
+    - alias: Netzladen – Ladestand unbekannt, sicherheitshalber halten
+      conditions:
+      - "{{ modus == 'Netzladen erzwingen' and not soc_ok }}"
+      sequence:
+      - action: modbus.write_register
+        continue_on_error: true
+        data:
+          hub: kostal
+          slave: 71
+          address: 1034
+          value:
+          - 0
+          - 0
+    - alias: Netzladen – laden
+      conditions:
+      - "{{ modus == 'Netzladen erzwingen' and soc < soc_max }}"
+      sequence:
+      - action: modbus.write_register
+        continue_on_error: true
+        data:
+          hub: kostal
+          slave: 71
+          address: 1034
+          value: "{{ ladewert }}"
+    - alias: Netzladen – Ziel erreicht, zurück auf Automatik
+      conditions:
+      - "{{ modus == 'Netzladen erzwingen' }}"
+      sequence:
+      - action: modbus.write_register
+        continue_on_error: true
+        data:
+          hub: kostal
+          slave: 71
+          address: 1034
+          value:
+          - 0
+          - 0
+      - action: notify.mobile_app_iphone_andreas
+        continue_on_error: true
+        data:
+          title: "\U0001F50B Netzladen beendet"
+          message: "Ladestand {{ soc | round(0) | int }} % erreicht. Speicher-Modus steht wieder auf Automatik."
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.batterie_modus
+        data:
+          option: Automatik
+  mode: restart
+- id: '1792486749788'
+  alias: Rauchmelder Wohnzimmer Alarm
+  description: Meldet Rauchalarm sofort auf das iPhone von Andreas
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.co2_melder_wohnzimmer_rauch
+    to: 'on'
+  actions:
+  - action: notify.mobile_app_iphone_andreas
+    data:
+      title: "\U0001F525 RAUCHALARM Wohnzimmer"
+      message: Der Rauchmelder im Wohnzimmer hat ausgelöst!
+      data:
+        push:
+          sound:
+            name: default
+            critical: 1
+            volume: 1
+        tag: rauchalarm
+        url: /dashboard-raume/zuhause
+  mode: single
+- id: '1793042837891'
+  alias: Google Kalender aktualisieren
+  triggers:
+  - trigger: time_pattern
+    minutes: /30
+  actions:
+  - action: homeassistant.update_entity
+    target:
+      entity_id: calendar.google_kalender
+  mode: single
+- id: '1793133043445'
+  alias: Schule Erinnerung Vorabend
+  description: Erinnert am Vorabend, wenn Schwimm-, Sport- oder Kunstsachen mit müssen
+  triggers:
+  - trigger: time
+    at: '19:00:00'
+  conditions:
+  - condition: template
+    value_template: "{% from 'schule.jinja' import naechster_schultag, mitbringen
+      %} {% set d = naechster_schultag() | trim %} {{ d == (now() + timedelta(days=1)).strftime('%Y-%m-%d')\n
+      \  and (mitbringen(as_datetime(d).weekday()) | trim) != '' }}"
+  actions:
+  - action: notify.mobile_app_iphone_andreas
+    data:
+      title: Schule morgen
+      message: '{% from ''schule.jinja'' import naechster_schultag, mitbringen %}
+        {{ mitbringen(as_datetime(naechster_schultag() | trim).weekday()) }}'
+  mode: single
+- id: '1793630793881'
+  alias: Backup fehlgeschlagen
+  description: Meldet, wenn das automatische Backup fehlschlägt
+  triggers:
+  - trigger: state
+    entity_id: event.backup_automatic_backup
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.to_state.attributes.event_type == ''failed'' }}'
+  actions:
+  - action: notify.mobile_app_iphone_andreas
+    data:
+      title: Backup fehlgeschlagen ⚠️
+      message: 'Grund: {{ trigger.to_state.attributes.failed_reason or ''unbekannt''
+        }}. Bitte unter Einstellungen → System → Backups prüfen.'
+  mode: single
+- id: '1793634512729'
+  alias: Müll Erinnerung Vorabend
+  description: Erinnert am Vorabend um 18 Uhr an die Abfuhr
+  triggers:
+  - trigger: time
+    at: '18:00:00'
+  conditions:
+  - condition: template
+    value_template: '{{ state_attr(''sensor.mull_nachste_abfuhr'', ''morgen'') not
+      in [none, ''''] }}'
+  actions:
+  - action: notify.mobile_app_iphone_andreas
+    data:
+      title: "Müll rausstellen \U0001F5D1️"
+      message: 'Morgen wird abgeholt: {{ state_attr(''sensor.mull_nachste_abfuhr'',
+        ''morgen'') }}'
+  mode: single
+- id: '1793713022826'
+  alias: Raspberry UniFi Netzwerk Controller Überwachung
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.raspberry_15
+    to: 'off'
+    for: 00:02:00
+    id: aus
+  - trigger: state
+    entity_id: binary_sensor.raspberry_15
+    from: 'off'
+    to: 'on'
+    id: an
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: aus
+      sequence:
+      - action: notify.mobile_app_iphone_andreas
+        data:
+          title: ⚠️ Raspberry UniFi Netzwerk Controller offline
+          message: Antwortet seit 2 Minuten nicht mehr.
+          data:
+            push:
+              interruption-level: time-sensitive
+            ttl: 0
+            priority: high
+    - conditions:
+      - condition: trigger
+        id: an
+      - condition: template
+        value_template: '{{ (now() - trigger.from_state.last_changed).total_seconds()
+          > 120 }}'
+      sequence:
+      - action: notify.mobile_app_iphone_andreas
+        data:
+          title: ✅ Raspberry UniFi Netzwerk Controller wieder online
+          message: War {{ ((now() - trigger.from_state.last_changed) .total_seconds()
+            / 60) | round(0) | int }} Minuten weg.
+  mode: queued
+- id: '1793713041376'
+  alias: Access Points Überwachung
+  triggers:
+  - trigger: state
+    entity_id:
+    - sensor.ap_wohnzimmer_zustand
+    - sensor.ap_hwr_zustand
+    - sensor.ap_gartenhaus_zustand
+    - sensor.ap_dachboden_zustand
+    - sensor.ap_garage_zustand
+    to:
+    - unavailable
+    - unknown
+    for: 00:02:00
+    id: aus
+  - trigger: state
+    entity_id:
+    - sensor.ap_wohnzimmer_zustand
+    - sensor.ap_hwr_zustand
+    - sensor.ap_gartenhaus_zustand
+    - sensor.ap_dachboden_zustand
+    - sensor.ap_garage_zustand
+    from:
+    - unavailable
+    - unknown
+    not_to:
+    - unavailable
+    - unknown
+    id: an
+  conditions:
+  - condition: state
+    entity_id: binary_sensor.raspberry_15
+    state: 'on'
+    for: 00:05:00
+  actions:
+  - variables:
+      ap: '{{ trigger.to_state.name | replace('' Zustand'','''') }}'
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: aus
+      sequence:
+      - action: notify.mobile_app_iphone_andreas
+        data:
+          title: ⚠️ {{ ap }} offline
+          message: Seit 2 Minuten nicht erreichbar.
+          data:
+            push:
+              interruption-level: time-sensitive
+            ttl: 0
+            priority: high
+    - conditions:
+      - condition: trigger
+        id: an
+      - condition: template
+        value_template: '{{ (now() - trigger.from_state.last_changed).total_seconds()
+          > 120 }}'
+      sequence:
+      - action: notify.mobile_app_iphone_andreas
+        data:
+          title: ✅ {{ ap }} wieder online
+          message: War {{ ((now() - trigger.from_state.last_changed) .total_seconds()
+            / 60) | round(0) | int }} Minuten weg.
+  mode: queued
+- id: '1795000310001'
+  alias: 'Kostal: Störungsmeldung'
+  description: Push bei Kostal-Störung, tägliche Erinnerung um 8 Uhr solange sie anhält, Entwarnung wenn behoben
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.kostal_storung
+    to: 'on'
+    id: an
+  - trigger: time
+    at: 08:00:00
+    id: erinnerung
+  - trigger: state
+    entity_id: binary_sensor.kostal_storung
+    from: 'on'
+    to: 'off'
+    id: behoben
+  actions:
+  - choose:
+    - conditions:
+      - "{{ trigger.id in ['an', 'erinnerung'] and is_state('binary_sensor.kostal_storung', 'on') }}"
+      sequence:
+      - action: notify.mobile_app_iphone_andreas
+        data:
+          title: ⚠️ Kostal – Störung
+          message: "{{ state_attr('binary_sensor.kostal_storung', 'gruende') }}"
+          data:
+            tag: kostal_stoerung
+            url: /dashboard-energie/live
+            push:
+              interruption-level: time-sensitive
+    - conditions:
+      - "{{ trigger.id == 'behoben' }}"
+      sequence:
+      - action: notify.mobile_app_iphone_andreas
+        data:
+          title: ✅ Kostal wieder in Ordnung
+          message: Die Störung ist behoben.
+          data:
+            tag: kostal_stoerung
+  mode: queued

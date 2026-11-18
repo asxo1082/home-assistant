@@ -1,0 +1,18 @@
+# Zugangsdaten und Laufzeitdaten von Home Assistant – niemals ins Repository
+secrets.yaml
+.storage/
+.cloud/
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.log.*
+ip_bans.yaml
+known_devices.yaml
+backups/
+tts/
+deps/
+ssl/
+*.pem
+*.key
+.HA_VERSION

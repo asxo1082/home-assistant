@@ -1,0 +1,90 @@
+alias: Gute Nacht
+mode: single
+sequence:
+  - action: homeassistant.turn_off
+    continue_on_error: true
+    target:
+      entity_id:
+        - light.gastewc
+        - light.kinderzimmer
+        - switch.shelly2pmg3_8cbfea97b4e0_output_0
+        - switch.shelly2pmg3_8cbfea97b4e0_output_1
+        - light.shelly_stehlampe_gross_2   # Stehlampe groß – geht bei Gute Nacht aus
+  - action: cover.close_cover
+    continue_on_error: true
+    target:
+      entity_id:
+        - cover.rollo_badezimmer
+        - cover.rollo_flur_links
+        - cover.rollo_flur_rechts
+        - cover.rollo_gaste_wc
+        - cover.rollo_hwr
+        - cover.rollo_kinderzimmer_clara
+        - cover.rollo_kinderzimmer_paul
+        - cover.rollo_kuche
+        - cover.rollo_schlafzimmer
+        - cover.rollo_wohnzimmer_feld
+        - cover.rollo_wohnzimmer_garten_mitte
+        - cover.rollo_wohnzimmer_garten_rechts
+        - cover.rollo_wohnzimmer_strasse_links
+        - cover.rollo_wohnzimmer_strasse_rechts
+  - action: alarm_control_panel.alarm_arm_home
+    continue_on_error: true
+    target:
+      entity_id: alarm_control_panel.alpen_alarm
+  - action: switch.turn_on
+    continue_on_error: true
+    target:
+      entity_id:
+        - switch.garage_aussenbeleuchtung
+        - switch.shelly1_e89f6d867192
+        - switch.beleuchtung_kugelahorn_steckdose_1
+  - action: light.turn_on
+    continue_on_error: true
+    target:
+      entity_id: light.licht_terrasse_rechts
+    data:
+      brightness_pct: 53
+  - action: light.turn_on
+    continue_on_error: true
+    target:
+      entity_id:
+        - light.licht_mauer_links
+        - light.licht_mauer_rechts
+    data:
+      brightness_pct: 40
+      color_temp_kelvin: 2700
+  - action: light.turn_on
+    continue_on_error: true
+    target:
+      entity_id:
+        - light.aussenbeleuchtung_hutte_li
+        - light.aussenbeleuchtung_hutte_re
+    data:
+      brightness_pct: 62
+      color_temp_kelvin: 4000
+  - action: light.turn_on
+    continue_on_error: true
+    target:
+      entity_id: light.shelly_stehlampe_gross   # nur Stehlampe klein als Nachtlicht
+    data:
+      brightness_pct: 15
+  - delay: "00:00:10"
+  - variables:
+      offen: >-
+        {% set ns = namespace(o=[]) %}
+        {% for s in states.binary_sensor if s.attributes.get('device_class') in ['window', 'door', 'garage_door', 'opening'] and s.state == 'on' %}
+        {% set ns.o = ns.o + [s.name | replace('Sensor ', '')] %}
+        {% endfor %}
+        {{ ns.o | join(', ') }}
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ not is_state('alarm_control_panel.alpen_alarm', 'armed_home') or offen != '' or is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage', 'open') }}
+        sequence:
+          - action: persistent_notification.create
+            data:
+              title: Gute Nacht
+              message: >-
+                {% if not is_state('alarm_control_panel.alpen_alarm', 'armed_home') %}Die Alarmanlage ist NICHT scharf. {% endif %}{% if offen != '' %}Offen: {{ offen }}. {% endif %}{% if is_state('cover.smart_garage_door_2006048876520336100248e1e91e491b_garage', 'open') %}Das Garagentor ist noch offen.{% endif %}

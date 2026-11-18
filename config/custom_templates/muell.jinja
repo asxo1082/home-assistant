@@ -1,0 +1,35 @@
+{# Müll-Helfer für Dashboards – liest sensor.mull_nachste_abfuhr #}
+{# Ablage: /config/custom_templates/muell.jinja, danach Aktion homeassistant.reload_custom_templates #}
+
+{% macro tage_text(t) -%}
+{%- set t = t | int(-1) -%}
+{{ 'heute' if t == 0 else ('morgen' if t == 1 else 'in ' ~ t ~ ' Tagen') }}
+{%- endmacro %}
+
+{# Zeile für eine Tonne: k = rest | bio | papier | gelb #}
+{% macro zeile(k) -%}
+{%- set a = state_attr('sensor.mull_nachste_abfuhr', k) -%}
+{%- if a and a.tage is defined -%}
+{%- set d = as_datetime(a.datum | string, none) -%}
+{{ tage_text(a.tage) }} · {{ d.strftime('%d.%m.') if d else a.datum }}
+{%- else -%}kein Termin{%- endif -%}
+{%- endmacro %}
+
+{# Tage bis zur Abfuhr einer Tonne als Zahl (999 = unbekannt) #}
+{% macro tage(k) -%}
+{%- set a = state_attr('sensor.mull_nachste_abfuhr', k) -%}
+{{ a.tage | int(999) if a and a.tage is defined else 999 }}
+{%- endmacro %}
+
+{# Nächste Abfuhr als Kurztext, z. B. "Biomüll in 9 Tagen" #}
+{% macro naechste() -%}
+{%- set namen = {'rest': 'Restmüll', 'bio': 'Biomüll', 'papier': 'Papier', 'gelb': 'Gelbe Tonne'} -%}
+{%- set ns = namespace(n='', t=999) -%}
+{%- for k in namen -%}
+  {%- set a = state_attr('sensor.mull_nachste_abfuhr', k) -%}
+  {%- if a and a.tage is defined and a.tage | int(999) < ns.t -%}
+    {%- set ns.t = a.tage | int(999) -%}{%- set ns.n = namen[k] -%}
+  {%- endif -%}
+{%- endfor -%}
+{{ ns.n ~ ' ' ~ tage_text(ns.t) if ns.n else 'Müll: kein Termin' }}
+{%- endmacro %}

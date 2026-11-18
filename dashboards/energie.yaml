@@ -1,0 +1,1738 @@
+views:
+  - title: Live
+    path: live
+    icon: mdi:flash
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Jetzt
+            heading_style: title
+            icon: mdi:flash
+            grid_options:
+              columns: full
+          - type: custom:mushroom-template-card
+            entity: binary_sensor.kostal_storung
+            primary: >-
+              {% set s = states('binary_sensor.kostal_storung') %}{{
+              'Kostal – Störung' if s == 'on' else ('Kostal – alles in Ordnung'
+              if s == 'off' else 'Kostal – Überwachung nicht verfügbar') }}
+            secondary: >-
+              {% set s = states('binary_sensor.kostal_storung') %}{% if s ==
+              'on' %}{{ state_attr('binary_sensor.kostal_storung', 'gruende')
+              }}{% elif s == 'off' %}Wechselrichter erreichbar, Werte plausibel{%
+              else %}Sensor binary_sensor.kostal_storung prüfen{% endif %}
+            multiline_secondary: true
+            icon: >-
+              {% set s = states('binary_sensor.kostal_storung') %}{{
+              'mdi:alert-octagon' if s == 'on' else ('mdi:check-circle' if s ==
+              'off' else 'mdi:help-circle') }}
+            icon_color: >-
+              {% set s = states('binary_sensor.kostal_storung') %}{{ 'red' if s
+              == 'on' else ('green' if s == 'off' else 'grey') }}
+            layout: horizontal
+            fill_container: true
+            grid_options:
+              columns: full
+            tap_action:
+              action: more-info
+            card_mod:
+              style: >
+                ha-card { border-radius: 22px;
+                  {% set s = states('binary_sensor.kostal_storung') %}{% set rgb = '244,67,54' if s == 'on' else ('76,175,80' if s == 'off' else '120,144,156') %}
+                  border: {{ '2px solid rgba(244,67,54,.7)' if s == 'on' else 'none' }};
+                  background: linear-gradient(135deg, rgba({{ rgb }},.36), rgba({{ rgb }},.08)); }
+          - type: grid
+            columns: 2
+            square: false
+            grid_options:
+              columns: full
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Solar
+                secondary: >-
+                  {% set pv = states('sensor.pv_erzeugung') | float(0) %}{{
+                  (pv/1000) | round(1) }} kW
+                icon: mdi:solar-power
+                icon_color: >-
+                  {% set pv = states('sensor.pv_erzeugung') | float(0) %}{{
+                  'amber' if pv > 50 else 'disabled' }}
+                layout: vertical
+                fill_container: true
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    110px;
+                      {% set pv = states('sensor.pv_erzeugung') | float(0) %}{% set rgb = '255,193,7' if pv > 50 else '120,144,156' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},.36), rgba({{ rgb }},.08)); }
+                tap_action:
+                  action: none
+              - type: custom:mushroom-template-card
+                primary: Netz
+                secondary: >-
+                  {% set g = states('sensor.plenticoreseelen_grid_power') |
+                  float(0) %}{{ 'Bezug ' ~ ((g/1000) | round(1)) ~ ' kW' if g >
+                  50 else ('Einspeisung ' ~ ((-g/1000) | round(1)) ~ ' kW' if g
+                  < -50 else 'ausgeglichen') }}
+                icon: mdi:transmission-tower
+                icon_color: >-
+                  {% set g = states('sensor.plenticoreseelen_grid_power') |
+                  float(0) %}{{ 'red' if g > 50 else ('green' if g < -50 else
+                  'blue') }}
+                layout: vertical
+                fill_container: true
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    110px;
+                      {% set g = states('sensor.plenticoreseelen_grid_power') | float(0) %}{% set rgb = '244,67,54' if g > 50 else ('76,175,80' if g < -50 else '33,150,243') %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},.36), rgba({{ rgb }},.08)); }
+                tap_action:
+                  action: none
+              - type: custom:mushroom-template-card
+                primary: Batterie
+                secondary: >-
+                  {% set s = states('sensor.plenticoreseelen_battery_soc') |
+                  float(0) %}{% set p =
+                  states('sensor.plenticoreseelen_battery_power') | float(0)
+                  %}{{ s | round(0) | int }} % · {{ 'lädt' if p < -50 else
+                  ('entlädt' if p > 50 else 'bereit') }}
+                icon: mdi:battery-high
+                icon_color: >-
+                  {% set s = states('sensor.plenticoreseelen_battery_soc') |
+                  float(0) %}{% set p =
+                  states('sensor.plenticoreseelen_battery_power') | float(0)
+                  %}{{ 'red' if s < 20 else ('amber' if s < 50 else 'green') }}
+                layout: vertical
+                fill_container: true
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    110px;
+                      {% set s = states('sensor.plenticoreseelen_battery_soc') | float(0) %}{% set rgb = '244,67,54' if s < 20 else ('255,160,0' if s < 50 else '76,175,80') %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},.36), rgba({{ rgb }},.08)); }
+                tap_action:
+                  action: none
+              - type: custom:mushroom-template-card
+                primary: Strompreis
+                secondary: >-
+                  {% set fix =
+                  is_state('input_boolean.tibber_tarif_aktiv','off') %}{% set p
+                  = (states('sensor.preis_netzbezug_fix') if fix else
+                  states('sensor.strompreis_tibber_berechnet')) | float(0) %}{{
+                  (p*100) | round(1) | string | replace('.', ',') }} ct/kWh · {{
+                  'Fixtarif' if fix else ('günstig' if
+                  is_state('binary_sensor.tibber_laden_freigabe','on') else
+                  'normal') }}
+                icon: mdi:currency-eur
+                icon_color: >-
+                  {{ 'blue' if
+                  is_state('input_boolean.tibber_tarif_aktiv','off') else
+                  ('green' if
+                  is_state('binary_sensor.tibber_laden_freigabe','on') else
+                  'blue') }}
+                layout: vertical
+                fill_container: true
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    110px;
+                      {% set rgb = '76,175,80' if (not is_state('input_boolean.tibber_tarif_aktiv','off') and is_state('binary_sensor.tibber_laden_freigabe','on')) else '33,150,243' %}
+                      background: linear-gradient(135deg, rgba({{ rgb }},.36), rgba({{ rgb }},.08)); }
+                tap_action:
+                  action: none
+          - type: vertical-stack
+            cards:
+              - type: custom:power-flow-card-plus
+                entities:
+                  battery:
+                    entity: sensor.plenticoreseelen_battery_power
+                    state_of_charge: sensor.plenticoreseelen_battery_soc
+                    show_state_of_charge: true
+                    state_of_charge_unit_white_space: true
+                    display_state: two_way
+                    invert_state: false
+                    display_zero: true
+                  grid:
+                    entity: sensor.plenticoreseelen_grid_power
+                    display_state: two_way
+                    invert_state: false
+                  solar:
+                    entity: sensor.plenticoreseelen_sum_power_of_all_pv_dc_inputs
+                    display_zero_state: true
+                    display_zero: true
+                    invert_state: false
+                    use_metadata: false
+                    icon: mdi:solar-power-variant
+                    name: PV-Haus
+                  individual:
+                    - entity: sensor.keba_p30_charging_power
+                      name: Wallbox
+                    - entity: sensor.garage_klima_leistung
+                      name: Garage + Klima
+                    - entity: sensor.vorgarten_leistung
+                      name: Vorgarten
+                      color_value: true
+                    - entity: sensor.ecoflow_powerstream_solarleistung
+                      name: PV-EcoFlow
+                      inverted_animation: true
+                      icon: mdi:solar-power-variant
+                  home:
+                    entity: sensor.plenticoreseelen_home_power
+                    override_state: true
+                    subtract_individual: false
+                    hide: false
+                    circle_animation: true
+                    color_value: true
+                    color_icon: true
+                clickable_entities: true
+                display_zero_lines:
+                  mode: show
+                  transparency: 50
+                  grey_color:
+                    - 189
+                    - 189
+                    - 189
+                use_new_flow_rate_model: true
+                base_decimals: 0
+                kilo_decimals: 1
+                min_flow_rate: 0.75
+                max_flow_rate: 6
+                max_expected_power: 11000
+                min_expected_power: 0.01
+                kilo_threshold: 1000
+                mega_threshold: 1000000
+                sort_individual_devices: false
+                dashboard_link: /energy
+                title: Live
+              - type: custom:apexcharts-card
+                header:
+                  show: true
+                  title: Verlauf
+                  show_states: false
+                graph_span: 24h
+                span:
+                  start: day
+                update_interval: 5min
+                apex_config:
+                  chart:
+                    height: 320
+                    stacked: true
+                  xaxis:
+                    labels:
+                      datetimeUTC: false
+                      format: HH
+                  legend:
+                    position: bottom
+                all_series_config:
+                  group_by:
+                    func: avg
+                    duration: 5min
+                    fill: last
+                  float_precision: 2
+                  show:
+                    legend_value: false
+                yaxis:
+                  - id: kw
+                    min: 0
+                    decimals: 1
+                    apex_config:
+                      title:
+                        text: kW
+                      forceNiceScale: true
+                  - id: soc
+                    opposite: true
+                    min: 0
+                    max: 100
+                    decimals: 0
+                    apex_config:
+                      title:
+                        text: '%'
+                series:
+                  - entity: sensor.plenticoreseelen_home_power_from_grid
+                    name: Netzbezug
+                    type: area
+                    yaxis_id: kw
+                    color: '#D0D0D0'
+                    opacity: 0.8
+                    stroke_width: 0
+                    transform: return x / 1000;
+                  - entity: sensor.plenticoreseelen_home_power_from_pv
+                    name: Direktnutzung
+                    type: area
+                    yaxis_id: kw
+                    color: '#8BC34A'
+                    opacity: 0.85
+                    stroke_width: 0
+                    transform: return x / 1000;
+                  - entity: sensor.plenticoreseelen_home_power_from_battery
+                    name: Batterieentladung
+                    type: area
+                    yaxis_id: kw
+                    color: '#4A90C2'
+                    opacity: 0.85
+                    stroke_width: 0
+                    transform: return x / 1000;
+                  - entity: sensor.plenticoreseelen_pv_to_battery_power
+                    name: Batterieladung
+                    type: area
+                    yaxis_id: kw
+                    color: '#8EDDFF'
+                    opacity: 0.85
+                    stroke_width: 0
+                    transform: return x / 1000;
+                  - entity: sensor.plenticoreseelen_grid_power
+                    name: Einspeisung
+                    type: area
+                    yaxis_id: kw
+                    color: '#FFC857'
+                    opacity: 0.9
+                    stroke_width: 0
+                    transform: 'return x < 0 ? -x / 1000 : 0;'
+                  - entity: sensor.plenticoreseelen_home_power
+                    name: Verbrauch
+                    type: line
+                    yaxis_id: kw
+                    color: '#7A7A7A'
+                    stroke_width: 2.5
+                    transform: return x / 1000;
+                  - entity: sensor.plenticoreseelen_battery_soc
+                    name: Ladezustand (SoC)
+                    type: line
+                    yaxis_id: soc
+                    color: '#8E7CC3'
+                    stroke_width: 2.5
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: Strompreis
+            heading_style: title
+            icon: mdi:currency-eur
+            grid_options:
+              columns: full
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Strompreis heute und morgen
+              show_states: false
+            graph_span: 48h
+            span:
+              start: day
+            now:
+              show: true
+              label: Jetzt
+            apex_config:
+              chart:
+                height: 280
+              xaxis:
+                labels:
+                  datetimeUTC: false
+              yaxis:
+                decimalsInFloat: 2
+            series:
+              - entity: sensor.nord_pool_preise_verlauf
+                name: Börsenpreis
+                type: line
+                curve: stepline
+                stroke_width: 2
+                extend_to: false
+                show:
+                  legend_value: false
+                data_generator: >
+                  const a = (entity.attributes.heute ||
+                  []).concat(entity.attributes.morgen || []);
+
+                  return a.map(e => [e[0], e[1]]);
+              - entity: sensor.nord_pool_preise_verlauf
+                name: Gesamtpreis (berechnet)
+                type: line
+                curve: stepline
+                stroke_width: 2
+                extend_to: false
+                show:
+                  legend_value: false
+                data_generator: >
+                  const a = (entity.attributes.heute ||
+                  []).concat(entity.attributes.morgen || []);
+
+                  return a.map(e => [e[0], e[2]]);
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Sonne
+            heading_style: title
+            icon: mdi:weather-sunny
+            grid_options:
+              columns: full
+          - type: custom:horizon-card
+            moon: true
+            fields:
+              sunrise: true
+              sunset: true
+              dawn: true
+              noon: true
+              dusk: true
+              azimuth: true
+              elevation: true
+              moonrise: true
+              moonset: true
+              moon_phase: true
+            language: de
+            time_format: 24
+            grid_options:
+              columns: full
+    background:
+      opacity: 40
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+    badges: []
+  - title: Heute
+    path: heute
+    icon: mdi:calendar-today
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Heute
+            heading_style: title
+            icon: mdi:calendar-today
+            grid_options:
+              columns: full
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: gauge
+                entity: sensor.plenticoreseelen_autarky_day
+                name: Autarkie
+                min: 0
+                max: 100
+              - type: gauge
+                entity: sensor.pv_anteil_verbrauch
+                name: PV-Anteil
+                min: 0
+                max: 100
+              - type: gauge
+                entity: sensor.plenticoreseelen_battery_soc
+                name: Batterie
+                min: 0
+                max: 100
+                severity:
+                  red: 0
+                  yellow: 20
+                  green: 50
+              - type: gauge
+                entity: sensor.plenticoreseelen_own_consumption_rate_day
+                name: Eigenverbrauch
+                min: 0
+                max: 100
+            grid_options:
+              columns: full
+          - type: glance
+            title: 💶 Kosten heute
+            show_name: true
+            show_icon: false
+            show_state: true
+            columns: 3
+            entities:
+              - entity: sensor.kosten_netzbezug_heute
+                name: Netzbezug
+              - entity: sensor.gutschrift_einspeisung_heute
+                name: Einspeisung
+              - entity: sensor.strom_saldo_heute
+                name: Saldo
+            grid_options:
+              columns: full
+          - type: vertical-stack
+            cards:
+              - type: sensor
+                entity: sensor.plenticoreseelen_home_consumption_day
+                name: Verbrauch
+                graph: none
+              - type: glance
+                show_name: true
+                show_icon: false
+                show_state: true
+                columns: 3
+                entities:
+                  - entity: sensor.plenticoreseelen_home_consumption_from_grid_day
+                    name: aus Netz
+                  - entity: sensor.plenticoreseelen_home_consumption_from_battery_day
+                    name: aus Batterie
+                  - entity: sensor.plenticoreseelen_home_consumption_from_pv_day
+                    name: aus PV
+            grid_options:
+              columns: full
+          - type: vertical-stack
+            cards:
+              - type: sensor
+                entity: sensor.erzeugung_tag
+                name: Erzeugung
+                graph: none
+              - type: glance
+                show_name: true
+                show_icon: false
+                show_state: true
+                columns: 3
+                entities:
+                  - entity: sensor.plenticoreseelen_energy_to_grid_day
+                    name: Einspeisung
+                  - entity: sensor.plenticoreseelen_battery_charge_from_pv_day
+                    name: Batterieladung
+                  - entity: sensor.plenticoreseelen_home_consumption_from_pv_day
+                    name: Direktnutzung
+            grid_options:
+              columns: full
+    background:
+      opacity: 40
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+    badges: []
+  - title: Einnahmen
+    path: einnahmen
+    icon: mdi:cash-plus
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Was ich verdiene
+            heading_style: title
+            icon: mdi:cash-plus
+            grid_options:
+              columns: full
+          - type: grid
+            columns: 2
+            square: false
+            grid_options:
+              columns: full
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Heute
+                secondary: >-
+                  {{ states('sensor.gutschrift_einspeisung_heute') | float(0) |
+                  round(2) | string | replace('.', ',') }} € · {{
+                  states('sensor.plenticoreseelen_energy_to_grid_day') |
+                  float(0) | round(1) | string | replace('.', ',') }} kWh
+                icon: mdi:cash-plus
+                icon_color: green
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    110px;
+                      background: linear-gradient(135deg, rgba(76,175,80,.34), rgba(76,175,80,.08)); }
+              - type: custom:mushroom-template-card
+                primary: Diese Woche
+                secondary: >-
+                  {{ states('sensor.verdienst_woche') | float(0) | round(2) |
+                  string | replace('.', ',') }} € · {{
+                  states('sensor.einspeisung_kwh_woche') | float(0) | round(1) |
+                  string | replace('.', ',') }} kWh
+                icon: mdi:calendar-week
+                icon_color: green
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    110px;
+                      background: linear-gradient(135deg, rgba(76,175,80,.34), rgba(76,175,80,.08)); }
+              - type: custom:mushroom-template-card
+                primary: Dieser Monat
+                secondary: >-
+                  {{ states('sensor.verdienst_monat') | float(0) | round(2) |
+                  string | replace('.', ',') }} € · {{
+                  states('sensor.einspeisung_kwh_monat') | float(0) | round(1) |
+                  string | replace('.', ',') }} kWh
+                icon: mdi:calendar-month
+                icon_color: green
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    110px;
+                      background: linear-gradient(135deg, rgba(76,175,80,.34), rgba(76,175,80,.08)); }
+              - type: custom:mushroom-template-card
+                primary: Gesamt seit Start
+                secondary: >-
+                  {{ states('sensor.verdienst_einspeisung_gesamt') | float(0) |
+                  round(2) | string | replace('.', ',') }} € · {{
+                  states('sensor.einspeisung_gesamt_kwh') | float(0) | round(1)
+                  | string | replace('.', ',') }} kWh
+                icon: mdi:piggy-bank
+                icon_color: green
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    110px;
+                      background: linear-gradient(135deg, rgba(76,175,80,.34), rgba(76,175,80,.08)); }
+          - type: entities
+            title: '💶 Bilanz: Kosten minus Verdienst'
+            show_header_toggle: false
+            entities:
+              - type: section
+                label: Heute
+              - entity: sensor.kosten_netzbezug_heute
+                name: Netzbezug (Kosten)
+              - entity: sensor.gutschrift_einspeisung_heute
+                name: Einspeisung (Verdienst)
+              - entity: sensor.strom_saldo_heute
+                name: Saldo (Minus = du verdienst)
+              - type: section
+                label: Dieser Monat
+              - entity: sensor.kosten_fix_monat
+                name: Kosten Fixtarif
+              - entity: sensor.kosten_dyn_monat
+                name: Kosten Tibber (dynamisch)
+              - entity: sensor.verdienst_monat
+                name: Verdienst Einspeisung
+              - entity: sensor.saldo_monat_fix
+                name: Saldo mit Fixtarif
+              - entity: sensor.saldo_monat_dynamisch
+                name: Saldo mit Tibber
+              - type: divider
+              - entity: sensor.saldo_differenz_monat
+                name: Tibber günstiger (+) oder teurer (−)
+                icon: mdi:scale-balance
+            grid_options:
+              columns: full
+          - type: history-graph
+            title: Einspeisung (kW) letzte 24 Stunden
+            hours_to_show: 24
+            entities:
+              - entity: sensor.einspeisung_leistung_kw
+                name: Einspeisung
+            grid_options:
+              columns: full
+          - type: markdown
+            content: >-
+              Hinweis: Woche, Monat und Gesamt zählen ab dem Tag, an dem die
+              neuen Sensoren eingerichtet wurden. Der Wert für heute stammt aus
+              dem Tageszähler des Wechselrichters.
+            grid_options:
+              columns: full
+    background:
+      opacity: 40
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+    badges: []
+  - title: Wallbox
+    path: wallbox
+    icon: mdi:ev-station
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Wallbox & Laden
+            heading_style: title
+            icon: mdi:ev-station
+            grid_options:
+              columns: full
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set kw = states('sensor.keba_p30_charging_power') | float(0)
+              %}{% if kw > 0.05 %}Lädt mit {{ kw | round(1) | string |
+              replace('.', ',') }} kW · ca. {{ ((kw * 1000) / 690) | round(1) |
+              string | replace('.', ',') }} A{% else %}Wallbox{% endif %}
+            secondary: >-
+              {% set kw = states('sensor.keba_p30_charging_power') | float(0)
+              %}{% set se = states('sensor.keba_p30_session_energy') | float(0)
+              | round(1) | string | replace('.', ',') %}{% if kw > 0.05 %}Diese
+              Ladung bisher {{ se }} kWh{% else %}Letzte Ladung {{ se }} kWh{%
+              endif %} · {{ states('input_select.wallbox') }}
+            icon: mdi:ev-station
+            icon_color: >-
+              {{ 'green' if states('sensor.keba_p30_charging_power') | float(0)
+              > 0.05 else 'disabled' }}
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: none
+            grid_options:
+              columns: full
+            card_mod:
+              style: |-
+                ha-card { border-radius: 22px; border: none;
+                  {% set on = states('sensor.keba_p30_charging_power') | float(0) > 0.05 %}
+                  {% set rgb = '76,175,80' if on else '120,144,156' %}
+                  background: linear-gradient(135deg, rgba({{ rgb }},.34), rgba({{ rgb }},.08)); }
+          - type: grid
+            columns: 2
+            square: false
+            grid_options:
+              columns: full
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Letzte 24 Stunden
+                secondary: >-
+                  {% set k = states('sensor.ladung_energie_24h') | float(0) %}{%
+                  set e = states('sensor.ladung_kosten_24h') | float(0) %}{{ k |
+                  round(1) | string | replace('.', ',') }} kWh · {{ e | round(2)
+                  | string | replace('.', ',') }} €
+                icon: mdi:clock-time-four-outline
+                icon_color: cyan
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    100px; background: linear-gradient(135deg,
+                    rgba(0,188,212,.30), rgba(0,188,212,.06)); }
+              - type: custom:mushroom-template-card
+                primary: Heute
+                secondary: >-
+                  {% set k = states('sensor.ladung_kwh_tag') | float(0) %}{% set
+                  e = states('sensor.ladung_kosten_heute') | float(0) %}{{ k |
+                  round(1) | string | replace('.', ',') }} kWh · {{ e | round(2)
+                  | string | replace('.', ',') }} €
+                icon: mdi:calendar-today
+                icon_color: teal
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    100px; background: linear-gradient(135deg,
+                    rgba(0,150,136,.30), rgba(0,150,136,.06)); }
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                entity: input_select.ladung_zeitraum
+                icon: >-
+                  {{ 'mdi:check-circle' if
+                  is_state('input_select.ladung_zeitraum','Aktueller Monat')
+                  else 'mdi:circle-outline' }}
+                icon_color: >-
+                  {{ 'blue' if
+                  is_state('input_select.ladung_zeitraum','Aktueller Monat')
+                  else 'disabled' }}
+                content: Dieser Monat
+                tap_action:
+                  action: perform-action
+                  perform_action: input_select.select_option
+                  target:
+                    entity_id: input_select.ladung_zeitraum
+                  data:
+                    option: Aktueller Monat
+              - type: template
+                entity: input_select.ladung_zeitraum
+                icon: >-
+                  {{ 'mdi:check-circle' if
+                  is_state('input_select.ladung_zeitraum','Letzter Monat') else
+                  'mdi:circle-outline' }}
+                icon_color: >-
+                  {{ 'blue' if is_state('input_select.ladung_zeitraum','Letzter
+                  Monat') else 'disabled' }}
+                content: Letzter Monat
+                tap_action:
+                  action: perform-action
+                  perform_action: input_select.select_option
+                  target:
+                    entity_id: input_select.ladung_zeitraum
+                  data:
+                    option: Letzter Monat
+              - type: template
+                entity: input_select.ladung_zeitraum
+                icon: >-
+                  {{ 'mdi:check-circle' if
+                  is_state('input_select.ladung_zeitraum','Vorletzter Monat')
+                  else 'mdi:circle-outline' }}
+                icon_color: >-
+                  {{ 'blue' if
+                  is_state('input_select.ladung_zeitraum','Vorletzter Monat')
+                  else 'disabled' }}
+                content: Vorletzter
+                tap_action:
+                  action: perform-action
+                  perform_action: input_select.select_option
+                  target:
+                    entity_id: input_select.ladung_zeitraum
+                  data:
+                    option: Vorletzter Monat
+              - type: template
+                entity: input_select.ladung_zeitraum
+                icon: >-
+                  {{ 'mdi:check-circle' if
+                  is_state('input_select.ladung_zeitraum','Gesamt aktuelles
+                  Jahr') else 'mdi:circle-outline' }}
+                icon_color: >-
+                  {{ 'blue' if is_state('input_select.ladung_zeitraum','Gesamt
+                  aktuelles Jahr') else 'disabled' }}
+                content: Dieses Jahr
+                tap_action:
+                  action: perform-action
+                  perform_action: input_select.select_option
+                  target:
+                    entity_id: input_select.ladung_zeitraum
+                  data:
+                    option: Gesamt aktuelles Jahr
+              - type: template
+                entity: input_select.ladung_zeitraum
+                icon: >-
+                  {{ 'mdi:check-circle' if
+                  is_state('input_select.ladung_zeitraum','Gesamt letztes Jahr')
+                  else 'mdi:circle-outline' }}
+                icon_color: >-
+                  {{ 'blue' if is_state('input_select.ladung_zeitraum','Gesamt
+                  letztes Jahr') else 'disabled' }}
+                content: Letztes Jahr
+                tap_action:
+                  action: perform-action
+                  perform_action: input_select.select_option
+                  target:
+                    entity_id: input_select.ladung_zeitraum
+                  data:
+                    option: Gesamt letztes Jahr
+            grid_options:
+              columns: full
+          - type: grid
+            columns: 2
+            square: false
+            grid_options:
+              columns: full
+            cards:
+              - type: custom:mushroom-template-card
+                primary: '{{ states(''input_select.ladung_zeitraum'') }} · geladen'
+                secondary: >-
+                  {% set s = 'sensor.ladung_statistik_perioden' %}{% set a =
+                  states('input_select.ladung_zeitraum') %}{% set m =
+                  {'Aktueller Monat': state_attr(s,'aktueller_monat'), 'Letzter
+                  Monat': state_attr(s,'letzter_monat'), 'Vorletzter Monat':
+                  state_attr(s,'vorletzter_monat'), 'Gesamt aktuelles Jahr':
+                  state_attr(s,'jahr_aktuell'), 'Gesamt letztes Jahr':
+                  state_attr(s,'jahr_letztes')} %}{% set kwh = m.get(a, 0) |
+                  float(0) %}{{ kwh | round(1) | string | replace('.', ',') }}
+                  kWh
+                icon: mdi:ev-station
+                icon_color: green
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    100px; background: linear-gradient(135deg,
+                    rgba(76,175,80,.30), rgba(76,175,80,.06)); }
+              - type: custom:mushroom-template-card
+                primary: '{{ states(''input_select.ladung_zeitraum'') }} · Kosten'
+                secondary: >-
+                  {% set s = 'sensor.ladung_statistik_perioden' %}{% set a =
+                  states('input_select.ladung_zeitraum') %}{% set m =
+                  {'Aktueller Monat': state_attr(s,'aktueller_monat'), 'Letzter
+                  Monat': state_attr(s,'letzter_monat'), 'Vorletzter Monat':
+                  state_attr(s,'vorletzter_monat'), 'Gesamt aktuelles Jahr':
+                  state_attr(s,'jahr_aktuell'), 'Gesamt letztes Jahr':
+                  state_attr(s,'jahr_letztes')} %}{% set kwh = m.get(a, 0) |
+                  float(0) %}{{ (kwh *
+                  states('input_number.tarif_fix_arbeitspreis_ct') | float(0) /
+                  100) | round(2) | string | replace('.', ',') }} €
+                icon: mdi:currency-eur
+                icon_color: amber
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    100px; background: linear-gradient(135deg,
+                    rgba(255,160,0,.30), rgba(255,160,0,.06)); }
+          - type: custom:mushroom-template-card
+            primary: Hochrechnung laufender Monat
+            secondary: >-
+              {% set h = states('sensor.ladung_hochrechnung_monat') |
+              float(none) %}{% set p =
+              states('input_number.tarif_fix_arbeitspreis_ct') | float(0) / 100
+              %}{% if h is none %}Verfügbar ab dem 4. Tag des Monats{% else %}{{
+              h | round(2) | string | replace('.', ',') }} € · ca. {{ ((h / p)
+              if p > 0 else 0) | round(0) | int }} kWh bis Monatsende{% endif %}
+            icon: mdi:chart-line
+            icon_color: purple
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: none
+            grid_options:
+              columns: full
+            card_mod:
+              style: >-
+                ha-card { border-radius: 22px; border: none; background:
+                linear-gradient(135deg, rgba(156,39,176,.30),
+                rgba(156,39,176,.06)); }
+          - type: grid
+            columns: 2
+            square: false
+            grid_options:
+              columns: full
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Geladen {{ now().year }}
+                secondary: >-
+                  {% set k =
+                  state_attr('sensor.ladung_statistik_perioden','jahr_aktuell')
+                  | float(0) %}{% set p =
+                  states('input_number.tarif_fix_arbeitspreis_ct') | float(0) /
+                  100 %}{{ k | round(1) | string | replace('.', ',') }} kWh · {{
+                  (k * p) | round(2) | string | replace('.', ',') }} €
+                icon: mdi:ev-station
+                icon_color: indigo
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    100px; background: linear-gradient(135deg,
+                    rgba(63,81,181,.30), rgba(63,81,181,.06)); }
+              - type: custom:mushroom-template-card
+                primary: Geladen diesen Monat
+                secondary: >-
+                  {% set k =
+                  state_attr('sensor.ladung_statistik_perioden','aktueller_monat')
+                  | float(0) %}{% set p =
+                  states('input_number.tarif_fix_arbeitspreis_ct') | float(0) /
+                  100 %}{{ k | round(1) | string | replace('.', ',') }} kWh · {{
+                  (k * p) | round(2) | string | replace('.', ',') }} €
+                icon: mdi:calendar-month
+                icon_color: blue
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    100px; background: linear-gradient(135deg,
+                    rgba(33,150,243,.30), rgba(33,150,243,.06)); }
+          - type: heading
+            heading: Ladungen pro Monat
+            heading_style: title
+            icon: mdi:ev-station
+            grid_options:
+              columns: full
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Wallbox pro Monat (kWh)
+              show_states: false
+            graph_span: 12month
+            span:
+              start: year
+            apex_config:
+              chart:
+                height: 240
+              plotOptions:
+                bar:
+                  columnWidth: 60%
+                  borderRadius: 4
+              dataLabels:
+                enabled: true
+                style:
+                  fontSize: 11px
+                formatter: EVAL:function(v){return v.toFixed(0)+' kWh';}
+              xaxis:
+                labels:
+                  format: MMM
+              yaxis:
+                labels:
+                  formatter: EVAL:function(v){return v.toFixed(0)+' kWh';}
+              legend:
+                show: false
+            series:
+              - entity: sensor.ladung_statistik_perioden
+                name: Wallbox
+                type: column
+                color: '#42A5F5'
+                unit: ' kWh'
+                float_precision: 0
+                show:
+                  datalabels: true
+                  legend_value: false
+                data_generator: >-
+                  const y = new Date().getFullYear(); const m =
+                  (hass.states['sensor.ladung_statistik_perioden'] &&
+                  hass.states['sensor.ladung_statistik_perioden'].attributes.monate)
+                  || {}; return Object.keys(m).filter(k =>
+                  k.startsWith(String(y))).sort().map(k => [new Date(y,
+                  parseInt(k.slice(5,7)) - 1, 1).getTime(), Number(m[k])]);
+            grid_options:
+              columns: full
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Wallbox-Kosten pro Monat (€)
+              show_states: false
+            graph_span: 12month
+            span:
+              start: year
+            apex_config:
+              chart:
+                height: 240
+              plotOptions:
+                bar:
+                  columnWidth: 60%
+                  borderRadius: 4
+              dataLabels:
+                enabled: true
+                style:
+                  fontSize: 11px
+                formatter: EVAL:function(v){return v.toFixed(0)+' €';}
+              xaxis:
+                labels:
+                  format: MMM
+              yaxis:
+                labels:
+                  formatter: EVAL:function(v){return v.toFixed(0)+' €';}
+              legend:
+                show: false
+            series:
+              - entity: sensor.ladung_statistik_perioden
+                name: Kosten
+                type: column
+                color: '#FFA726'
+                unit: ' €'
+                float_precision: 2
+                show:
+                  datalabels: true
+                  legend_value: false
+                data_generator: >-
+                  const y = new Date().getFullYear(); const m =
+                  (hass.states['sensor.ladung_statistik_perioden'] &&
+                  hass.states['sensor.ladung_statistik_perioden'].attributes.monate)
+                  || {}; const p =
+                  parseFloat(hass.states['input_number.tarif_fix_arbeitspreis_ct'].state)
+                  / 100; return Object.keys(m).filter(k =>
+                  k.startsWith(String(y))).sort().map(k => [new Date(y,
+                  parseInt(k.slice(5,7)) - 1, 1).getTime(), Number(m[k]) * p]);
+            grid_options:
+              columns: full
+          - type: markdown
+            grid_options:
+              columns: full
+            content: >-
+              Anteil am Gesamtverbrauch dieses Jahres: siehe Reiter Monate
+              (Netzbezug) im Vergleich zu den kWh hier. Nicht jede geladene kWh
+              stammt aus dem Netz, ein Teil kommt von der PV-Anlage.
+    background:
+      opacity: 40
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+    badges: []
+  - title: Monate
+    path: monate
+    icon: mdi:calendar-month
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Jahr {{ now().year }} gesamt
+            grid_options:
+              columns: full
+          - type: grid
+            columns: 2
+            square: false
+            grid_options:
+              columns: full
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Netzbezug {{ now().year }}
+                secondary: >-
+                  {{ states('sensor.netzbezug_kwh_jahr') | float(0) | round(0) |
+                  int }} kWh · {{ states('sensor.netzbezug_jahr_kosten') |
+                  float(0) | round(2) | string | replace('.', ',') }} €
+                icon: mdi:transmission-tower-export
+                icon_color: red
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    110px; background: linear-gradient(135deg,
+                    rgba(244,67,54,.34), rgba(244,67,54,.08)); }
+              - type: custom:mushroom-template-card
+                primary: Einspeisung {{ now().year }}
+                secondary: >-
+                  {{ states('sensor.einspeisung_jahr_kwh') | float(0) | round(0)
+                  | int }} kWh · {{ states('sensor.einspeisung_jahr_verguetung')
+                  | float(0) | round(2) | string | replace('.', ',') }} €
+                icon: mdi:transmission-tower-import
+                icon_color: green
+                layout: vertical
+                fill_container: true
+                tap_action:
+                  action: none
+                card_mod:
+                  style: >-
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    110px; background: linear-gradient(135deg,
+                    rgba(76,175,80,.34), rgba(76,175,80,.08)); }
+          - type: custom:mushroom-template-card
+            primary: Wallbox Laden {{ now().year }}
+            secondary: >-
+              {% set k =
+              state_attr('sensor.ladung_statistik_perioden','jahr_aktuell') |
+              float(0) %}{% set p =
+              states('input_number.tarif_fix_arbeitspreis_ct') | float(0) / 100
+              %}{{ k | round(1) | string | replace('.', ',') }} kWh · {{ (k * p)
+              | round(2) | string | replace('.', ',') }} € (im Netzbezug
+              enthalten)
+            icon: mdi:ev-station
+            icon_color: blue
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-energie/wallbox
+            grid_options:
+              columns: full
+            card_mod:
+              style: >-
+                ha-card { border-radius: 22px; border: none; background:
+                linear-gradient(135deg, rgba(33,150,243,.30),
+                rgba(33,150,243,.06)); }
+          - type: custom:mushroom-template-card
+            primary: Klima Garage {{ now().year }}
+            secondary: >-
+              {% set k = states('sensor.klima_kwh_jahr') | float(0) %}{% set p =
+              states('sensor.preis_netzbezug_fix') | float(0) %}{% set mo =
+              states('sensor.klima_kwh_monat') | float(0) %}{{ k | round(1) |
+              string | replace('.', ',') }} kWh · {{ (k * p) | round(2) | string
+              | replace('.', ',') }} € · Monat: {{ mo | round(1) | string |
+              replace('.', ',') }} kWh ({{ (mo * p) | round(2) | string |
+              replace('.', ',') }} €)
+            multiline_secondary: true
+            icon: mdi:air-conditioner
+            icon_color: cyan
+            layout: horizontal
+            fill_container: true
+            tap_action:
+              action: none
+            grid_options:
+              columns: full
+            card_mod:
+              style: >-
+                ha-card { border-radius: 22px; border: none; background:
+                linear-gradient(135deg, rgba(0,188,212,.30),
+                rgba(0,188,212,.06)); }
+          - type: custom:mushroom-template-card
+            primary: Kosten nach Vergütung {{ now().year }}
+            secondary: >-
+              {% set v = states('sensor.saldo_jahr') | float(0) %}{{ (v | abs) |
+              round(2) | string | replace('.', ',') }} € {{ 'Kosten' if v > 0
+              else 'Überschuss' }} (Netzbezug minus Einspeisevergütung)
+            icon: mdi:scale-balance
+            icon_color: >-
+              {{ 'red' if states('sensor.saldo_jahr') | float(0) > 0 else
+              'green' }}
+            layout: horizontal
+            tap_action:
+              action: none
+            grid_options:
+              columns: full
+            card_mod:
+              style: >-
+                ha-card { border-radius: 22px; border: none; background:
+                linear-gradient(135deg, rgba(33,150,243,.30),
+                rgba(33,150,243,.06)); }
+          - type: entities
+            title: 🧾 Abrechnung laufendes Jahr
+            show_header_toggle: false
+            grid_options:
+              columns: full
+            entities:
+              - entity: sensor.abschlag_jahr_bezahlt
+                name: Abschläge
+                icon: mdi:cash-register
+              - entity: sensor.netzbezug_jahr_kosten
+                name: Strom
+                icon: mdi:transmission-tower-export
+              - entity: sensor.grundpreis_jahr_anteilig
+                name: Grundpreis
+                icon: mdi:calendar-clock
+              - type: divider
+              - entity: sensor.guthaben_jahr
+                name: Nachzahlung / Guthaben
+                icon: mdi:scale-balance
+              - entity: sensor.einspeisung_jahr_verguetung
+                name: Einspeisevergütung
+                icon: mdi:transmission-tower-import
+          - type: entities
+            title: 📈 Hochrechnung bis Dezember
+            show_header_toggle: false
+            grid_options:
+              columns: full
+            entities:
+              - entity: sensor.abschlag_jahr_gesamt
+                name: Abschläge Jahr
+                icon: mdi:cash-register
+              - entity: sensor.kosten_jahr_prognose_linear
+                name: Prognose linear
+                icon: mdi:chart-line
+              - entity: sensor.kosten_jahr_prognose_winter
+                name: Prognose Winter
+                icon: mdi:snowflake
+              - type: divider
+              - entity: sensor.ergebnis_jahresende_prognose
+                name: Nachzahlung / Guthaben
+                icon: mdi:scale-balance
+              - entity: sensor.abschlag_empfohlen
+                name: Abschlag empfohlen
+                icon: mdi:lightbulb-on-outline
+              - entity: input_number.winter_verbrauch_kwh_monat
+                name: Winter kWh/Monat
+          - type: entities
+            title: ⚖️ Fixtarif gegen Tibber (Simulation seit Aufzeichnungsstart)
+            show_header_toggle: false
+            grid_options:
+              columns: full
+            entities:
+              - entity: sensor.kosten_fix_gesamt
+                name: Kosten Fixtarif
+              - entity: sensor.kosten_dynamisch_gesamt
+                name: Kosten Tibber (dynamisch)
+              - entity: sensor.kosten_differenz_gesamt
+                name: Tibber günstiger (+) oder teurer (-)
+          - type: markdown
+            content: >-
+              Netzbezug × Strompreis ({{ (states('sensor.preis_netzbezug_fix') |
+              float(0)) | round(4) | string | replace('.', ',') }} €/kWh) und
+              Einspeisung × Vergütung ({{ (states('sensor.preis_einspeisung') |
+              float(0)) | round(4) | string | replace('.', ',') }} €/kWh).
+              Jahreswerte = Zähler seit 1.1. × aktueller Preis (Einstellung im
+              Reiter Tarife). Januar bis Mai stammen aus der Kostal-App, der
+              Mai-Balken im Monatsdiagramm ist unvollständig.
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Netzbezug pro Monat
+            heading_style: title
+            icon: mdi:transmission-tower-export
+            grid_options:
+              columns: full
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Netzbezug pro Monat
+              show_states: false
+            graph_span: 12month
+            span:
+              start: year
+            apex_config:
+              chart:
+                height: 240
+              plotOptions:
+                bar:
+                  columnWidth: 60%
+                  borderRadius: 4
+              dataLabels:
+                enabled: true
+                style:
+                  fontSize: 11px
+                formatter: EVAL:function(v){return v.toFixed(0)+' kWh';}
+              xaxis:
+                labels:
+                  format: MMM
+              yaxis:
+                labels:
+                  formatter: EVAL:function(v){return v.toFixed(0)+' kWh';}
+              legend:
+                show: false
+            series:
+              - entity: sensor.plenticoreseelen_home_consumption_from_grid_total
+                name: Netzbezug
+                type: column
+                color: '#E57373'
+                unit: ' kWh'
+                statistics:
+                  type: change
+                  period: month
+                  align: start
+                float_precision: 0
+                show:
+                  datalabels: true
+                  legend_value: false
+            grid_options:
+              columns: full
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Stromkosten pro Monat
+              show_states: false
+            graph_span: 12month
+            span:
+              start: year
+            apex_config:
+              chart:
+                height: 240
+              plotOptions:
+                bar:
+                  columnWidth: 60%
+                  borderRadius: 4
+              dataLabels:
+                enabled: true
+                style:
+                  fontSize: 11px
+                formatter: EVAL:function(v){return v.toFixed(0)+' €';}
+              xaxis:
+                labels:
+                  format: MMM
+              yaxis:
+                labels:
+                  formatter: EVAL:function(v){return v.toFixed(0)+' €';}
+              legend:
+                show: false
+            series:
+              - entity: sensor.plenticoreseelen_home_consumption_from_grid_total
+                name: Stromkosten
+                type: column
+                color: '#C62828'
+                unit: ' €'
+                statistics:
+                  type: change
+                  period: month
+                  align: start
+                float_precision: 2
+                show:
+                  datalabels: true
+                  legend_value: false
+                transform: >-
+                  return x *
+                  parseFloat(hass.states['sensor.preis_netzbezug_fix'].state);
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Einspeisung pro Monat
+            heading_style: title
+            icon: mdi:transmission-tower-import
+            grid_options:
+              columns: full
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Einspeisung pro Monat
+              show_states: false
+            graph_span: 12month
+            span:
+              start: year
+            apex_config:
+              chart:
+                height: 240
+              plotOptions:
+                bar:
+                  columnWidth: 60%
+                  borderRadius: 4
+              dataLabels:
+                enabled: true
+                style:
+                  fontSize: 11px
+                formatter: EVAL:function(v){return v.toFixed(0)+' kWh';}
+              xaxis:
+                labels:
+                  format: MMM
+              yaxis:
+                labels:
+                  formatter: EVAL:function(v){return v.toFixed(0)+' kWh';}
+              legend:
+                show: false
+            series:
+              - entity: sensor.plenticoreseelen_energy_to_grid_total
+                name: Einspeisung
+                type: column
+                color: '#81C784'
+                unit: ' kWh'
+                statistics:
+                  type: change
+                  period: month
+                  align: start
+                float_precision: 0
+                show:
+                  datalabels: true
+                  legend_value: false
+            grid_options:
+              columns: full
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Einspeise-Vergütung pro Monat
+              show_states: false
+            graph_span: 12month
+            span:
+              start: year
+            apex_config:
+              chart:
+                height: 240
+              plotOptions:
+                bar:
+                  columnWidth: 60%
+                  borderRadius: 4
+              dataLabels:
+                enabled: true
+                style:
+                  fontSize: 11px
+                formatter: EVAL:function(v){return v.toFixed(0)+' €';}
+              xaxis:
+                labels:
+                  format: MMM
+              yaxis:
+                labels:
+                  formatter: EVAL:function(v){return v.toFixed(0)+' €';}
+              legend:
+                show: false
+            series:
+              - entity: sensor.plenticoreseelen_energy_to_grid_total
+                name: Einspeise-Vergütung
+                type: column
+                color: '#2E7D32'
+                unit: ' €'
+                statistics:
+                  type: change
+                  period: month
+                  align: start
+                float_precision: 2
+                show:
+                  datalabels: true
+                  legend_value: false
+                transform: >-
+                  return x *
+                  parseFloat(hass.states['sensor.preis_einspeisung'].state);
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Januar bis Mai (vor der Aufzeichnung)
+            heading_style: title
+            icon: mdi:calendar-clock
+            grid_options:
+              columns: full
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Januar–Mai in kWh (Kostal-App)
+              show_states: false
+            graph_span: 5month
+            span:
+              start: year
+            apex_config:
+              chart:
+                height: 240
+              plotOptions:
+                bar:
+                  columnWidth: 70%
+                  borderRadius: 4
+              dataLabels:
+                enabled: true
+                style:
+                  fontSize: 11px
+                formatter: EVAL:function(v){return v.toFixed(0)+' kWh';}
+              xaxis:
+                labels:
+                  format: MMM
+              yaxis:
+                labels:
+                  formatter: EVAL:function(v){return v.toFixed(0)+' kWh';}
+              legend:
+                show: true
+                position: bottom
+            series:
+              - entity: sensor.plenticoreseelen_home_consumption_from_grid_total
+                name: Netzbezug
+                type: column
+                color: '#E57373'
+                unit: ' kWh'
+                show:
+                  datalabels: true
+                  legend_value: false
+                data_generator: >-
+                  const y = new Date().getFullYear(); if (y !== 2026) return [];
+                  const v = [1500, 920, 820, 614.9, 510]; return v.map((x, i) =>
+                  [new Date(2026, i, 1).getTime(), x * 1]);
+              - entity: sensor.plenticoreseelen_energy_to_grid_total
+                name: Einspeisung
+                type: column
+                color: '#81C784'
+                unit: ' kWh'
+                show:
+                  datalabels: true
+                  legend_value: false
+                data_generator: >-
+                  const y = new Date().getFullYear(); if (y !== 2026) return [];
+                  const v = [12.27, 92.79, 365.4, 556.0, 274.0]; return
+                  v.map((x, i) => [new Date(2026, i, 1).getTime(), x * 1]);
+            grid_options:
+              columns: full
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Januar–Mai in € (Kostal-App)
+              show_states: false
+            graph_span: 5month
+            span:
+              start: year
+            apex_config:
+              chart:
+                height: 240
+              plotOptions:
+                bar:
+                  columnWidth: 70%
+                  borderRadius: 4
+              dataLabels:
+                enabled: true
+                style:
+                  fontSize: 11px
+                formatter: EVAL:function(v){return v.toFixed(0)+' €';}
+              xaxis:
+                labels:
+                  format: MMM
+              yaxis:
+                labels:
+                  formatter: EVAL:function(v){return v.toFixed(0)+' €';}
+              legend:
+                show: true
+                position: bottom
+            series:
+              - entity: sensor.plenticoreseelen_home_consumption_from_grid_total
+                name: Stromkosten
+                type: column
+                color: '#C62828'
+                unit: ' €'
+                show:
+                  datalabels: true
+                  legend_value: false
+                data_generator: >-
+                  const y = new Date().getFullYear(); if (y !== 2026) return [];
+                  const v = [1500, 920, 820, 614.9, 510]; return v.map((x, i) =>
+                  [new Date(2026, i, 1).getTime(), x *
+                  parseFloat(hass.states['sensor.preis_netzbezug_fix'].state)]);
+              - entity: sensor.plenticoreseelen_energy_to_grid_total
+                name: Vergütung
+                type: column
+                color: '#2E7D32'
+                unit: ' €'
+                show:
+                  datalabels: true
+                  legend_value: false
+                data_generator: >-
+                  const y = new Date().getFullYear(); if (y !== 2026) return [];
+                  const v = [12.27, 92.79, 365.4, 556.0, 274.0]; return
+                  v.map((x, i) => [new Date(2026, i, 1).getTime(), x *
+                  parseFloat(hass.states['sensor.preis_einspeisung'].state)]);
+            grid_options:
+              columns: full
+    background:
+      opacity: 40
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+    badges: []
+  - title: Steuerung
+    path: steuerung
+    icon: mdi:tune
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Energiesteuerung
+            heading_style: title
+            icon: mdi:tune
+            grid_options:
+              columns: full
+          - type: vertical-stack
+            cards:
+              - type: entities
+                title: ⚡ Energie Automatik
+                show_header_toggle: false
+                entities:
+                  - entity: input_select.energie_modus
+                    name: Hauptschalter
+              - type: entities
+                title: 🔋 Speicher-Steuerung (Pylontech & Kostal)
+                show_header_toggle: false
+                entities:
+                  - entity: input_select.batterie_modus
+                    name: Speicher-Modus
+                  - entity: input_boolean.entladeschutz_autoladen
+                    name: Batterie nicht ins Auto entladen
+                  - type: conditional
+                    conditions:
+                      - entity: input_select.batterie_modus
+                        state: Netzladen erzwingen
+                    row:
+                      entity: input_select.netzladeleistung
+                      name: Netzladeleistung (W, max. 2500)
+                  - type: conditional
+                    conditions:
+                      - entity: input_select.batterie_modus
+                        state: Netzladen erzwingen
+                    row:
+                      entity: input_number.netzladen_max_soc
+                      name: Netzladen bis Ladestand
+                  - entity: sensor.plenticoreseelen_battery_soc
+                    name: Ladestand
+                  - entity: sensor.plenticoreseelen_battery_power
+                    name: Batterieleistung
+              - type: entities
+                title: 🚗 Wallbox & E-Auto (KEBA KeContact)
+                show_header_toggle: false
+                entities:
+                  - entity: input_select.wallbox
+                    name: Lade-Modus
+                  - entity: input_boolean.tibber_tarif_aktiv
+                    name: Tibber-Tarif aktiv (ab Januar)
+                  - type: conditional
+                    conditions:
+                      - entity: input_select.wallbox
+                        state: Sofort laden (Max 11 kW)
+                    row:
+                      entity: input_number.sofort_laden_kw
+                      name: Ladeleistung (kW)
+                  - entity: sensor.keba_p30_charging_power
+                    name: Aktuelle Ladeleistung
+                  - entity: sensor.pv_ueberschuss_wallbox
+                    name: PV-Überschuss
+                  - entity: binary_sensor.pv_laden_freigabe
+                    name: PV-Laden freigegeben
+                  - entity: sensor.keba_p30_total_energy
+                    name: Zählerstand Total
+                  - type: divider
+                  - entity: sensor.strompreis_tibber_berechnet
+                    name: Strompreis aktuell (berechnet)
+                  - entity: input_number.tibber_max_preis
+                    name: Max-Preis zum Laden (Gesamtpreis)
+                  - entity: binary_sensor.tibber_laden_freigabe
+                    name: Tibber-Laden freigegeben
+            grid_options:
+              columns: full
+    background:
+      opacity: 40
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+    badges: []
+  - title: Tarife
+    path: tarife
+    icon: mdi:currency-eur
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Tarife & Strompreis
+            heading_style: title
+            icon: mdi:currency-eur
+            grid_options:
+              columns: full
+          - type: entities
+            title: 📊 Kosten-Vergleich (Simulation)
+            show_header_toggle: false
+            entities:
+              - type: section
+                label: Dynamisch (Tibber, berechnet)
+              - entity: sensor.kosten_dyn_tag
+                name: Heute
+              - entity: sensor.kosten_dyn_woche
+                name: Diese Woche
+              - entity: sensor.kosten_dyn_monat
+                name: Dieser Monat
+              - entity: sensor.kosten_dynamisch_gesamt
+                name: Gesamt seit Start
+              - type: section
+                label: Fixtarif (Maingau)
+              - entity: sensor.kosten_fix_tag
+                name: Heute
+              - entity: sensor.kosten_fix_woche
+                name: Diese Woche
+              - entity: sensor.kosten_fix_monat
+                name: Dieser Monat
+              - entity: sensor.kosten_fix_gesamt
+                name: Gesamt seit Start
+              - type: section
+                label: Vergleich
+              - entity: sensor.kosten_differenz_gesamt
+                name: Tibber günstiger (+) oder teurer (-)
+              - type: section
+                label: Tarif-Eingaben
+              - entity: input_number.tarif_fix_arbeitspreis_ct
+                name: Fixtarif Arbeitspreis (ct/kWh, brutto)
+              - entity: input_number.tarif_fix_grundpreis_jahr
+                name: Fixtarif Grundpreis (€/Jahr, brutto)
+              - entity: input_number.tarif_einspeiseverguetung_ct
+                name: Einspeisevergütung (ct/kWh)
+              - entity: input_number.tibber_grundgebuehr_monat
+                name: Tibber Grundgebühr (€/Monat)
+              - entity: input_number.abschlag_monat
+                name: Monatlicher Abschlag (€/Monat)
+              - entity: input_number.winter_verbrauch_kwh_monat
+                name: Winter-Verbrauch (kWh/Monat, Schätzung)
+            grid_options:
+              columns: full
+          - type: entities
+            title: 💶 Strompreis-Faktoren
+            show_header_toggle: false
+            entities:
+              - entity: sensor.nord_pool_ger_aktueller_preis
+                name: Börsenpreis (netto)
+              - entity: input_number.preis_aufschlag_ct
+                name: Tibber Aufschlag (ct/kWh)
+              - entity: input_number.preis_netz_umlagen_ct
+                name: Netz, Konzession, Umlagen (ct/kWh)
+              - entity: input_number.preis_stromsteuer_ct
+                name: Stromsteuer (ct/kWh)
+              - entity: input_number.preis_mwst
+                name: Mehrwertsteuer (%)
+              - entity: sensor.strompreis_tibber_berechnet
+                name: Gesamtpreis aktuell (berechnet)
+            grid_options:
+              columns: full
+    background:
+      opacity: 40
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+    badges: []
+title: Energie

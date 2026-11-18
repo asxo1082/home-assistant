@@ -1,0 +1,74 @@
+{# Stundenplan 3b – 1. Halbjahr 2026/27 (gültig ab 07.09.2026) #}
+{# Wochentage: 0 = Montag ... 4 = Freitag, 5/6 = Wochenende #}
+
+{% macro tagname(wd) -%}
+{{ ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'][wd] }}
+{%- endmacro %}
+
+{% macro faecher(wd) -%}
+{%- set plan = [
+  ['Deutsch (Erzählkreis)', 'Mathe', 'SU', 'Religion', 'Englisch'],
+  ['Deutsch', 'Mathe', 'Deutsch (Rechtschreibung)', 'SU', 'Religion'],
+  ['Deutsch', 'Mathe', 'Klassenrat', 'Englisch', 'Schwimmen', 'Schwimmen'],
+  ['Deutsch', 'Sport', 'Englisch', 'Mathe'],
+  ['Kunst', 'Kunst', 'Deutsch', 'Mathe', 'Musik']
+] -%}
+{%- if wd < 5 -%}{{ plan[wd] | unique | join(', ') }}{%- else -%}schulfrei{%- endif -%}
+{%- endmacro %}
+
+{% macro schulende(wd) -%}
+{%- set ende = ['12:35', '12:35', '13:20', '11:30', '12:35'] -%}
+{%- if wd < 5 -%}{{ ende[wd] }}{%- endif -%}
+{%- endmacro %}
+
+{# Hinweis zum Einpacken für einen Schultag – leer = nichts Besonderes #}
+{% macro mitbringen(wd) -%}
+{%- set hinweis = [
+  '',
+  '',
+  'Schwimmsachen einpacken 🏊',
+  'Sportzeug einpacken 👟',
+  '2 Stunden Kunst 🎨',
+  '',
+  ''
+] -%}
+{{ hinweis[wd] }}
+{%- endmacro %}
+
+{# Warum ist an Datum d (Format JJJJ-MM-TT) keine Schule? Leer = Schultag #}
+{% macro frei(d) -%}
+{%- set ferien = [
+  ['2026-10-17', '2026-10-31', 'Herbstferien 🍂'],
+  ['2026-12-23', '2027-01-06', 'Weihnachtsferien 🎄'],
+  ['2027-03-22', '2027-04-03', 'Osterferien 🐣'],
+  ['2027-05-18', '2027-05-18', 'Pfingstferien'],
+  ['2027-07-19', '2027-08-31', 'Sommerferien ☀️']
+] -%}
+{%- set feiertage = {
+  '2027-05-06': 'Christi Himmelfahrt',
+  '2027-05-17': 'Pfingstmontag',
+  '2027-05-27': 'Fronleichnam'
+} -%}
+{# Bewegliche Ferientage der Schule hier eintragen, z. B. '2027-02-08' #}
+{%- set beweglich = [] -%}
+{%- set ns = namespace(r='') -%}
+{%- for f in ferien -%}
+  {%- if not ns.r and f[0] <= d and d <= f[1] -%}{%- set ns.r = f[2] -%}{%- endif -%}
+{%- endfor -%}
+{%- if not ns.r and d in feiertage -%}{%- set ns.r = feiertage[d] -%}{%- endif -%}
+{%- if not ns.r and d in beweglich -%}{%- set ns.r = 'Beweglicher Ferientag' -%}{%- endif -%}
+{%- if not ns.r and as_datetime(d).weekday() >= 5 -%}{%- set ns.r = 'Wochenende' -%}{%- endif -%}
+{{ ns.r }}
+{%- endmacro %}
+
+{# Nächster Schultag nach heute als JJJJ-MM-TT #}
+{% macro naechster_schultag() -%}
+{%- set ns = namespace(d='') -%}
+{%- for i in range(1, 70) -%}
+  {%- if not ns.d -%}
+    {%- set d = (now() + timedelta(days=i)).strftime('%Y-%m-%d') -%}
+    {%- if not (frei(d) | trim) -%}{%- set ns.d = d -%}{%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
+{{ ns.d }}
+{%- endmacro %}
