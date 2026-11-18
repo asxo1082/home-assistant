@@ -1,0 +1,56 @@
+alias: Bewässerung Zeit
+mode: parallel
+max: 10
+fields:
+  zone:
+    name: Zone
+    selector:
+      entity:
+        domain: switch
+  minuten:
+    name: Minuten
+    selector:
+      number:
+        min: 1
+        max: 120
+sequence:
+  - variables:
+      pumpe: switch.shellyplug_s_819696
+      pumpe_war_aus: '{{ is_state(''switch.shellyplug_s_819696'', ''off'') }}'
+  - if:
+      - condition: template
+        value_template: '{{ zone != pumpe and pumpe_war_aus }}'
+    then:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.shellyplug_s_819696
+      - delay:
+          seconds: 3
+  - action: switch.turn_on
+    target:
+      entity_id: '{{ zone }}'
+  - delay:
+      minutes: '{{ minuten | int }}'
+  - action: switch.turn_off
+    target:
+      entity_id: '{{ zone }}'
+  - if:
+      - condition: template
+        value_template: '{{ zone == pumpe }}'
+    then:
+      - action: switch.turn_off
+        target:
+          entity_id:
+            - switch.sprinkler
+            - switch.tropf_vorgarten
+            - switch.shellyplug_s_dddecc
+  - if:
+      - condition: template
+        value_template: >-
+          {{ zone != pumpe and pumpe_war_aus and
+          expand(['switch.sprinkler','switch.tropf_vorgarten','switch.shellyplug_s_dddecc'])
+          | selectattr('state','eq','on') | list | count == 0 }}
+    then:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.shellyplug_s_819696
