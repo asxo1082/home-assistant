@@ -182,6 +182,30 @@ template:
           {% set dc = states('sensor.plenticoreseelen_sum_power_of_all_pv_dc_inputs') | float(0) %}
           {{ [dc, 0] | max | round(0) }}
 
+      # Sonnenstrom-Ampel: grün ab 2.000 W Überschuss (oder ab 1.200 W bei Speicher ≥ 90 %), gelb ab 800 W, sonst rot
+      - name: "Sonnenstrom Überschuss"
+        unique_id: sonnenstrom_uberschuss
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        availability: >
+          {{ states('sensor.pv_erzeugung') | is_number
+             and states('sensor.plenticoreseelen_home_power') | is_number }}
+        state: >
+          {{ (states('sensor.pv_erzeugung') | float(0)
+              - states('sensor.plenticoreseelen_home_power') | float(0)) | round(0) }}
+
+      - name: "Sonnenstrom Ampel"
+        unique_id: sonnenstrom_ampel
+        icon: mdi:traffic-light
+        availability: "{{ states('sensor.sonnenstrom_uberschuss') | is_number }}"
+        state: >
+          {% set u = states('sensor.sonnenstrom_uberschuss') | float(0) %}
+          {% set soc = states('sensor.plenticoreseelen_battery_soc') | float(0) %}
+          {% if u >= 2000 or (u >= 1200 and soc >= 90) %}gruen
+          {% elif u >= 800 %}gelb
+          {% else %}rot{% endif %}
+
       - name: "Strompreis Tibber berechnet"
         unique_id: strompreis_tibber_berechnet
         unit_of_measurement: "€/kWh"
