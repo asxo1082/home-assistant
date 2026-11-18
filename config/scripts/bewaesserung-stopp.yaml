@@ -1,0 +1,19 @@
+alias: Bewässerung Stopp
+mode: single
+sequence:
+  - action: script.turn_off
+    continue_on_error: true
+    target:
+      entity_id: script.bewasserung_zeit
+  - action: switch.turn_off
+    continue_on_error: true
+    target:
+      entity_id:
+        - switch.sprinkler
+        - switch.tropf_vorgarten
+        - switch.shellyplug_s_dddecc
+  - delay: '00:00:02'
+  - action: switch.turn_off
+    continue_on_error: true
+    target:
+      entity_id: switch.shellyplug_s_819696
