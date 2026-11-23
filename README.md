@@ -28,4 +28,4 @@ Archiv der Home-Assistant-Konfiguration. Privat. Keine Zugangsdaten im Repositor
 ## Stand
 
 - 18.11.2026: Erstbestand. Energie-Automatik neu (Wallbox/Speicher), Kostal-Störungsmeldung, Statuskarte im Energie-Dashboard. HA-Version 2026.11 (HACS → Marketplace).
-- 23.11.2026: Energie-Dashboard, Reiter Live: neue Karte „Energiefluss“ (Kopfzeile mit Status und Autarkie, Power-Flow im Glow-Stil, Tageswerte PV/Haus/Netz/Speicher). Wallbox heißt dort „Auto“ und zeigt die geladene kWh der Sitzung; Auto-Ladestand fehlt (keine Tesla-Integration).
+- 23.11.2026: Energie-Dashboard, Reiter Live: neue Karte „Energiefluss“ (Kopfzeile mit Status und Autarkie, Power-Flow in Originalfarben, Tageswerte PV/Haus/Netz/Speicher; dunkler Glow-Stil wieder entfernt, im hellen Theme unlesbar). Wallbox heißt dort „Auto“ und zeigt die geladene kWh der Sitzung; Auto-Ladestand fehlt (keine Tesla-Integration).
