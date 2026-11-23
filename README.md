@@ -21,7 +21,11 @@ Archiv der Home-Assistant-Konfiguration. Privat. Keine Zugangsdaten im Repositor
 
 ## Offene Punkte
 
-- 01.01.2027: Monatsdiagramme (Energie → Monate) von `plenticoreseelen_home_consumption_from_grid_total` / `_energy_to_grid_total` auf `sensor.netzbezug_gesamt_gefiltert` / `sensor.einspeisung_gesamt_gefiltert` umstellen
+- 01.01.2027 Tarifwechsel, alles in einem Schritt:
+  - Tarif-Eingaben: Arbeitspreis 33,00 ct/kWh, Grundpreis 162,48 €/Jahr (13,54 €/Monat), Abschlag laut Vertrag (Angebot 275 €; realistisch 325–330 € bei ~11.400 kWh)
+  - Monatsdiagramme (Energie → Monate) auf `sensor.netzbezug_gesamt_gefiltert` / `sensor.einspeisung_gesamt_gefiltert` umstellen
+  - „Abschlag empfohlen“ umbauen: Jahresprognose ÷ 12 mit neuem Tarif statt Restbetrag auf Dezember
+  - Hinweis: „Winter kWh/Monat“ realistisch ~1.450 (Okt 1.316, Nov ~1.450)
 - Bewässerung: Pumpe läuft weiter, wenn die letzte Zone einzeln ausgeschaltet wird → Automation „Pumpe aus, wenn keine Zone an“
 - Gute Nacht: Außenlicht-Schritte doppelt zu „Außen an“ → durch `script.aussen_an` ersetzen
 - Archiv: Theme Glass Navy sowie Dashboards Tablet und Standorte im Live-Stand fehlen
