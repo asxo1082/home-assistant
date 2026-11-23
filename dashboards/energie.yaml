@@ -54,8 +54,14 @@ views:
               - type: custom:mushroom-template-card
                 primary: Solar
                 secondary: >-
-                  {% set pv = states('sensor.pv_erzeugung') | float(0) %}{{
-                  (pv/1000) | round(1) }} kW
+                  {% set pv = states('sensor.pv_erzeugung') | float(0) %}{% set
+                  s = 'sensor.plenticoreseelen_energy_yield_day' %}{% set e =
+                  states(s) | float(0) %}{% set e = (e / 1000) if state_attr(s,
+                  'unit_of_measurement') == 'Wh' else e %}jetzt {{ (pv / 1000)
+                  | round(1) | string | replace('.', ',') }} kW
+
+                  heute {{ e | round(1) | string | replace('.', ',') }} kWh
+                multiline_secondary: true
                 icon: mdi:solar-power
                 icon_color: >-
                   {% set pv = states('sensor.pv_erzeugung') | float(0) %}{{
@@ -65,18 +71,60 @@ views:
                 card_mod:
                   style: >
                     ha-card { border-radius: 22px; border: none; min-height:
-                    110px;
+                    120px;
                       {% set pv = states('sensor.pv_erzeugung') | float(0) %}{% set rgb = '255,193,7' if pv > 50 else '120,144,156' %}
                       background: linear-gradient(135deg, rgba({{ rgb }},.36), rgba({{ rgb }},.08)); }
+                    .secondary { white-space: pre-line !important; }
                 tap_action:
-                  action: none
+                  action: more-info
+                  entity: sensor.plenticoreseelen_energy_yield_day
+              - type: custom:mushroom-template-card
+                primary: Haus
+                secondary: >-
+                  {% set h = states('sensor.plenticoreseelen_home_power') |
+                  float(0) %}{% set s =
+                  'sensor.plenticoreseelen_home_consumption_day' %}{% set e =
+                  states(s) | float(0) %}{% set e = (e / 1000) if state_attr(s,
+                  'unit_of_measurement') == 'Wh' else e %}{% set a =
+                  states('sensor.plenticoreseelen_autarky_day') | float(0)
+                  %}jetzt {{ (h / 1000) | round(1) | string | replace('.', ',')
+                  }} kW
+
+                  heute {{ e | round(1) | string | replace('.', ',') }} kWh · {{
+                  a | round(0) | int }} % autark
+                multiline_secondary: true
+                icon: mdi:home-lightning-bolt
+                icon_color: indigo
+                layout: vertical
+                fill_container: true
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 22px; border: none; min-height:
+                    120px;
+                      background: linear-gradient(135deg, rgba(63,81,181,.30), rgba(63,81,181,.08)); }
+                    .secondary { white-space: pre-line !important; }
+                tap_action:
+                  action: more-info
+                  entity: sensor.plenticoreseelen_home_consumption_day
               - type: custom:mushroom-template-card
                 primary: Netz
                 secondary: >-
                   {% set g = states('sensor.plenticoreseelen_grid_power') |
-                  float(0) %}{{ 'Bezug ' ~ ((g/1000) | round(1)) ~ ' kW' if g >
-                  50 else ('Einspeisung ' ~ ((-g/1000) | round(1)) ~ ' kW' if g
-                  < -50 else 'ausgeglichen') }}
+                  float(0) %}{% set b =
+                  'sensor.plenticoreseelen_home_consumption_from_grid_day' %}{%
+                  set eb = states(b) | float(0) %}{% set eb = (eb / 1000) if
+                  state_attr(b, 'unit_of_measurement') == 'Wh' else eb %}{% set
+                  f = 'sensor.plenticoreseelen_energy_to_grid_day' %}{% set ef =
+                  states(f) | float(0) %}{% set ef = (ef / 1000) if
+                  state_attr(f, 'unit_of_measurement') == 'Wh' else ef %}jetzt
+                  {{ ('Bezug ' ~ ((g / 1000) | round(1) | string | replace('.',
+                  ',')) ~ ' kW') if g > 50 else (('Einspeisung ' ~ ((-g / 1000) |
+                  round(1) | string | replace('.', ',')) ~ ' kW') if g < -50 else
+                  'ausgeglichen') }}
+
+                  heute Bezug {{ eb | round(1) | string | replace('.', ',') }} ·
+                  Einsp. {{ ef | round(1) | string | replace('.', ',') }} kWh
+                multiline_secondary: true
                 icon: mdi:transmission-tower
                 icon_color: >-
                   {% set g = states('sensor.plenticoreseelen_grid_power') |
@@ -87,63 +135,53 @@ views:
                 card_mod:
                   style: >
                     ha-card { border-radius: 22px; border: none; min-height:
-                    110px;
+                    120px;
                       {% set g = states('sensor.plenticoreseelen_grid_power') | float(0) %}{% set rgb = '244,67,54' if g > 50 else ('76,175,80' if g < -50 else '33,150,243') %}
                       background: linear-gradient(135deg, rgba({{ rgb }},.36), rgba({{ rgb }},.08)); }
+                    .secondary { white-space: pre-line !important; }
                 tap_action:
-                  action: none
+                  action: more-info
+                  entity: sensor.plenticoreseelen_home_consumption_from_grid_day
               - type: custom:mushroom-template-card
                 primary: Batterie
                 secondary: >-
-                  {% set s = states('sensor.plenticoreseelen_battery_soc') |
+                  {% set soc = states('sensor.plenticoreseelen_battery_soc') |
                   float(0) %}{% set p =
                   states('sensor.plenticoreseelen_battery_power') | float(0)
-                  %}{{ s | round(0) | int }} % · {{ 'lädt' if p < -50 else
-                  ('entlädt' if p > 50 else 'bereit') }}
+                  %}{% set ns = namespace(c=0) %}{% for s in
+                  ['sensor.plenticoreseelen_battery_charge_from_pv_day',
+                  'sensor.plenticoreseelen_battery_charge_from_grid_day'] %}{%
+                  set e = states(s) | float(0) %}{% set ns.c = ns.c + ((e /
+                  1000) if state_attr(s, 'unit_of_measurement') == 'Wh' else e)
+                  %}{% endfor %}{% set d =
+                  'sensor.plenticoreseelen_battery_discharge_day' %}{% set ed =
+                  states(d) | float(0) %}{% set ed = (ed / 1000) if
+                  state_attr(d, 'unit_of_measurement') == 'Wh' else ed %}jetzt
+                  {{ soc | round(0) | int }} % · {{ ('lädt ' ~ ((-p / 1000) |
+                  round(1) | string | replace('.', ',')) ~ ' kW') if p < -50 else
+                  (('entlädt ' ~ ((p / 1000) | round(1) | string | replace('.',
+                  ',')) ~ ' kW') if p > 50 else 'bereit') }}
+
+                  heute rein {{ ns.c | round(1) | string | replace('.', ',') }}
+                  · raus {{ ed | round(1) | string | replace('.', ',') }} kWh
+                multiline_secondary: true
                 icon: mdi:battery-high
                 icon_color: >-
                   {% set s = states('sensor.plenticoreseelen_battery_soc') |
-                  float(0) %}{% set p =
-                  states('sensor.plenticoreseelen_battery_power') | float(0)
-                  %}{{ 'red' if s < 20 else ('amber' if s < 50 else 'green') }}
+                  float(0) %}{{ 'red' if s < 20 else ('amber' if s < 50 else
+                  'green') }}
                 layout: vertical
                 fill_container: true
                 card_mod:
                   style: >
                     ha-card { border-radius: 22px; border: none; min-height:
-                    110px;
+                    120px;
                       {% set s = states('sensor.plenticoreseelen_battery_soc') | float(0) %}{% set rgb = '244,67,54' if s < 20 else ('255,160,0' if s < 50 else '76,175,80') %}
                       background: linear-gradient(135deg, rgba({{ rgb }},.36), rgba({{ rgb }},.08)); }
+                    .secondary { white-space: pre-line !important; }
                 tap_action:
-                  action: none
-              - type: custom:mushroom-template-card
-                primary: Strompreis
-                secondary: >-
-                  {% set fix =
-                  is_state('input_boolean.tibber_tarif_aktiv','off') %}{% set p
-                  = (states('sensor.preis_netzbezug_fix') if fix else
-                  states('sensor.strompreis_tibber_berechnet')) | float(0) %}{{
-                  (p*100) | round(1) | string | replace('.', ',') }} ct/kWh · {{
-                  'Fixtarif' if fix else ('günstig' if
-                  is_state('binary_sensor.tibber_laden_freigabe','on') else
-                  'normal') }}
-                icon: mdi:currency-eur
-                icon_color: >-
-                  {{ 'blue' if
-                  is_state('input_boolean.tibber_tarif_aktiv','off') else
-                  ('green' if
-                  is_state('binary_sensor.tibber_laden_freigabe','on') else
-                  'blue') }}
-                layout: vertical
-                fill_container: true
-                card_mod:
-                  style: >
-                    ha-card { border-radius: 22px; border: none; min-height:
-                    110px;
-                      {% set rgb = '76,175,80' if (not is_state('input_boolean.tibber_tarif_aktiv','off') and is_state('binary_sensor.tibber_laden_freigabe','on')) else '33,150,243' %}
-                      background: linear-gradient(135deg, rgba({{ rgb }},.36), rgba({{ rgb }},.08)); }
-                tap_action:
-                  action: none
+                  action: more-info
+                  entity: sensor.plenticoreseelen_battery_soc
           - type: custom:mushroom-template-card
             entity: sensor.sonnenstrom_ampel
             primary: >-
@@ -180,196 +218,80 @@ views:
                   background: linear-gradient(135deg, rgba({{ c }},.30), rgba({{ c }},.08)); }
           - type: vertical-stack
             cards:
-              - type: vertical-stack
-                cards:
-                  - type: custom:mushroom-template-card
-                    primary: Energiefluss
-                    secondary: >-
-                      {% set g = states('sensor.plenticoreseelen_grid_power') |
-                      float(0) %}{% set a =
-                      states('sensor.plenticoreseelen_autarky_day') | float(0)
-                      %}● LIVE · {{ 'Netzbezug' if g > 100 else ('Einspeisung'
-                      if g < -100 else 'Ausgeglichen') }} · Autarkie heute {{ a
-                      | round(0) | int }} %
-                    icon: >-
-                      {% set g = states('sensor.plenticoreseelen_grid_power') |
-                      float(0) %}{{ 'mdi:transmission-tower-import' if g > 100
-                      else ('mdi:transmission-tower-export' if g < -100 else
-                      'mdi:swap-horizontal') }}
-                    icon_color: >-
-                      {% set g = states('sensor.plenticoreseelen_grid_power') |
-                      float(0) %}{{ 'red' if g > 100 else ('green' if g < -100
-                      else 'blue') }}
-                    layout: horizontal
-                    fill_container: true
-                    tap_action:
-                      action: navigate
-                      navigation_path: /energy
-                    card_mod:
-                      style: >
-                        ha-card { border-radius: 22px; border: none;
-                          {% set g = states('sensor.plenticoreseelen_grid_power') | float(0) %}{% set rgb = '244,67,54' if g > 100 else ('76,175,80' if g < -100 else '33,150,243') %}
-                          background: linear-gradient(135deg, rgba({{ rgb }},.36), rgba({{ rgb }},.08)); }
-                  - type: custom:power-flow-card-plus
-                    entities:
-                      battery:
-                        entity: sensor.plenticoreseelen_battery_power
-                        state_of_charge: sensor.plenticoreseelen_battery_soc
-                        show_state_of_charge: true
-                        state_of_charge_unit_white_space: true
-                        display_state: two_way
-                        invert_state: false
+              - type: custom:power-flow-card-plus
+                entities:
+                  battery:
+                    entity: sensor.plenticoreseelen_battery_power
+                    state_of_charge: sensor.plenticoreseelen_battery_soc
+                    show_state_of_charge: true
+                    state_of_charge_unit_white_space: true
+                    display_state: two_way
+                    invert_state: false
+                    display_zero: true
+                    name: Batterie
+                  grid:
+                    entity: sensor.plenticoreseelen_grid_power
+                    display_state: two_way
+                    invert_state: false
+                    name: Strom
+                  solar:
+                    entity: sensor.plenticoreseelen_sum_power_of_all_pv_dc_inputs
+                    display_zero_state: true
+                    display_zero: true
+                    invert_state: false
+                    use_metadata: false
+                    icon: mdi:solar-power-variant
+                    name: PV-Haus
+                  individual:
+                    - entity: sensor.keba_p30_charging_power
+                      name: Auto
+                      icon: mdi:car-electric
+                      display_zero: true
+                      display_zero_state: true
+                      secondary_info:
+                        entity: sensor.keba_p30_session_energy
+                        unit_of_measurement: kWh
+                        icon: mdi:battery-charging
+                        decimals: 1
                         display_zero: true
-                        name: Batterie
-                      grid:
-                        entity: sensor.plenticoreseelen_grid_power
-                        display_state: two_way
-                        invert_state: false
-                        name: Strom
-                      solar:
-                        entity: sensor.plenticoreseelen_sum_power_of_all_pv_dc_inputs
-                        display_zero_state: true
-                        display_zero: true
-                        invert_state: false
-                        use_metadata: false
-                        icon: mdi:solar-power-variant
-                        name: PV-Haus
-                      individual:
-                        - entity: sensor.keba_p30_charging_power
-                          name: Auto
-                          icon: mdi:car-electric
-                          display_zero: true
-                          display_zero_state: true
-                          secondary_info:
-                            entity: sensor.keba_p30_session_energy
-                            unit_of_measurement: kWh
-                            icon: mdi:battery-charging
-                            decimals: 1
-                            display_zero: true
-                        - entity: sensor.garage_klima_leistung
-                          name: Garage + Klima
-                        - entity: sensor.vorgarten_leistung
-                          name: Vorgarten
-                          color_value: true
-                        - entity: sensor.ecoflow_powerstream_solarleistung
-                          name: PV-EcoFlow
-                          inverted_animation: true
-                          icon: mdi:solar-power-variant
-                      home:
-                        entity: sensor.plenticoreseelen_home_power
-                        override_state: true
-                        subtract_individual: false
-                        hide: false
-                        name: Haus
-                        circle_animation: true
-                        color_value: true
-                        color_icon: true
-                    clickable_entities: true
-                    display_zero_lines:
-                      mode: show
-                      transparency: 50
-                      grey_color:
-                        - 189
-                        - 189
-                        - 189
-                    use_new_flow_rate_model: true
-                    base_decimals: 0
-                    kilo_decimals: 1
-                    min_flow_rate: 0.75
-                    max_flow_rate: 6
-                    max_expected_power: 11000
-                    min_expected_power: 0.01
-                    kilo_threshold: 1000
-                    mega_threshold: 1000000
-                    sort_individual_devices: false
-                    dashboard_link: /energy
-                    dashboard_link_label: Energie-Dashboard
-                  - type: grid
-                    columns: 4
-                    square: false
-                    cards:
-                      - type: custom:mushroom-template-card
-                        primary: >-
-                          {% set s = 'sensor.plenticoreseelen_energy_yield_day'
-                          %}{% set e = states(s) | float(0) %}{{ ((e / 1000) if
-                          state_attr(s, 'unit_of_measurement') == 'Wh' else e) |
-                          round(1) | string | replace('.', ',') }} kWh
-                        secondary: PV heute
-                        icon: mdi:solar-power-variant
-                        icon_color: amber
-                        layout: vertical
-                        fill_container: true
-                        tap_action:
-                          action: more-info
-                          entity: sensor.plenticoreseelen_energy_yield_day
-                        card_mod:
-                          style: |
-                            ha-card { border-radius: 22px; }
-                      - type: custom:mushroom-template-card
-                        primary: >-
-                          {% set s = 'sensor.plenticoreseelen_home_consumption_day'
-                          %}{% set e = states(s) | float(0) %}{{ ((e / 1000) if
-                          state_attr(s, 'unit_of_measurement') == 'Wh' else e) |
-                          round(1) | string | replace('.', ',') }} kWh
-                        secondary: Haus heute
-                        icon: mdi:home-lightning-bolt
-                        icon_color: blue
-                        layout: vertical
-                        fill_container: true
-                        tap_action:
-                          action: more-info
-                          entity: sensor.plenticoreseelen_home_consumption_day
-                        card_mod:
-                          style: |
-                            ha-card { border-radius: 22px; }
-                      - type: custom:mushroom-template-card
-                        primary: >-
-                          {% set s =
-                          'sensor.plenticoreseelen_home_consumption_from_grid_day'
-                          %}{% set e = states(s) | float(0) %}{{ ((e / 1000) if
-                          state_attr(s, 'unit_of_measurement') == 'Wh' else e) |
-                          round(1) | string | replace('.', ',') }} kWh
-                        secondary: >-
-                          {% set s = 'sensor.plenticoreseelen_energy_to_grid_day'
-                          %}{% set e = states(s) | float(0) %}Bezug · Einsp. {{
-                          ((e / 1000) if state_attr(s, 'unit_of_measurement') ==
-                          'Wh' else e) | round(1) | string | replace('.', ',') }}
-                        multiline_secondary: true
-                        icon: mdi:transmission-tower
-                        icon_color: purple
-                        layout: vertical
-                        fill_container: true
-                        tap_action:
-                          action: more-info
-                          entity: sensor.plenticoreseelen_home_consumption_from_grid_day
-                        card_mod:
-                          style: |
-                            ha-card { border-radius: 22px; }
-                      - type: custom:mushroom-template-card
-                        primary: >-
-                          {% set ns = namespace(k=0) %}{% for s in
-                          ['sensor.plenticoreseelen_battery_charge_from_pv_day',
-                          'sensor.plenticoreseelen_battery_charge_from_grid_day']
-                          %}{% set e = states(s) | float(0) %}{% set ns.k = ns.k
-                          + ((e / 1000) if state_attr(s, 'unit_of_measurement') ==
-                          'Wh' else e) %}{% endfor %}{{ ns.k | round(1) | string |
-                          replace('.', ',') }} kWh
-                        secondary: >-
-                          {% set s = 'sensor.plenticoreseelen_battery_discharge_day'
-                          %}{% set e = states(s) | float(0) %}Geladen · Entl. {{
-                          ((e / 1000) if state_attr(s, 'unit_of_measurement') ==
-                          'Wh' else e) | round(1) | string | replace('.', ',') }}
-                        multiline_secondary: true
-                        icon: mdi:battery-charging-high
-                        icon_color: pink
-                        layout: vertical
-                        fill_container: true
-                        tap_action:
-                          action: more-info
-                          entity: sensor.plenticoreseelen_battery_discharge_day
-                        card_mod:
-                          style: |
-                            ha-card { border-radius: 22px; }
+                    - entity: sensor.garage_klima_leistung
+                      name: Garage + Klima
+                    - entity: sensor.vorgarten_leistung
+                      name: Vorgarten
+                      color_value: true
+                    - entity: sensor.ecoflow_powerstream_solarleistung
+                      name: PV-EcoFlow
+                      inverted_animation: true
+                      icon: mdi:solar-power-variant
+                  home:
+                    entity: sensor.plenticoreseelen_home_power
+                    override_state: true
+                    subtract_individual: false
+                    hide: false
+                    name: Haus
+                    circle_animation: true
+                    color_value: true
+                    color_icon: true
+                clickable_entities: true
+                display_zero_lines:
+                  mode: show
+                  transparency: 50
+                  grey_color:
+                    - 189
+                    - 189
+                    - 189
+                use_new_flow_rate_model: true
+                base_decimals: 0
+                kilo_decimals: 1
+                min_flow_rate: 0.75
+                max_flow_rate: 6
+                max_expected_power: 11000
+                min_expected_power: 0.01
+                kilo_threshold: 1000
+                mega_threshold: 1000000
+                sort_individual_devices: false
+                dashboard_link: /energy
+                dashboard_link_label: Energie-Dashboard
               - type: custom:apexcharts-card
                 header:
                   show: true
@@ -477,6 +399,36 @@ views:
             icon: mdi:currency-eur
             grid_options:
               columns: full
+          - type: custom:mushroom-template-card
+            grid_options:
+              columns: full
+            primary: Strompreis
+            secondary: >-
+              {% set fix =
+              is_state('input_boolean.tibber_tarif_aktiv','off') %}{% set p
+              = (states('sensor.preis_netzbezug_fix') if fix else
+              states('sensor.strompreis_tibber_berechnet')) | float(0) %}{{
+              (p*100) | round(1) | string | replace('.', ',') }} ct/kWh · {{
+              'Fixtarif' if fix else ('günstig' if
+              is_state('binary_sensor.tibber_laden_freigabe','on') else
+              'normal') }}
+            icon: mdi:currency-eur
+            icon_color: >-
+              {{ 'blue' if
+              is_state('input_boolean.tibber_tarif_aktiv','off') else
+              ('green' if
+              is_state('binary_sensor.tibber_laden_freigabe','on') else
+              'blue') }}
+            layout: vertical
+            fill_container: true
+            card_mod:
+              style: >
+                ha-card { border-radius: 22px; border: none; min-height:
+                110px;
+                  {% set rgb = '76,175,80' if (not is_state('input_boolean.tibber_tarif_aktiv','off') and is_state('binary_sensor.tibber_laden_freigabe','on')) else '33,150,243' %}
+                  background: linear-gradient(135deg, rgba({{ rgb }},.36), rgba({{ rgb }},.08)); }
+            tap_action:
+              action: none
           - type: custom:apexcharts-card
             header:
               show: true
