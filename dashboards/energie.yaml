@@ -1821,9 +1821,9 @@ views:
                 name: Kündigungsfrist (Monate)
               - entity: sensor.vertrag_ende
                 name: Mindestlaufzeit endet am
-              - entity: sensor.vertrag_kuendigen_bis
+              - entity: sensor.vertrag_kundigen_bis
                 name: Kündigen bis spätestens
-              - entity: sensor.vertrag_tage_bis_kuendigungsfrist
+              - entity: sensor.vertrag_tage_bis_kundigungsfrist
                 name: Tage bis zur Kündigungsfrist
               - entity: input_number.tarif_fix_arbeitspreis_ct
                 name: Arbeitspreis (ct/kWh, brutto)

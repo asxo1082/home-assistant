@@ -623,9 +623,9 @@ template:
         unique_id: vertrag_tage_bis_kuendigungsfrist
         unit_of_measurement: "Tage"
         icon: mdi:timer-sand
-        availability: "{{ states('sensor.vertrag_kuendigen_bis') | regex_match('^[0-9]{4}-[0-9]{2}-[0-9]{2}') }}"
+        availability: "{{ states('sensor.vertrag_kundigen_bis') | regex_match('^[0-9]{4}-[0-9]{2}-[0-9]{2}') }}"
         state: >
-          {{ (strptime(states('sensor.vertrag_kuendigen_bis'), '%Y-%m-%d').date() - now().date()).days }}
+          {{ (strptime(states('sensor.vertrag_kundigen_bis'), '%Y-%m-%d').date() - now().date()).days }}
 
   - binary_sensor:
       - name: "PV Laden Freigabe"
