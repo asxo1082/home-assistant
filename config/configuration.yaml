@@ -555,6 +555,48 @@ template:
           {% set limit = states('input_number.tibber_max_preis') | float(0) %}
           {{ preis <= limit }}
 
+  # Gefilterte Kostal-Zähler (23.11.2026): übernehmen nur Werte > 0, die nicht kleiner als der letzte Stand sind.
+  # Grund: Am 08.11.2026 meldete der Kostal kurz einen zu kleinen Zählerstand, HA hielt das für einen Zählertausch
+  # und zählte den kompletten Stand (~41.000 kWh) doppelt. Diese Sensoren können das nicht.
+  # Monatsdiagramme im Energie-Dashboard laufen ab 01.01.2027 auf diesen Sensoren (vorher fehlt ihnen die Historie).
+  - trigger:
+      - trigger: state
+        entity_id: sensor.plenticoreseelen_home_consumption_from_grid_total
+      - trigger: homeassistant
+        event: start
+    sensor:
+      - name: "Netzbezug gesamt gefiltert"
+        unique_id: netzbezug_gesamt_gefiltert
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        icon: mdi:transmission-tower-import
+        state: >
+          {% set n = states('sensor.plenticoreseelen_home_consumption_from_grid_total') %}
+          {% set a = this.state | float(-1) %}
+          {% if n | is_number and n | float(0) > 0 and n | float(0) >= a %}{{ n | float(0) | round(2) }}
+          {% elif a >= 0 %}{{ a }}
+          {% else %}{{ none }}{% endif %}
+
+  - trigger:
+      - trigger: state
+        entity_id: sensor.plenticoreseelen_energy_to_grid_total
+      - trigger: homeassistant
+        event: start
+    sensor:
+      - name: "Einspeisung gesamt gefiltert"
+        unique_id: einspeisung_gesamt_gefiltert
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        icon: mdi:transmission-tower-export
+        state: >
+          {% set n = states('sensor.plenticoreseelen_energy_to_grid_total') %}
+          {% set a = this.state | float(-1) %}
+          {% if n | is_number and n | float(0) > 0 and n | float(0) >= a %}{{ n | float(0) | round(2) }}
+          {% elif a >= 0 %}{{ a }}
+          {% else %}{{ none }}{% endif %}
+
   - trigger:
       - trigger: time_pattern
         minutes: "/15"

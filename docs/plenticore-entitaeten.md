@@ -56,3 +56,10 @@ Stand: 28.10.2026 · Gerät „PlenticoreSeelen“ · Bereich „Energie“
 
 - `binary_sensor.kostal_storung`, Logik in `config/custom_templates/kostal.jinja`
 - Push über Automation „Kostal: Störungsmeldung“, Statuskarte im Energie-Dashboard (Reiter Live)
+
+## Zählersprünge (Statistik)
+
+- 08.11.2026 21:00: Kostal meldete kurz einen zu kleinen Gesamtzählerstand. HA wertete das als Zählertausch und addierte den kompletten Stand (Netzbezug +41.078,60 kWh, Einspeisung ~17.500 kWh). Korrigiert am 23.11. über Entwicklerwerkzeuge → Statistiken → Summe anpassen.
+- Schutz: `sensor.netzbezug_gesamt_gefiltert` und `sensor.einspeisung_gesamt_gefiltert` (übernehmen nur Werte > 0, nie kleiner als der letzte Stand). Monatsdiagramme ab 01.01.2027 darauf umstellen.
+- Meldung: Automation „Kostal: Zählersprung melden“ schickt eine Push-Nachricht, sobald einer der sechs Gesamtzähler kleiner wird oder auf 0 fällt.
+
