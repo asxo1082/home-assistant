@@ -1810,29 +1810,51 @@ views:
               - entity: sensor.kosten_differenz_gesamt
                 name: Tibber günstiger (+) oder teurer (-)
               - type: section
-                label: Tarif-Eingaben
+                label: Aktueller Vertrag
+              - entity: input_text.vertrag_anbieter
+                name: Anbieter
+              - entity: input_datetime.vertrag_beginn
+                name: Beginn
+              - entity: input_select.vertrag_laufzeit
+                name: Mindestlaufzeit
+              - entity: input_number.vertrag_kuendigungsfrist_monate
+                name: Kündigungsfrist (Monate)
+              - entity: sensor.vertrag_ende
+                name: Mindestlaufzeit endet am
+              - entity: sensor.vertrag_kuendigen_bis
+                name: Kündigen bis spätestens
+              - entity: sensor.vertrag_tage_bis_kuendigungsfrist
+                name: Tage bis zur Kündigungsfrist
               - entity: input_number.tarif_fix_arbeitspreis_ct
-                name: Fixtarif Arbeitspreis (ct/kWh, brutto)
+                name: Arbeitspreis (ct/kWh, brutto)
               - entity: input_number.tarif_fix_grundpreis_jahr
-                name: Fixtarif Grundpreis (€/Jahr, brutto)
+                name: Grundpreis (€/Jahr, brutto)
+              - entity: input_number.abschlag_monat
+                name: Abschlag (€/Monat)
+              - type: section
+                label: Nächster Vertrag (wird ab Beginn automatisch übernommen)
+              - entity: input_text.vertrag_neu_anbieter
+                name: Anbieter
+              - entity: input_datetime.tarifwechsel_ab
+                name: Beginn
+              - entity: input_select.vertrag_neu_laufzeit
+                name: Mindestlaufzeit
+              - entity: input_number.vertrag_neu_kuendigungsfrist_monate
+                name: Kündigungsfrist (Monate)
+              - entity: input_number.tarif_neu_arbeitspreis_ct
+                name: Arbeitspreis (ct/kWh, brutto)
+              - entity: input_number.tarif_neu_grundpreis_jahr
+                name: Grundpreis (€/Jahr, brutto)
+              - entity: input_number.tarif_neu_abschlag_monat
+                name: Abschlag (€/Monat)
+              - type: section
+                label: Weitere Eingaben
               - entity: input_number.tarif_einspeiseverguetung_ct
                 name: Einspeisevergütung (ct/kWh)
               - entity: input_number.tibber_grundgebuehr_monat
                 name: Tibber Grundgebühr (€/Monat)
-              - entity: input_number.abschlag_monat
-                name: Monatlicher Abschlag (€/Monat)
               - entity: input_number.winter_verbrauch_kwh_monat
                 name: Winter-Verbrauch (kWh/Monat, Schätzung)
-              - type: section
-                label: Tarifwechsel (wird am Stichtag automatisch übernommen)
-              - entity: input_datetime.tarifwechsel_ab
-                name: Neuer Tarif gilt ab
-              - entity: input_number.tarif_neu_arbeitspreis_ct
-                name: Neuer Arbeitspreis (ct/kWh, brutto)
-              - entity: input_number.tarif_neu_grundpreis_jahr
-                name: Neuer Grundpreis (€/Jahr, brutto)
-              - entity: input_number.tarif_neu_abschlag_monat
-                name: Neuer Abschlag (€/Monat)
             grid_options:
               columns: full
           - type: entities

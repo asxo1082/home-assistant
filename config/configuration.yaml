@@ -55,6 +55,18 @@ input_select:
       - "Gesamt aktuelles Jahr"
       - "Gesamt letztes Jahr"
     icon: mdi:calendar-month
+  vertrag_laufzeit:
+    name: "Aktueller Vertrag: Mindestlaufzeit"
+    options:
+      - "12 Monate"
+      - "24 Monate"
+    icon: mdi:calendar-range
+  vertrag_neu_laufzeit:
+    name: "Nächster Vertrag: Mindestlaufzeit"
+    options:
+      - "12 Monate"
+      - "24 Monate"
+    icon: mdi:calendar-range
 
 input_boolean:
   entladeschutz_autoladen:
@@ -113,14 +125,14 @@ input_number:
     unit_of_measurement: "%"
     mode: box
   tarif_fix_arbeitspreis_ct:
-    name: "Fixtarif Arbeitspreis (brutto)"
+    name: "Aktueller Vertrag: Arbeitspreis (brutto)"
     min: 0
     max: 80
     step: 0.01
     unit_of_measurement: "ct/kWh"
     mode: box
   tarif_fix_grundpreis_jahr:
-    name: "Fixtarif Grundpreis (brutto)"
+    name: "Aktueller Vertrag: Grundpreis (brutto)"
     min: 0
     max: 600
     step: 0.01
@@ -150,17 +162,18 @@ input_number:
     mode: box
     icon: mdi:snowflake
   abschlag_monat:
-    name: "Monatlicher Abschlag"
+    name: "Aktueller Vertrag: Abschlag"
     min: 0
     max: 2000
     step: 1
     unit_of_measurement: "€/Monat"
     mode: box
     icon: mdi:cash-register
-  # Tarifwechsel mit Datum (23.11.2026): neue Werte vorab eintragen, Automation „Tarifwechsel übernehmen“
-  # schreibt sie am Stichtag in die aktuellen Felder. 0 = Feld bleibt unverändert.
+  # Stromvertrag (23.11.2026): „Aktueller Vertrag“ = tarif_fix_* / abschlag_monat (IDs bleiben, alle Berechnungen hängen daran).
+  # „Nächster Vertrag“ = tarif_neu_*: vorab eintragen, Automation „Tarif: Vertragswechsel übernehmen“ schreibt sie
+  # ab dem Beginn-Datum in den aktuellen Vertrag und leert danach die Felder. 0 = Feld wird nicht übernommen.
   tarif_neu_arbeitspreis_ct:
-    name: "Neuer Tarif: Arbeitspreis (brutto)"
+    name: "Nächster Vertrag: Arbeitspreis (brutto)"
     min: 0
     max: 80
     step: 0.01
@@ -168,7 +181,7 @@ input_number:
     mode: box
     icon: mdi:calendar-arrow-right
   tarif_neu_grundpreis_jahr:
-    name: "Neuer Tarif: Grundpreis (brutto)"
+    name: "Nächster Vertrag: Grundpreis (brutto)"
     min: 0
     max: 600
     step: 0.01
@@ -176,7 +189,7 @@ input_number:
     mode: box
     icon: mdi:calendar-arrow-right
   tarif_neu_abschlag_monat:
-    name: "Neuer Tarif: Abschlag"
+    name: "Nächster Vertrag: Abschlag"
     min: 0
     max: 2000
     step: 1
@@ -184,12 +197,44 @@ input_number:
     mode: box
     icon: mdi:calendar-arrow-right
 
+  vertrag_kuendigungsfrist_monate:
+    name: "Aktueller Vertrag: Kündigungsfrist"
+    min: 0
+    max: 12
+    step: 1
+    unit_of_measurement: "Monate"
+    mode: box
+    icon: mdi:calendar-alert
+  vertrag_neu_kuendigungsfrist_monate:
+    name: "Nächster Vertrag: Kündigungsfrist"
+    min: 0
+    max: 12
+    step: 1
+    unit_of_measurement: "Monate"
+    mode: box
+    icon: mdi:calendar-alert
+
 input_datetime:
-  tarifwechsel_ab:
-    name: "Neuer Tarif gilt ab"
+  vertrag_beginn:
+    name: "Aktueller Vertrag: Beginn"
     has_date: true
-    has_time: true
+    has_time: false
     icon: mdi:calendar-start
+  tarifwechsel_ab:
+    name: "Nächster Vertrag: Beginn"
+    has_date: true
+    has_time: false
+    icon: mdi:calendar-arrow-right
+
+input_text:
+  vertrag_anbieter:
+    name: "Aktueller Vertrag: Anbieter"
+    max: 60
+    icon: mdi:domain
+  vertrag_neu_anbieter:
+    name: "Nächster Vertrag: Anbieter"
+    max: 60
+    icon: mdi:domain
 
 template:
   - sensor:
@@ -554,6 +599,33 @@ template:
         availability: "{{ states('sensor.netzbezug_kwh_jahr') | is_number and states('sensor.einspeisung_jahr_kwh') | is_number }}"
         state: >
           {{ (states('sensor.netzbezug_jahr_kosten') | float(0) - states('sensor.einspeisung_jahr_verguetung') | float(0)) | round(2) }}
+
+      # Stromvertrag: Ende der Mindestlaufzeit und letzter Kündigungstag – Logik in custom_templates/vertrag.jinja
+      - name: "Vertrag Ende"
+        unique_id: vertrag_ende
+        device_class: date
+        icon: mdi:calendar-end
+        state: >
+          {% from 'vertrag.jinja' import vertrag_ende %}
+          {% set e = vertrag_ende(states('input_datetime.vertrag_beginn'), states('input_select.vertrag_laufzeit')) | trim %}
+          {{ e if e else none }}
+
+      - name: "Vertrag kündigen bis"
+        unique_id: vertrag_kuendigen_bis
+        device_class: date
+        icon: mdi:calendar-alert
+        state: >
+          {% from 'vertrag.jinja' import kuendigen_bis %}
+          {% set k = kuendigen_bis(states('sensor.vertrag_ende'), states('input_number.vertrag_kuendigungsfrist_monate')) | trim %}
+          {{ k if k else none }}
+
+      - name: "Vertrag Tage bis Kündigungsfrist"
+        unique_id: vertrag_tage_bis_kuendigungsfrist
+        unit_of_measurement: "Tage"
+        icon: mdi:timer-sand
+        availability: "{{ states('sensor.vertrag_kuendigen_bis') | regex_match('^[0-9]{4}-[0-9]{2}-[0-9]{2}') }}"
+        state: >
+          {{ (strptime(states('sensor.vertrag_kuendigen_bis'), '%Y-%m-%d').date() - now().date()).days }}
 
   - binary_sensor:
       - name: "PV Laden Freigabe"

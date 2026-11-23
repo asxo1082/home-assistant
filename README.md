@@ -7,7 +7,7 @@ Archiv der Home-Assistant-Konfiguration. Privat. Keine Zugangsdaten im Repositor
 | Ordner | Inhalt | Ziel in Home Assistant |
 |---|---|---|
 | `config/` | `configuration.yaml`, `automations.yaml` | `/config/` |
-| `config/custom_templates/` | Jinja-Makros (Kostal, Müll, Schule) | `/config/custom_templates/` |
+| `config/custom_templates/` | Jinja-Makros (Kostal, Müll, Schule, Vertrag) | `/config/custom_templates/` |
 | `config/scripts/` | Skripte | Einstellungen → Skripte (YAML-Modus) |
 | `dashboards/` | Dashboards im Raw-Format | Dashboard → ⋮ → Raw-Konfigurationseditor |
 | `docs/` | Notizen zu Anlage und Netzwerk | – |
@@ -22,7 +22,7 @@ Archiv der Home-Assistant-Konfiguration. Privat. Keine Zugangsdaten im Repositor
 ## Offene Punkte
 
 - 01.01.2027 Tarifwechsel, alles in einem Schritt:
-  - Tarifwechsel läuft automatisch (Automation „Tarif: Tarifwechsel übernehmen“) – nur prüfen, ob Push kam und Werte stimmen
+  - Vertragswechsel läuft automatisch (Automation „Tarif: Vertragswechsel übernehmen“) – nur prüfen, ob Push kam und Werte stimmen
   - Monatsdiagramme (Energie → Monate) auf `sensor.netzbezug_gesamt_gefiltert` / `sensor.einspeisung_gesamt_gefiltert` umstellen
   - „Abschlag empfohlen“ umbauen: Jahresprognose ÷ 12 mit neuem Tarif statt Restbetrag auf Dezember
   - Hinweis: „Winter kWh/Monat“ realistisch ~1.450 (Okt 1.316, Nov ~1.450)
@@ -37,3 +37,4 @@ Archiv der Home-Assistant-Konfiguration. Privat. Keine Zugangsdaten im Repositor
 - 23.11.2026 (2): Energie Live aufgeräumt: vier Kacheln Solar/Haus/Netz/Batterie zeigen je „jetzt“ (Leistung) und „heute“ (Energie); Kopfzeile und Tageswerte-Zeile unter dem Energiefluss entfernt; Strompreis-Kachel in den Abschnitt Strompreis verschoben. Tesla-Anbindung bewusst verworfen.
 - 23.11.2026 (3): Statistik-Ausreißer 08.11. 21:00 (Netzbezug +41.078 kWh, Einspeisung) von Hand korrigiert. Neu: gefilterte Zähler Netzbezug/Einspeisung (ignorieren Sprünge nach unten) und Automation „Kostal: Zählersprung melden“ für alle sechs Kostal-Gesamtzähler.
 - 23.11.2026 (4): Tarifwechsel mit Datum: `input_datetime.tarifwechsel_ab` + Felder „Neuer Tarif“ (Arbeitspreis, Grundpreis, Abschlag); Automation übernimmt sie am Stichtag in die aktuellen Felder und meldet per Push (holt nach, falls HA aus war).
+- 23.11.2026 (5): Tarif-Eingaben umgebaut zu „Aktueller Vertrag“ / „Nächster Vertrag“ (Anbieter, Beginn, Mindestlaufzeit 12/24 Monate, Kündigungsfrist, Preise, Abschlag). Sensoren Vertragsende / Kündigen bis / Tage bis Kündigungsfrist (`custom_templates/vertrag.jinja`), Push 60/30/14/7/1 Tage vor Kündigungsfrist. Wechsel wird auch nachträglich sofort übernommen; Felder „Nächster Vertrag“ werden danach geleert.

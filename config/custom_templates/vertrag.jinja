@@ -1,0 +1,30 @@
+{#- Datumsrechnung Stromvertrag (23.11.2026)
+    vertrag_ende('2027-01-01', '24 Monate')  -> '2028-12-31'
+    kuendigen_bis('2028-12-31', 1)           -> '2028-11-30'
+    Leerer Text, wenn Beginn oder Laufzeit fehlen. -#}
+
+{% macro vertrag_ende(beginn, laufzeit) -%}
+{%- set b = beginn | string -%}
+{%- if b | regex_match('^[0-9]{4}-[0-9]{2}-[0-9]{2}') -%}
+{%- set d = strptime(b[:10], '%Y-%m-%d') -%}
+{%- set lz = (laufzeit | string | regex_findall('[0-9]+') | first | default(0)) | int(0) -%}
+{%- if lz > 0 -%}
+{%- set mi = d.year * 12 + d.month - 1 + lz -%}
+{%- set m1 = strptime('%04d-%02d-01' | format(mi // 12, mi % 12 + 1), '%Y-%m-%d') -%}
+{{- (m1 + timedelta(days=d.day - 1) - timedelta(days=1)).strftime('%Y-%m-%d') -}}
+{%- endif -%}
+{%- endif -%}
+{%- endmacro %}
+
+{% macro kuendigen_bis(ende, frist) -%}
+{%- set e0 = ende | string -%}
+{%- if e0 | regex_match('^[0-9]{4}-[0-9]{2}-[0-9]{2}') -%}
+{%- set e = strptime(e0[:10], '%Y-%m-%d') -%}
+{%- set mi = e.year * 12 + e.month - 1 - (frist | int(0)) -%}
+{%- set m1 = strptime('%04d-%02d-01' | format(mi // 12, mi % 12 + 1), '%Y-%m-%d') -%}
+{%- set mi2 = mi + 1 -%}
+{%- set m2 = strptime('%04d-%02d-01' | format(mi2 // 12, mi2 % 12 + 1), '%Y-%m-%d') -%}
+{%- set dim = (m2 - m1).days -%}
+{{- (m1 + timedelta(days=([e.day, dim] | min) - 1)).strftime('%Y-%m-%d') -}}
+{%- endif -%}
+{%- endmacro %}

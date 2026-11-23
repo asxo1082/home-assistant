@@ -515,37 +515,57 @@
   mode: queued
   max: 10
 - id: '1795002600004'
-  alias: 'Tarif: Tarifwechsel übernehmen'
+  alias: 'Tarif: Vertragswechsel übernehmen'
   description: >-
-    Schreibt am Stichtag (input_datetime.tarifwechsel_ab) die Werte „Neuer Tarif“ in Arbeitspreis,
-    Grundpreis und Abschlag. Holt den Wechsel nach, falls Home Assistant zum Stichtag aus war.
-    Neue Werte mit 0 werden nicht übernommen und gemeldet.
+    Ab dem Beginn des nächsten Vertrags (input_datetime.tarifwechsel_ab) werden Anbieter, Preise, Abschlag,
+    Mindestlaufzeit und Kündigungsfrist in den aktuellen Vertrag geschrieben; danach werden die Felder
+    „Nächster Vertrag“ geleert. Läuft täglich kurz nach Mitternacht, beim Start und 3 Minuten nach einer
+    Eingabe (falls der Beginn schon erreicht ist, wird sofort übernommen). Felder mit 0 bleiben unverändert.
   triggers:
   - trigger: time
-    at: input_datetime.tarifwechsel_ab
+    at: 00:00:30
   - trigger: homeassistant
     event: start
-  - trigger: time
-    at: 00:05:00
+  - trigger: state
+    id: eingabe
+    entity_id:
+    - input_datetime.tarifwechsel_ab
+    - input_text.vertrag_neu_anbieter
+    - input_number.tarif_neu_arbeitspreis_ct
+    - input_number.tarif_neu_grundpreis_jahr
+    - input_number.tarif_neu_abschlag_monat
+    - input_select.vertrag_neu_laufzeit
+    - input_number.vertrag_neu_kuendigungsfrist_monate
   conditions:
   - condition: template
     value_template: >-
-      {% set ts = state_attr('input_datetime.tarifwechsel_ab', 'timestamp') %}
-      {% set ap_neu = states('input_number.tarif_neu_arbeitspreis_ct') | float(0) %}
-      {% set gp_neu = states('input_number.tarif_neu_grundpreis_jahr') | float(0) %}
-      {% set ab_neu = states('input_number.tarif_neu_abschlag_monat') | float(0) %}
-      {{ ts is number and now().timestamp() >= ts and (
-           (ap_neu > 0 and ap_neu != states('input_number.tarif_fix_arbeitspreis_ct') | float(0))
-        or (gp_neu > 0 and gp_neu != states('input_number.tarif_fix_grundpreis_jahr') | float(0))
-        or (ab_neu > 0 and ab_neu != states('input_number.abschlag_monat') | float(0)) ) }}
+      {% set ab = states('input_datetime.tarifwechsel_ab') %}
+      {{ ab | regex_match('^[0-9]{4}-[0-9]{2}-[0-9]{2}') and ab[:10] <= now().strftime('%Y-%m-%d')
+         and (states('input_number.tarif_neu_arbeitspreis_ct') | float(0) > 0
+              or states('input_number.tarif_neu_grundpreis_jahr') | float(0) > 0
+              or states('input_number.tarif_neu_abschlag_monat') | float(0) > 0
+              or states('input_text.vertrag_neu_anbieter') | trim not in ['', 'unknown', 'unavailable']) }}
   actions:
+  - if:
+    - condition: trigger
+      id: eingabe
+    then:
+    - delay: 00:03:00
   - variables:
+      ab: "{{ states('input_datetime.tarifwechsel_ab')[:10] }}"
+      anbieter_neu: "{{ states('input_text.vertrag_neu_anbieter') | trim }}"
       ap_neu: "{{ states('input_number.tarif_neu_arbeitspreis_ct') | float(0) }}"
       gp_neu: "{{ states('input_number.tarif_neu_grundpreis_jahr') | float(0) }}"
       ab_neu: "{{ states('input_number.tarif_neu_abschlag_monat') | float(0) }}"
+      lz_neu: "{{ states('input_select.vertrag_neu_laufzeit') }}"
+      kf_neu: "{{ states('input_number.vertrag_neu_kuendigungsfrist_monate') | int(0) }}"
       ap_alt: "{{ states('input_number.tarif_fix_arbeitspreis_ct') | float(0) }}"
       gp_alt: "{{ states('input_number.tarif_fix_grundpreis_jahr') | float(0) }}"
       ab_alt: "{{ states('input_number.abschlag_monat') | float(0) }}"
+      ende: >-
+        {% from 'vertrag.jinja' import vertrag_ende %}{{ vertrag_ende(states('input_datetime.tarifwechsel_ab'), states('input_select.vertrag_neu_laufzeit')) | trim }}
+      kuendigen: >-
+        {% from 'vertrag.jinja' import vertrag_ende, kuendigen_bis %}{{ kuendigen_bis(vertrag_ende(states('input_datetime.tarifwechsel_ab'), states('input_select.vertrag_neu_laufzeit')) | trim, states('input_number.vertrag_neu_kuendigungsfrist_monate')) | trim }}
   - if:
     - condition: template
       value_template: "{{ ap_neu > 0 }}"
@@ -573,14 +593,80 @@
         entity_id: input_number.abschlag_monat
       data:
         value: "{{ ab_neu }}"
+  - if:
+    - condition: template
+      value_template: "{{ anbieter_neu not in ['', 'unknown', 'unavailable'] }}"
+    then:
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.vertrag_anbieter
+      data:
+        value: "{{ anbieter_neu }}"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.vertrag_beginn
+    data:
+      date: "{{ ab }}"
+  - action: input_select.select_option
+    target:
+      entity_id: input_select.vertrag_laufzeit
+    data:
+      option: "{{ lz_neu }}"
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.vertrag_kuendigungsfrist_monate
+    data:
+      value: "{{ kf_neu }}"
   - action: notify.mobile_app_iphone_andreas
     data:
-      title: "\U0001F4B6 Neuer Stromtarif aktiv"
+      title: "\U0001F4B6 Neuer Stromvertrag aktiv{{ ' – ' ~ anbieter_neu if anbieter_neu not in ['', 'unknown', 'unavailable'] }}"
       message: >-
+        Ab {{ ab[8:10] }}.{{ ab[5:7] }}.{{ ab[:4] }}:
         Arbeitspreis {{ ap_alt | string | replace('.', ',') }} → {{ (ap_neu if ap_neu > 0 else ap_alt) | string | replace('.', ',') }} ct/kWh{{ ' (nicht eingetragen!)' if ap_neu == 0 }},
         Grundpreis {{ gp_alt | string | replace('.', ',') }} → {{ (gp_neu if gp_neu > 0 else gp_alt) | string | replace('.', ',') }} €/Jahr{{ ' (nicht eingetragen!)' if gp_neu == 0 }},
         Abschlag {{ ab_alt | int }} → {{ (ab_neu if ab_neu > 0 else ab_alt) | int }} €/Monat{{ ' (nicht eingetragen!)' if ab_neu == 0 }}.
+        {% if ende %}Mindestlaufzeit {{ lz_neu }} bis {{ ende[8:10] }}.{{ ende[5:7] }}.{{ ende[:4] }}, kündigen bis {{ kuendigen[8:10] }}.{{ kuendigen[5:7] }}.{{ kuendigen[:4] }}.{% endif %}
       data:
         url: /dashboard-energie/monate
         tag: tarifwechsel
+  - action: input_number.set_value
+    target:
+      entity_id:
+      - input_number.tarif_neu_arbeitspreis_ct
+      - input_number.tarif_neu_grundpreis_jahr
+      - input_number.tarif_neu_abschlag_monat
+    data:
+      value: 0
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.vertrag_neu_anbieter
+    data:
+      value: ''
+  mode: single
+  max_exceeded: silent
+- id: '1795002600005'
+  alias: 'Tarif: Kündigungsfrist Stromvertrag'
+  description: >-
+    Erinnert 60, 30, 14, 7 und 1 Tag(e) vor dem letzten Kündigungstag der Mindestlaufzeit
+    (sensor.vertrag_kuendigen_bis) – Zeit zum Preisvergleich.
+  triggers:
+  - trigger: time
+    at: 09:00:00
+  conditions:
+  - condition: template
+    value_template: "{{ states('sensor.vertrag_tage_bis_kuendigungsfrist') | int(-1) in [60, 30, 14, 7, 1] }}"
+  actions:
+  - variables:
+      k: "{{ states('sensor.vertrag_kuendigen_bis') }}"
+      e: "{{ states('sensor.vertrag_ende') }}"
+  - action: notify.mobile_app_iphone_andreas
+    data:
+      title: "⏳ Stromvertrag: noch {{ states('sensor.vertrag_tage_bis_kuendigungsfrist') }} Tage bis zur Kündigungsfrist"
+      message: >-
+        {{ states('input_text.vertrag_anbieter') | default('Stromvertrag') }}: Mindestlaufzeit endet am
+        {{ e[8:10] }}.{{ e[5:7] }}.{{ e[:4] }}, Kündigung muss bis {{ k[8:10] }}.{{ k[5:7] }}.{{ k[:4] }} beim Anbieter sein.
+        Jetzt Preise vergleichen – danach meist monatlich kündbar, aber die Preisgarantie läuft aus.
+      data:
+        url: /dashboard-energie/monate
+        tag: vertrag-kuendigung
   mode: single
