@@ -157,6 +157,39 @@ input_number:
     unit_of_measurement: "€/Monat"
     mode: box
     icon: mdi:cash-register
+  # Tarifwechsel mit Datum (23.11.2026): neue Werte vorab eintragen, Automation „Tarifwechsel übernehmen“
+  # schreibt sie am Stichtag in die aktuellen Felder. 0 = Feld bleibt unverändert.
+  tarif_neu_arbeitspreis_ct:
+    name: "Neuer Tarif: Arbeitspreis (brutto)"
+    min: 0
+    max: 80
+    step: 0.01
+    unit_of_measurement: "ct/kWh"
+    mode: box
+    icon: mdi:calendar-arrow-right
+  tarif_neu_grundpreis_jahr:
+    name: "Neuer Tarif: Grundpreis (brutto)"
+    min: 0
+    max: 600
+    step: 0.01
+    unit_of_measurement: "€/Jahr"
+    mode: box
+    icon: mdi:calendar-arrow-right
+  tarif_neu_abschlag_monat:
+    name: "Neuer Tarif: Abschlag"
+    min: 0
+    max: 2000
+    step: 1
+    unit_of_measurement: "€/Monat"
+    mode: box
+    icon: mdi:calendar-arrow-right
+
+input_datetime:
+  tarifwechsel_ab:
+    name: "Neuer Tarif gilt ab"
+    has_date: true
+    has_time: true
+    icon: mdi:calendar-start
 
 template:
   - sensor:

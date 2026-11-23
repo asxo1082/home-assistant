@@ -22,7 +22,7 @@ Archiv der Home-Assistant-Konfiguration. Privat. Keine Zugangsdaten im Repositor
 ## Offene Punkte
 
 - 01.01.2027 Tarifwechsel, alles in einem Schritt:
-  - Tarif-Eingaben: Arbeitspreis 33,00 ct/kWh, Grundpreis 162,48 €/Jahr (13,54 €/Monat), Abschlag laut Vertrag (Angebot 275 €; realistisch 325–330 € bei ~11.400 kWh)
+  - Tarifwechsel läuft automatisch (Automation „Tarif: Tarifwechsel übernehmen“) – nur prüfen, ob Push kam und Werte stimmen
   - Monatsdiagramme (Energie → Monate) auf `sensor.netzbezug_gesamt_gefiltert` / `sensor.einspeisung_gesamt_gefiltert` umstellen
   - „Abschlag empfohlen“ umbauen: Jahresprognose ÷ 12 mit neuem Tarif statt Restbetrag auf Dezember
   - Hinweis: „Winter kWh/Monat“ realistisch ~1.450 (Okt 1.316, Nov ~1.450)
@@ -36,3 +36,4 @@ Archiv der Home-Assistant-Konfiguration. Privat. Keine Zugangsdaten im Repositor
 - 23.11.2026: Energie-Dashboard, Reiter Live: neue Karte „Energiefluss“ (Kopfzeile mit Status und Autarkie, Power-Flow in Originalfarben, Tageswerte PV/Haus/Netz/Speicher; dunkler Glow-Stil wieder entfernt, im hellen Theme unlesbar). Wallbox heißt dort „Auto“ und zeigt die geladene kWh der Sitzung; Auto-Ladestand fehlt (keine Tesla-Integration).
 - 23.11.2026 (2): Energie Live aufgeräumt: vier Kacheln Solar/Haus/Netz/Batterie zeigen je „jetzt“ (Leistung) und „heute“ (Energie); Kopfzeile und Tageswerte-Zeile unter dem Energiefluss entfernt; Strompreis-Kachel in den Abschnitt Strompreis verschoben. Tesla-Anbindung bewusst verworfen.
 - 23.11.2026 (3): Statistik-Ausreißer 08.11. 21:00 (Netzbezug +41.078 kWh, Einspeisung) von Hand korrigiert. Neu: gefilterte Zähler Netzbezug/Einspeisung (ignorieren Sprünge nach unten) und Automation „Kostal: Zählersprung melden“ für alle sechs Kostal-Gesamtzähler.
+- 23.11.2026 (4): Tarifwechsel mit Datum: `input_datetime.tarifwechsel_ab` + Felder „Neuer Tarif“ (Arbeitspreis, Grundpreis, Abschlag); Automation übernimmt sie am Stichtag in die aktuellen Felder und meldet per Push (holt nach, falls HA aus war).

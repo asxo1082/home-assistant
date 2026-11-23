@@ -514,3 +514,73 @@
         tag: kostal-zaehlersprung
   mode: queued
   max: 10
+- id: '1795002600004'
+  alias: 'Tarif: Tarifwechsel übernehmen'
+  description: >-
+    Schreibt am Stichtag (input_datetime.tarifwechsel_ab) die Werte „Neuer Tarif“ in Arbeitspreis,
+    Grundpreis und Abschlag. Holt den Wechsel nach, falls Home Assistant zum Stichtag aus war.
+    Neue Werte mit 0 werden nicht übernommen und gemeldet.
+  triggers:
+  - trigger: time
+    at: input_datetime.tarifwechsel_ab
+  - trigger: homeassistant
+    event: start
+  - trigger: time
+    at: 00:05:00
+  conditions:
+  - condition: template
+    value_template: >-
+      {% set ts = state_attr('input_datetime.tarifwechsel_ab', 'timestamp') %}
+      {% set ap_neu = states('input_number.tarif_neu_arbeitspreis_ct') | float(0) %}
+      {% set gp_neu = states('input_number.tarif_neu_grundpreis_jahr') | float(0) %}
+      {% set ab_neu = states('input_number.tarif_neu_abschlag_monat') | float(0) %}
+      {{ ts is number and now().timestamp() >= ts and (
+           (ap_neu > 0 and ap_neu != states('input_number.tarif_fix_arbeitspreis_ct') | float(0))
+        or (gp_neu > 0 and gp_neu != states('input_number.tarif_fix_grundpreis_jahr') | float(0))
+        or (ab_neu > 0 and ab_neu != states('input_number.abschlag_monat') | float(0)) ) }}
+  actions:
+  - variables:
+      ap_neu: "{{ states('input_number.tarif_neu_arbeitspreis_ct') | float(0) }}"
+      gp_neu: "{{ states('input_number.tarif_neu_grundpreis_jahr') | float(0) }}"
+      ab_neu: "{{ states('input_number.tarif_neu_abschlag_monat') | float(0) }}"
+      ap_alt: "{{ states('input_number.tarif_fix_arbeitspreis_ct') | float(0) }}"
+      gp_alt: "{{ states('input_number.tarif_fix_grundpreis_jahr') | float(0) }}"
+      ab_alt: "{{ states('input_number.abschlag_monat') | float(0) }}"
+  - if:
+    - condition: template
+      value_template: "{{ ap_neu > 0 }}"
+    then:
+    - action: input_number.set_value
+      target:
+        entity_id: input_number.tarif_fix_arbeitspreis_ct
+      data:
+        value: "{{ ap_neu }}"
+  - if:
+    - condition: template
+      value_template: "{{ gp_neu > 0 }}"
+    then:
+    - action: input_number.set_value
+      target:
+        entity_id: input_number.tarif_fix_grundpreis_jahr
+      data:
+        value: "{{ gp_neu }}"
+  - if:
+    - condition: template
+      value_template: "{{ ab_neu > 0 }}"
+    then:
+    - action: input_number.set_value
+      target:
+        entity_id: input_number.abschlag_monat
+      data:
+        value: "{{ ab_neu }}"
+  - action: notify.mobile_app_iphone_andreas
+    data:
+      title: "\U0001F4B6 Neuer Stromtarif aktiv"
+      message: >-
+        Arbeitspreis {{ ap_alt | string | replace('.', ',') }} → {{ (ap_neu if ap_neu > 0 else ap_alt) | string | replace('.', ',') }} ct/kWh{{ ' (nicht eingetragen!)' if ap_neu == 0 }},
+        Grundpreis {{ gp_alt | string | replace('.', ',') }} → {{ (gp_neu if gp_neu > 0 else gp_alt) | string | replace('.', ',') }} €/Jahr{{ ' (nicht eingetragen!)' if gp_neu == 0 }},
+        Abschlag {{ ab_alt | int }} → {{ (ab_neu if ab_neu > 0 else ab_alt) | int }} €/Monat{{ ' (nicht eingetragen!)' if ab_neu == 0 }}.
+      data:
+        url: /dashboard-energie/monate
+        tag: tarifwechsel
+  mode: single

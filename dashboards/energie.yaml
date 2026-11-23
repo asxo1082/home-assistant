@@ -1796,7 +1796,7 @@ views:
               - entity: sensor.kosten_dynamisch_gesamt
                 name: Gesamt seit Start
               - type: section
-                label: Fixtarif (Maingau)
+                label: Fixtarif (aktueller Vertrag)
               - entity: sensor.kosten_fix_tag
                 name: Heute
               - entity: sensor.kosten_fix_woche
@@ -1823,6 +1823,16 @@ views:
                 name: Monatlicher Abschlag (€/Monat)
               - entity: input_number.winter_verbrauch_kwh_monat
                 name: Winter-Verbrauch (kWh/Monat, Schätzung)
+              - type: section
+                label: Tarifwechsel (wird am Stichtag automatisch übernommen)
+              - entity: input_datetime.tarifwechsel_ab
+                name: Neuer Tarif gilt ab
+              - entity: input_number.tarif_neu_arbeitspreis_ct
+                name: Neuer Arbeitspreis (ct/kWh, brutto)
+              - entity: input_number.tarif_neu_grundpreis_jahr
+                name: Neuer Grundpreis (€/Jahr, brutto)
+              - entity: input_number.tarif_neu_abschlag_monat
+                name: Neuer Abschlag (€/Monat)
             grid_options:
               columns: full
           - type: entities
